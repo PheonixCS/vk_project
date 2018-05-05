@@ -11,9 +11,9 @@ class Setting(models.Model):
     )
 
     key = models.CharField(max_length=128, primary_key=True)
-    key_type = models.CharField(choices=SETTINGS_TYPES)
+    key_type = models.CharField(max_length=32, choices=SETTINGS_TYPES)
     value = models.CharField(max_length=256)
-    description = models.CharField(max_length=256)
+    description = models.CharField(max_length=256, blank=True, null=True)
 
     @staticmethod
     def get_value(self, key):
