@@ -17,10 +17,10 @@ class Filter(models.Model):
 
 class Record(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.DO_NOTHING)
-    record_id = models.IntegerField()
-    likes_count = models.IntegerField()
-    reposts_count = models.IntegerField()
-    views_count = models.IntegerField()
+    record_id = models.IntegerField(null=True)
+    likes_count = models.IntegerField(null=True)
+    reposts_count = models.IntegerField(null=True)
+    views_count = models.IntegerField(null=True)
     text = models.TextField(max_length=2048, null=True)
     rate = models.IntegerField(null=True)
     post_in_donor_date = models.DateTimeField(null=True)
@@ -35,8 +35,8 @@ class Image(models.Model):
 
 class Video(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE)
-    owner_id = models.IntegerField()
-    video_id = models.IntegerField()
+    owner_id = models.IntegerField(null=True)
+    video_id = models.IntegerField(null=True)
 
     def get_url(self):
         return 'https://vk.com/video{}_{}'.format(self.owner_id, self.video_id)
