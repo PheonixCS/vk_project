@@ -3,6 +3,7 @@ from django.db import models
 
 class Donor(models.Model):
     id = models.CharField(max_length=32, verbose_name='Domain/id группы донора', primary_key=True)
+    is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
 
 
 class Filter(models.Model):
