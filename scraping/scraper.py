@@ -32,16 +32,20 @@ def distribute_donors_between_accounts(donors, accounts):
 
 
 def create_vk_api_using_service_token(token, api_version):
+    log.debug('create api called')
     return vk_requests.create_api(service_token=token, api_version=api_version)
 
 
 def get_wall(api, group_id):
     # TODO обработка ошибок api
+    log.debug('get_wall called, got group_id {}'.format(group_id))
     if group_id.isdigit():
+        log.debug('group id is digit')
         wall = api.wall.get(owner_id='-{}'.format(group_id),
                             filter='owner',
                             api_version=VK_API_VERSION)
     else:
+        log.debug('group id os not digit')
         wall = api.wall.get(domain=group_id,
                             filter='owner',
                             api_version=VK_API_VERSION)
@@ -166,25 +170,74 @@ def save_record_to_db(donor, record):
     return created
 
 
+def rate_records(donor_id, records):
+    """
+
+    :param donor:
+    :param records:
+    :type donor_id: int
+    :type records: list
+    :return: None
+    """
+    log.info('start rating {} records'.format(len(records)))
+
+    default_timedelta = 3600
+    factor = 0.5
+
+    for record in records:
+        # TODO make one query with all records instead of one call each record
+        record_obj = Record.objects.get(donor__id=donor_id, record_id=record['id'])
+
+        delta_likes = record['likes']['count'] - record_obj.likes_count
+        delta_reposts = record['reposts']['count'] - record_obj.reposts_count
+        delta_views = record['views']['count'] - record_obj.views_count
+
+        resulting_rate = (delta_reposts/delta_likes + delta_likes/delta_views)*default_timedelta*factor
+        record_obj.rate = int(resulting_rate)
+
+        log.info('record {} in group {} rated {} with deltas likes: {}, reposts: {}, views:{}'.format(
+            record['id'],
+            donor_id,
+            resulting_rate,
+            delta_likes,
+            delta_reposts,
+            delta_views
+        ))
+
+        record_obj.save()
+
+
 def main():
     log.info('start main scrapper')
 
     tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, group=None)]
 
     donors = Donor.objects.filter(is_involved=True)
+    log.debug('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
+    log.info('got {} accounts with donors'.format(len(accounts_with_donors)))
 
     for account in accounts_with_donors:
         if not account['donors']:
+            log.info('account {} does not have any donor'.format(account))
             continue
 
         api = create_vk_api_using_service_token(account['token'], VK_API_VERSION)
 
         for donor in account['donors']:
-            records = get_wall(api, donor.id)['items']
+            all_records = get_wall(api, donor.id)['items']
+            log.debug('got {} records in group <{}>'.format(len(all_records), donor.id))
 
-            records = [record for record in records if not Record.objects.filter(record_id=record['id']).first()]
+            records = [record for record in all_records
+                       if not Record.objects.filter(record_id=record['id']).first()]
+
+            existing_records = list(set(all_records) - set(records))
+            log.debug('got {} existing records'.format(len(existing_records)))
+
+            non_rated_records = [record for record in existing_records
+                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
+            rate_records(donor.id, non_rated_records)
 
             records = filter_out_ads(records)
 
@@ -196,6 +249,7 @@ def main():
 
             for record in records:
                 save_record_to_db(donor, record)
+                log.info('saved {} records'.format(len(records)))
 
 
 if __name__ == '__main__':
