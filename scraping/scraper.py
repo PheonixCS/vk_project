@@ -1,14 +1,16 @@
 import datetime
 import re
+from difflib import SequenceMatcher
 
 import vk_requests
-import phonenumbers
+from phonenumbers import PhoneNumberMatcher
 
 from posting.models import User
 from scraping.models import Donor, Record, Image, Video
 from settings.models import Setting
 
 VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
+MIN_STRING_MATCH_RATIO = Setting.get_value(key='MIN_STRING_MATCH_RATIO')
 
 
 def distribute_donors_between_accounts(donors, accounts):
@@ -44,8 +46,13 @@ def get_wall(api, group_id):
 
 
 def filter_out_copies(records):
+    records_in_db = Record.objects.all()
     for record in records:
-        pass
+        for record_in_db in records_in_db:
+            if SequenceMatcher(None, record['text'], record_in_db.text).ratio() > MIN_STRING_MATCH_RATIO:
+                records.remove(record)
+                break
+            # TODO проверка изображений на дубликаты
     return records
 
 
@@ -59,7 +66,7 @@ def filter_out_ads(records):
             records.remove(record)
             continue
 
-        phone_numbers_in_text = phonenumbers.PhoneNumberMatcher(text=record['text'], region='RU')
+        phone_numbers_in_text = PhoneNumberMatcher(text=record['text'], region='RU')
         if phone_numbers_in_text:
             records.remove(record)
             continue
@@ -171,13 +178,15 @@ def main():
         for donor in account['donors']:
             records = get_wall(api, donor.id)['items']
 
-            records = filter_out_copies(records)
+            records = [record for record in records if not Record.objects.filter(record_id=record['id']).first()]
 
             records = filter_out_ads(records)
 
             custom_filters = donor.filters.all()
             if custom_filters:
                 records = filter_with_custom_filters(custom_filters, records)
+
+            records = filter_out_copies(records)
 
             for record in records:
                 save_record_to_db(donor, record)
