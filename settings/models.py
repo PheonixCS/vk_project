@@ -16,7 +16,7 @@ class Setting(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
 
     @staticmethod
-    def get_value(self, key):
+    def get_value(key):
         setting = Setting.objects.get(key=key)
         if setting.value:
             if setting.key_type == 'bool':
