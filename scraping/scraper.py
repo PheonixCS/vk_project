@@ -1,22 +1,16 @@
 import datetime
 import re
 from difflib import SequenceMatcher
-import os
-import sys
+import logging
 
-import django
 import vk_requests
 from phonenumbers import PhoneNumberMatcher
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(BASE_DIR)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'vk_scraping_posting.settings'
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vk_scraping_posting.settings")
-django.setup()
 
 from posting.models import User
 from scraping.models import Donor, Record, Image, Video
 from settings.models import Setting
+
+log = logging.getLogger('scraping.scraper')
 
 VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 MIN_STRING_MATCH_RATIO = Setting.get_value(key='MIN_STRING_MATCH_RATIO')
@@ -173,6 +167,8 @@ def save_record_to_db(donor, record):
 
 
 def main():
+    log.info('start main scrapper')
+
     tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, group=None)]
 
     donors = Donor.objects.filter(is_involved=True)
