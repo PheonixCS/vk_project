@@ -17,8 +17,8 @@ class Setting(models.Model):
 
     @staticmethod
     def get_value(key):
-        setting = Setting.objects.get(key=key)
-        if setting.value:
+        setting = Setting.objects.filter(key=key).first()
+        if setting:
             if setting.key_type == 'bool':
                 if setting.value.lower() in ['true', 'false']:
                     value = setting.value.lower() == 'true'
