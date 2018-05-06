@@ -16,6 +16,7 @@ from celery.schedules import crontab
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+CELERYD_HIJACK_ROOT_LOGGER = False
 # TODO add it to environment vars
 CELERY_BROKER_URL = 'amqp://localhost:5672'
 CELERY_BEAT_SCHEDULE = {
@@ -137,3 +138,64 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+        }
+    },
+
+    'handlers': {
+        'console': {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler',
+            'formatter': 'default'
+        },
+        'apps': {
+            'level': 'DEBUG',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/test.log",
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'default',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+        },
+        'celery': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/celery.log",
+            'formatter': 'default',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+        },
+        'django': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/django.log",
+            'formatter': 'default',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'django'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG')
+        },
+        'scraping': {
+            'handlers': ['apps'],
+            'level': os.getenv('SCRAPER_LOG_LEVEL', 'DEBUG')
+        },
+        'posting': {
+            'handlers': ['apps'],
+            'level': os.getenv('POSTING_LOG_LEVEL', 'DEBUG')
+        },
+        'moderation': {
+            'handlers': ['apps'],
+            'level': os.getenv('MODERATION_LOG_LEVEL', 'DEBUG')
+        },
+        'сelery': {
+            'handlers': ['console', 'celery'],
+            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
+        },
+    },
+}

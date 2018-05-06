@@ -15,7 +15,7 @@ from phonenumbers import PhoneNumberMatcher
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vk_scraping_posting.settings")
 # django.setup()
 
-logging.basicConfig(filename="test.log", level=logging.INFO)
+log = logging.getLogger('scraping.main')
 
 from posting.models import User
 from scraping.models import Donor, Record, Image, Video
@@ -176,7 +176,7 @@ def save_record_to_db(donor, record):
 
 
 def main():
-    logging.info('start main scrapper')
+    log.info('start main scrapper')
 
     tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, group=None)]
 

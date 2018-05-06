@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
+import celery.signals
 from celery import Celery
 
 # TODO figure out why 
@@ -16,6 +17,11 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 app.task(bind=True)
+
+
+@celery.signals.setup_logging.connect
+def on_celery_setup_logging(**kwargs):
+    pass
 
 
 def debug_task(self):
