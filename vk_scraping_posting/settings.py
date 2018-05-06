@@ -11,9 +11,19 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# TODO add it to environment vars
+CELERY_BROKER_URL = 'amqp://localhost:5672'
+CELERY_BEAT_SCHEDULE = {
+    'task-number-one': {
+        'task': 'scraping.tasks.run_scraper',
+        'schedule': crontab()
+    }
+}
 
 
 # Quick-start development settings - unsuitable for production
