@@ -1,7 +1,11 @@
+import datetime
+import re
+
 import vk_requests
+import phonenumbers
 
 from posting.models import User
-from scraping.models import Donor
+from scraping.models import Donor, Record, Image, Video
 from settings.models import Setting
 
 VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
@@ -39,12 +43,36 @@ def get_wall(api, group_id):
     return wall
 
 
-def filter_out_copies():
-    pass
+def filter_out_copies(records):
+    for record in records:
+        pass
+    return records
 
 
-def filter_out_ads():
-    pass
+def filter_out_ads(records):
+    for record in records:
+        if record['marked_as_ads']:
+            records.remove(record)
+            continue
+
+        if 'copy_history' in record:
+            records.remove(record)
+            continue
+
+        phone_numbers_in_text = phonenumbers.PhoneNumberMatcher(text=record['text'], region='RU')
+        if phone_numbers_in_text:
+            records.remove(record)
+            continue
+
+        urls_in_text = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', record['text'])
+        if urls_in_text:
+            records.remove(record)
+            continue
+
+        emails_in_text = re.findall(r'[\w.-]+ @ [\w.-]+', record['text'])
+        if emails_in_text:
+            records.remove(record)
+    return records
 
 
 def filter_with_custom_filters(custom_filters, records):
@@ -77,12 +105,55 @@ def filter_with_custom_filters(custom_filters, records):
                                                                                 item['doc']['ext'] == 'gif'])
                 if number_of_gifs < custom_filter.min_quantity_of_gifs:
                     records.remove(record)
-                    continue
     return records
 
 
+def find_url_of_biggest_image(image_dict):
+    photos_keys = [key for key in image_dict if key.startswith('photo_')]
+    key_of_max_size_photo = max(photos_keys, key=lambda x: int(x.split('_')[1]))
+    return image_dict[key_of_max_size_photo]
+
+
 def save_record_to_db(donor, record):
-    pass
+    obj, created = Record.objects.get_or_create(
+        donor=donor,
+        record_id=record['id'],
+        defaults={
+            'likes_count': record['likes']['count'],
+            'reposts_count': record['reposts']['count'],
+            'views_count': record['views']['count'],
+            'text': record['text'],
+            'post_in_donor_date': record['date'],
+            'add_to_db_date': datetime.datetime.now()
+        }
+    )
+    if created:
+        if 'attachments' in record:
+            if any('video' in d for d in record['attachments']):
+                videos = [item for item in record['attachments'] if item['type'] == 'video']
+                for video in videos:
+                    Video.objects.create(
+                        record=obj,
+                        owner_id=video['video']['owner_id'],
+                        video_id=video['video']['id']
+                    )
+
+            if any('doc' in d for d in record['attachments']):
+                gifs = [item for item in record['attachments'] if item['type'] == 'doc' and item['doc']['ext'] == 'gif']
+                for gif in gifs:
+                    Image.objects.create(
+                        record=obj,
+                        url=gif['doc']['url']
+                    )
+
+            if any('photo' in d for d in record['attachments']):
+                images = [item for item in record['attachments'] if item['type'] == 'photo']
+                for image in images:
+                    Image.objects.create(
+                        record=obj,
+                        url=find_url_of_biggest_image(image['photo'])
+                    )
+    return created
 
 
 def main():
@@ -100,9 +171,9 @@ def main():
         for donor in account['donors']:
             records = get_wall(api, donor.id)['items']
 
-            filter_out_copies()
+            records = filter_out_copies(records)
 
-            filter_out_ads()
+            records = filter_out_ads(records)
 
             custom_filters = donor.filters.all()
             if custom_filters:
