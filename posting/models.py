@@ -16,8 +16,8 @@ class User(models.Model):
 class Group(models.Model):
     id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True)
-    donors = models.ManyToManyField(Donor, blank=True)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
+    donors = models.ManyToManyField(Donor, blank=True, null=True)
 
     def __str__(self):
         return self.id

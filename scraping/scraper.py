@@ -32,11 +32,11 @@ def distribute_donors_between_accounts(donors, accounts):
     return accounts_with_donors
 
 
-def create_vk_api_using_service_token(token, api_version):
+def create_vk_api_using_service_token(token):
     log.debug('create api called')
 
     try:
-        api = vk_requests.create_api(service_token=token, api_version=api_version)
+        api = vk_requests.create_api(service_token=token, api_version=VK_API_VERSION)
     except VkAPIError as error_msg:
         log.info('token {} got api error: {}'.format(token, error_msg))
         return None
@@ -249,7 +249,7 @@ def main():
             log.info('account {} does not have any donor'.format(account))
             continue
 
-        api = create_vk_api_using_service_token(account['token'], VK_API_VERSION)
+        api = create_vk_api_using_service_token(account['token'])
         if not api:
             continue
 
