@@ -32,6 +32,7 @@ def distribute_donors_between_accounts(donors, accounts):
 
 
 def create_vk_api_using_service_token(token, api_version):
+    # TODO обработка ошибок api при авторизации
     log.debug('create api called')
     return vk_requests.create_api(service_token=token, api_version=api_version)
 
@@ -58,6 +59,7 @@ def filter_out_copies(records):
         for record_in_db in records_in_db:
             if SequenceMatcher(None, record['text'], record_in_db.text).ratio() > MIN_STRING_MATCH_RATIO:
                 records.remove(record)
+                log.debug('delete record {} as copy'.format(record['id']))
                 break
             # TODO проверка изображений на дубликаты
     return records
@@ -67,25 +69,30 @@ def filter_out_ads(records):
     for record in records:
         if record['marked_as_ads']:
             records.remove(record)
+            log.debug('delete record {} as ad: marked as ad'.format(record['id']))
             continue
 
         if 'copy_history' in record:
             records.remove(record)
+            log.debug('delete record {} as ad: got forward msg'.format(record['id']))
             continue
 
         phone_numbers_in_text = PhoneNumberMatcher(text=record['text'], region='RU')
         if phone_numbers_in_text:
             records.remove(record)
+            log.debug('delete record {} as ad: got phone'.format(record['id']))
             continue
 
         urls_in_text = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', record['text'])
         if urls_in_text:
             records.remove(record)
+            log.debug('delete record {} as ad: got url'.format(record['id']))
             continue
 
         emails_in_text = re.findall(r'[\w.-]+ @ [\w.-]+', record['text'])
         if emails_in_text:
             records.remove(record)
+            log.debug('delete record {} as ad: got email'.format(record['id']))
     return records
 
 
@@ -95,23 +102,27 @@ def filter_with_custom_filters(custom_filters, records):
             if custom_filter.min_quantity_of_line_breaks:
                 if len(record['text'].splitlines()) < custom_filter.min_quantity_of_line_breaks:
                     records.remove(record)
+                    log.debug('delete record {} because of min_quantity_of_line_breaks filter'.format(record['id']))
                     continue
 
             if custom_filter.min_text_length:
                 if len(record['text']) < custom_filter.min_text_length:
                     records.remove(record)
+                    log.debug('delete record {} because of min_text_length filter'.format(record['id']))
                     continue
 
             if custom_filter.min_quantity_of_videos:
                 number_of_videos = len([item for item in record['attachments'] if item['type'] == 'video'])
                 if number_of_videos < custom_filter.min_quantity_of_videos:
                     records.remove(record)
+                    log.debug('delete record {} because of min_quantity_of_videos filter'.format(record['id']))
                     continue
 
             if custom_filter.min_quantity_of_images:
                 number_of_images = len([item for item in record['attachments'] if item['type'] == 'photo'])
                 if number_of_images < custom_filter.min_quantity_of_images:
                     records.remove(record)
+                    log.debug('delete record {} because of min_quantity_of_images filter'.format(record['id']))
                     continue
 
             if custom_filter.min_quantity_of_gifs:
@@ -119,6 +130,7 @@ def filter_with_custom_filters(custom_filters, records):
                                                                                 item['doc']['ext'] == 'gif'])
                 if number_of_gifs < custom_filter.min_quantity_of_gifs:
                     records.remove(record)
+                    log.debug('delete record {} because of min_quantity_of_gifs filter'.format(record['id']))
     return records
 
 
@@ -211,12 +223,13 @@ def main():
     log.info('start main scrapper')
 
     tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, group=None)]
+    log.debug('working with {} tokens: {}'.format(len(tokens), tokens))
 
     donors = Donor.objects.filter(is_involved=True)
     log.debug('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
-    log.info('got {} accounts with donors'.format(len(accounts_with_donors)))
+    log.info('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
 
     for account in accounts_with_donors:
         if not account['donors']:
@@ -227,7 +240,7 @@ def main():
 
         for donor in account['donors']:
             all_records = get_wall(api, donor.id)['items']
-            log.debug('got {} records in group <{}>'.format(len(all_records), donor.id))
+            log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
 
             records = [record for record in all_records
                        if not Record.objects.filter(record_id=record['id']).first()]
@@ -243,6 +256,7 @@ def main():
 
             custom_filters = donor.filters.all()
             if custom_filters:
+                log.debug('got {} custom filters'.format(len(custom_filters)))
                 records = filter_with_custom_filters(custom_filters, records)
 
             records = filter_out_copies(records)
