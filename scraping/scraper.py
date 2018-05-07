@@ -4,6 +4,7 @@ from difflib import SequenceMatcher
 import logging
 
 import vk_requests
+from vk_requests.exceptions import VkAPIError
 from phonenumbers import PhoneNumberMatcher
 
 from posting.models import User
@@ -32,24 +33,36 @@ def distribute_donors_between_accounts(donors, accounts):
 
 
 def create_vk_api_using_service_token(token, api_version):
-    # TODO обработка ошибок api при авторизации
     log.debug('create api called')
-    return vk_requests.create_api(service_token=token, api_version=api_version)
+
+    try:
+        api = vk_requests.create_api(service_token=token, api_version=api_version)
+    except VkAPIError as error_msg:
+        log.info('token {} got api error: {}'.format(token, error_msg))
+        return None
+
+    return api
 
 
 def get_wall(api, group_id):
-    # TODO обработка ошибок api
-    log.debug('get_wall called, got group_id {}'.format(group_id))
-    if group_id.isdigit():
-        log.debug('group id is digit')
-        wall = api.wall.get(owner_id='-{}'.format(group_id),
-                            filter='owner',
-                            api_version=VK_API_VERSION)
-    else:
-        log.debug('group id os not digit')
-        wall = api.wall.get(domain=group_id,
-                            filter='owner',
-                            api_version=VK_API_VERSION)
+    log.debug('get_wall api called for group {}'.format(group_id))
+
+    try:
+        log.debug('get_wall called, got group_id {}'.format(group_id))
+        if group_id.isdigit():
+            log.debug('group id is digit')
+            wall = api.wall.get(owner_id='-{}'.format(group_id),
+                                filter='owner',
+                                api_version=VK_API_VERSION)
+        else:
+            log.debug('group id os not digit')
+            wall = api.wall.get(domain=group_id,
+                                filter='owner',
+                                api_version=VK_API_VERSION)
+    except VkAPIError as error_msg:
+        log.info('group {} got api error: {}'.format(group_id, error_msg))
+        return None
+
     return wall
 
 
@@ -237,9 +250,16 @@ def main():
             continue
 
         api = create_vk_api_using_service_token(account['token'], VK_API_VERSION)
+        if not api:
+            continue
 
         for donor in account['donors']:
-            all_records = get_wall(api, donor.id)['items']
+            wall = get_wall(api, donor.id)
+            if not wall:
+                continue
+
+            all_records = wall['items']
+
             log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
 
             records = [record for record in all_records
