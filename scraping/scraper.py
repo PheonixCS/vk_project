@@ -242,7 +242,7 @@ def main():
     log.debug('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
-    log.info('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
+    log.debug('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
 
     for account in accounts_with_donors:
         if not account['donors']:
@@ -254,36 +254,56 @@ def main():
             continue
 
         for donor in account['donors']:
+            # Scraping part
+
             wall = get_wall(api, donor.id)
             if not wall:
                 continue
 
+            # Fetch 100 records from donor wall.
+            # That 100 records can content some useless information, adds and
+            # information that we don't need.
             all_records = wall['items']
-
             log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
 
-            records = [record for record in all_records
-                       if not Record.objects.filter(record_id=record['id']).first()]
+            # now get records that we don't have in our db
+            new_records = [record for record in all_records
+                           if not Record.objects.filter(record_id=record['id']).first()]
 
-            existing_records = list(set(all_records) - set(records))
-            log.debug('got {} existing records'.format(len(existing_records)))
-
-            non_rated_records = [record for record in existing_records
-                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
-            rate_records(donor.id, non_rated_records)
-
-            records = filter_out_ads(records)
+            # Filters
+            new_records = filter_out_ads(new_records)
 
             custom_filters = donor.filters.all()
             if custom_filters:
                 log.debug('got {} custom filters'.format(len(custom_filters)))
-                records = filter_with_custom_filters(custom_filters, records)
+                new_records = filter_with_custom_filters(custom_filters, new_records)
 
-            records = filter_out_copies(records)
+            new_records = filter_out_copies(new_records)
 
-            for record in records:
+            # Save it to db
+            for record in new_records:
                 save_record_to_db(donor, record)
-                log.info('saved {} records'.format(len(records)))
+                log.info('saved {} records'.format(len(new_records)))
+
+            # Rating part
+            # Get all non rated records from this api call
+            non_rated_records = [record for record in all_records
+                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
+
+            rate_records(donor.id, non_rated_records)
+
+            all_non_rated = Record.objects.filter(rate__isnull=True)
+            if len(all_non_rated) > 100:
+                log.warning('too many non rated records!')
+                # TODO sort it by date, delete oldest
+                pass
+            else:
+                if not donor.id.isdigit():
+                    digit_id = new_records[0]['from_id']
+
+                all_non_rated = ['-{}_{}'.format(donor.id, record.id) for record in all_non_rated]
+                all_non_rated = api.wall.getById(posts=all_non_rated)
+                rate_records(donor.id, all_non_rated)
 
 
 if __name__ == '__main__':
