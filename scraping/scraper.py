@@ -68,83 +68,127 @@ def get_wall(api, group_id):
 
 def filter_out_copies(records):
     records_in_db = Record.objects.all()
-    for record in records:
-        for record_in_db in records_in_db:
-            if SequenceMatcher(None, record['text'], record_in_db.text).ratio() > MIN_STRING_MATCH_RATIO:
-                records.remove(record)
-                log.debug('delete record {} as copy'.format(record['id']))
-                break
-            # TODO проверка изображений на дубликаты
-    return records
+
+    # records_in_db_text = [record.text for record in records_in_db]
+    # filtered_records = [record for record in records if record['text'] not in records_in_db_text]
+
+    filtered_records = [record for record in records if any(record_in_db for record_in_db in records_in_db if
+                                                            SequenceMatcher(None,
+                                                                            record['text'],
+                                                                            record_in_db.text).ratio() < MIN_STRING_MATCH_RATIO)]
+    # TODO проверка изображений на дубликаты
+    return filtered_records
+
+
+def marked_as_ads_filter(item):
+    if 'marked_as_ads' in item:
+        log.debug('delete {} as ad: marked_as_ads_filter'.format(item['id']))
+        return False
+    return True
+
+
+def copy_history_filter(item):
+    if 'copy_history' in item:
+        log.debug('delete {} as ad: copy_history_filter'.format(item['id']))
+        return False
+    return True
+
+
+def phone_numbers_filter(item):
+    if PhoneNumberMatcher(text=item['text'], region='RU'):
+        log.debug('delete {} as ad: phone_numbers_filter'.format(item['id']))
+        return False
+    return True
+
+
+def urls_filter(item):
+    if re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', item['text']):
+        log.debug('delete {} as ad: urls_filter'.format(item['id']))
+        return False
+    return True
+
+
+def email_filter(item):
+    if re.findall(r'[\w.-]+ @ [\w.-]+', item['text']):
+        log.debug('delete {} as ad: email_filter'.format(item['id']))
+        return False
+    return True
 
 
 def filter_out_ads(records):
-    for record in records:
-        if record['marked_as_ads']:
-            records.remove(record)
-            log.debug('delete record {} as ad: marked as ad'.format(record['id']))
-            continue
+    filters = (
+        marked_as_ads_filter,
+        copy_history_filter,
+        phone_numbers_filter,
+        urls_filter,
+        email_filter
+    )
+    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
+    return filtered_records
 
-        if 'copy_history' in record:
-            records.remove(record)
-            log.debug('delete record {} as ad: got forward msg'.format(record['id']))
-            continue
 
-        phone_numbers_in_text = PhoneNumberMatcher(text=record['text'], region='RU')
-        if phone_numbers_in_text:
-            records.remove(record)
-            log.debug('delete record {} as ad: got phone'.format(record['id']))
-            continue
+def min_quantity_of_line_breaks_filter(item, custom_filter):
+    if len(item['text'].splitlines()) < custom_filter.min_quantity_of_line_breaks:
+        log.debug('delete {} because of custom filter: min_quantity_of_line_breaks'.format(item['id']))
+        return False
+    return True
 
-        urls_in_text = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', record['text'])
-        if urls_in_text:
-            records.remove(record)
-            log.debug('delete record {} as ad: got url'.format(record['id']))
-            continue
 
-        emails_in_text = re.findall(r'[\w.-]+ @ [\w.-]+', record['text'])
-        if emails_in_text:
-            records.remove(record)
-            log.debug('delete record {} as ad: got email'.format(record['id']))
-    return records
+def min_text_length_filter(item, custom_filter):
+    if len(item['text']) < custom_filter.min_text_length:
+        log.debug('delete {} because of custom filter: min_text_length'.format(item['id']))
+        return False
+    return True
+
+
+def min_quantity_of_videos_filter(item, custom_filter):
+    number_of_videos = len([attachment for attachment in item['attachments'] if attachment['type'] == 'video'])
+    if number_of_videos < custom_filter.min_quantity_of_videos:
+        log.debug('delete {} because of custom filter: min_quantity_of_videos'.format(item['id']))
+        return False
+    return True
+
+
+def min_quantity_of_images_filter(item, custom_filter):
+    number_of_images = len([attachment for attachment in item['attachments'] if attachment['type'] == 'photo'])
+    if number_of_images < custom_filter.min_quantity_of_images:
+        log.debug('delete {} because of custom filter: min_quantity_of_images'.format(item['id']))
+        return False
+    return True
+
+
+def min_quantity_of_gifs_filter(item, custom_filter):
+    number_of_gifs = len([attachment for attachment in item['attachments'] if attachment['type'] == 'doc' and
+                          attachment['doc']['ext'] == 'gif'])
+    if number_of_gifs < custom_filter.min_quantity_of_gifs:
+        log.debug('delete {} because of custom filter: min_quantity_of_gifs'.format(item['id']))
+        return False
+    return True
 
 
 def filter_with_custom_filters(custom_filters, records):
+    filtered_records = list(records)
     for custom_filter in custom_filters:
-        for record in records:
-            if custom_filter.min_quantity_of_line_breaks:
-                if len(record['text'].splitlines()) < custom_filter.min_quantity_of_line_breaks:
-                    records.remove(record)
-                    log.debug('delete record {} because of min_quantity_of_line_breaks filter'.format(record['id']))
-                    continue
+        filters = tuple()
+        if custom_filter.min_quantity_of_line_breaks:
+            filters += (min_quantity_of_line_breaks_filter)
 
-            if custom_filter.min_text_length:
-                if len(record['text']) < custom_filter.min_text_length:
-                    records.remove(record)
-                    log.debug('delete record {} because of min_text_length filter'.format(record['id']))
-                    continue
+        if custom_filter.min_text_length:
+            filters += (min_text_length_filter)
 
-            if custom_filter.min_quantity_of_videos:
-                number_of_videos = len([item for item in record['attachments'] if item['type'] == 'video'])
-                if number_of_videos < custom_filter.min_quantity_of_videos:
-                    records.remove(record)
-                    log.debug('delete record {} because of min_quantity_of_videos filter'.format(record['id']))
-                    continue
+        if custom_filter.min_quantity_of_videos:
+            filters += (min_quantity_of_videos_filter)
 
-            if custom_filter.min_quantity_of_images:
-                number_of_images = len([item for item in record['attachments'] if item['type'] == 'photo'])
-                if number_of_images < custom_filter.min_quantity_of_images:
-                    records.remove(record)
-                    log.debug('delete record {} because of min_quantity_of_images filter'.format(record['id']))
-                    continue
+        if custom_filter.min_quantity_of_images:
+            filters += (min_quantity_of_images_filter)
 
-            if custom_filter.min_quantity_of_gifs:
-                number_of_gifs = len([item for item in record['attachments'] if item['type'] == 'doc' and
-                                                                                item['doc']['ext'] == 'gif'])
-                if number_of_gifs < custom_filter.min_quantity_of_gifs:
-                    records.remove(record)
-                    log.debug('delete record {} because of min_quantity_of_gifs filter'.format(record['id']))
-    return records
+        if custom_filter.min_quantity_of_gifs:
+            filters += (min_quantity_of_gifs_filter)
+
+        filtered_records = [record for record in filtered_records if
+                            all(filter(record, custom_filter) for filter in filters)]
+
+    return filtered_records
 
 
 def find_url_of_biggest_image(image_dict):
@@ -217,7 +261,7 @@ def rate_records(donor_id, records):
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
         delta_views = record['views']['count'] - record_obj.views_count
 
-        resulting_rate = (delta_reposts/delta_likes + delta_likes/delta_views)*default_timedelta*factor
+        resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
         record_obj.rate = int(resulting_rate)
 
         log.info('record {} in group {} rated {} with deltas likes: {}, reposts: {}, views:{}'.format(
