@@ -38,7 +38,7 @@ def create_vk_api_using_service_token(token):
     try:
         api = vk_requests.create_api(service_token=token, api_version=VK_API_VERSION)
     except VkAPIError as error_msg:
-        log.info('token {} got api error: {}'.format(token, error_msg))
+        log.warning('token {} got api error: {}'.format(token, error_msg))
         return None
 
     return api
@@ -60,7 +60,7 @@ def get_wall(api, group_id):
                                 filter='owner',
                                 api_version=VK_API_VERSION)
     except VkAPIError as error_msg:
-        log.info('group {} got api error: {}'.format(group_id, error_msg))
+        log.warning('group {} got api error: {}'.format(group_id, error_msg))
         return None
 
     return wall
@@ -296,14 +296,25 @@ def main():
             if len(all_non_rated) > 100:
                 log.warning('too many non rated records!')
                 # TODO sort it by date, delete oldest
-                pass
-            else:
-                if not donor.id.isdigit():
-                    digit_id = new_records[0]['from_id']
+                all_non_rated = all_non_rated[:100]
 
-                all_non_rated = ['-{}_{}'.format(donor.id, record.id) for record in all_non_rated]
+            if donor.id.isdigit():
+                digit_id = donor.id
+            else:
+                digit_id = new_records[0]['from_id']
+
+            all_non_rated = ['-{}_{}'.format(digit_id, record.id) for record in all_non_rated]
+
+            try:
                 all_non_rated = api.wall.getById(posts=all_non_rated)
-                rate_records(donor.id, all_non_rated)
+            except VkAPIError as error_msg:
+                log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+
+            if not all_non_rated:
+                log.warning('got 0 unrated records from api')
+                continue
+
+            rate_records(donor.id, all_non_rated)
 
 
 if __name__ == '__main__':
