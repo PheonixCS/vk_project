@@ -10,7 +10,7 @@ class Donor(models.Model):
 
 
 class Filter(models.Model):
-    donor = models.ForeignKey(Donor, on_delete=models.DO_NOTHING)
+    donor = models.ForeignKey(Donor, on_delete=models.DO_NOTHING, related_name='filters')
     min_text_length = models.IntegerField(blank=True, null=True,
                                           verbose_name='Минимальная длина текста')
     min_quantity_of_line_breaks = models.IntegerField(blank=True, null=True,
@@ -27,7 +27,7 @@ class Filter(models.Model):
 
 
 class Record(models.Model):
-    donor = models.ForeignKey(Donor, on_delete=models.DO_NOTHING)
+    donor = models.ForeignKey(Donor, on_delete=models.DO_NOTHING, related_name='records')
     record_id = models.IntegerField(null=True)
     likes_count = models.IntegerField(null=True)
     reposts_count = models.IntegerField(null=True)
@@ -40,12 +40,12 @@ class Record(models.Model):
 
 
 class Image(models.Model):
-    record = models.ForeignKey(Record, on_delete=models.CASCADE)
-    url = models.CharField(max_length=128)
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='images')
+    url = models.CharField(max_length=256)
 
 
 class Video(models.Model):
-    record = models.ForeignKey(Record, on_delete=models.CASCADE)
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='videos')
     owner_id = models.IntegerField(null=True)
     video_id = models.IntegerField(null=True)
 
