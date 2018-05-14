@@ -81,7 +81,7 @@ def filter_out_copies(records):
 
 
 def marked_as_ads_filter(item):
-    if 'marked_as_ads' in item:
+    if item.get('marked_as_ads', 0):
         log.debug('delete {} as ad: marked_as_ads_filter'.format(item['id']))
         return False
     return True
@@ -334,31 +334,34 @@ def main():
             non_rated_records = [record for record in all_records
                                  if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
 
-            rate_records(donor.id, non_rated_records)
+            if non_rated_records:
+                rate_records(donor.id, non_rated_records)
 
             all_non_rated = Record.objects.filter(rate__isnull=True)
-            if len(all_non_rated) > 100:
-                log.warning('too many non rated records!')
-                # TODO sort it by date, delete oldest
-                all_non_rated = all_non_rated[:100]
 
-            if donor.id.isdigit():
-                digit_id = donor.id
-            else:
-                digit_id = new_records[0]['from_id']
+            if all_non_rated:
+                if len(all_non_rated) > 100:
+                    log.warning('too many non rated records!')
+                    # TODO sort it by date, delete oldest
+                    all_non_rated = all_non_rated[:100]
 
-            all_non_rated = ['-{}_{}'.format(digit_id, record.id) for record in all_non_rated]
+                if donor.id.isdigit():
+                    digit_id = donor.id
+                else:
+                    digit_id = new_records[0]['from_id']
 
-            try:
-                all_non_rated = api.wall.getById(posts=all_non_rated)
-            except VkAPIError as error_msg:
-                log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+                all_non_rated = ['-{}_{}'.format(digit_id, record.id) for record in all_non_rated]
 
-            if not all_non_rated:
-                log.warning('got 0 unrated records from api')
-                continue
+                try:
+                    all_non_rated = api.wall.getById(posts=all_non_rated)
+                except VkAPIError as error_msg:
+                    log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
 
-            rate_records(donor.id, all_non_rated)
+                if not all_non_rated:
+                    log.warning('got 0 unrated records from api')
+                    continue
+
+                rate_records(donor.id, all_non_rated)
 
 
 if __name__ == '__main__':
