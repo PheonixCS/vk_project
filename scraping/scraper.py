@@ -80,7 +80,12 @@ def get_wall_by_post_id(api, group_id, posts_ids):
 
 
 def filter_out_copies(records):
+    log.info('filter_out_copies called')
     records_in_db = Record.objects.all()
+
+    if not records_in_db:
+        log.info('no records in db')
+        return records
 
     # records_in_db_text = [record.text for record in records_in_db]
     # filtered_records = [record for record in records if record['text'] not in records_in_db_text]
@@ -129,6 +134,7 @@ def email_filter(item):
 
 
 def filter_out_ads(records):
+    log.info('filter_out_ads called')
     filters = (
         marked_as_ads_filter,
         copy_history_filter,
@@ -330,6 +336,7 @@ def main():
             # Filters
             new_records = filter_out_ads(new_records)
 
+            log.info('search for custom filters')
             custom_filters = donor.filters.all()
             if custom_filters:
                 log.debug('got {} custom filters'.format(len(custom_filters)))
