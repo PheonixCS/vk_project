@@ -17,12 +17,15 @@ from celery.schedules import crontab
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CELERYD_HIJACK_ROOT_LOGGER = False
-# TODO add it to environment vars
-CELERY_BROKER_URL = 'amqp://localhost:5672'
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'amqp://localhost:5672')
 CELERY_BEAT_SCHEDULE = {
-    'task-number-one': {
+    'scraper_task': {
         'task': 'scraping.tasks.run_scraper',
-        'schedule': crontab()
+        'schedule': crontab(minute=0)  # every hour at 0 minute
+    },
+    'poster_task': {
+        'task': 'posting.tasks.examine_groups',
+        'schedule': 60  # every 60 seconds
     }
 }
 
@@ -36,7 +39,7 @@ SECRET_KEY = '3(p-@#k$mrd0_*lw=u%kh7%oh!vp9iv@anxxk)-bcbbvup4^^0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['46.101.217.6']
 
 
 # Application definition

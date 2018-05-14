@@ -48,7 +48,6 @@ def get_wall(api, group_id):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
-        log.debug('get_wall called, got group_id {}'.format(group_id))
         if group_id.isdigit():
             log.debug('group id is digit')
             wall = api.wall.get(owner_id='-{}'.format(group_id),
@@ -66,8 +65,26 @@ def get_wall(api, group_id):
     return wall
 
 
+def get_wall_by_post_id(api, group_id, posts_ids):
+    log.debug('get_wall_by_post_id api called for group {}'.format(group_id))
+
+    posts = ['-{}_{}'.format(group_id, post) for post in posts_ids]
+    try:
+        all_non_rated = api.wall.getById(posts=posts)
+    except VkAPIError as error_msg:
+        log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+        return None
+
+    return all_non_rated
+
+
 def filter_out_copies(records):
+    log.info('filter_out_copies called')
     records_in_db = Record.objects.all()
+
+    if not records_in_db:
+        log.info('no records in db')
+        return records
 
     # records_in_db_text = [record.text for record in records_in_db]
     # filtered_records = [record for record in records if record['text'] not in records_in_db_text]
@@ -81,7 +98,7 @@ def filter_out_copies(records):
 
 
 def marked_as_ads_filter(item):
-    if 'marked_as_ads' in item:
+    if item.get('marked_as_ads', 0):
         log.debug('delete {} as ad: marked_as_ads_filter'.format(item['id']))
         return False
     return True
@@ -95,7 +112,7 @@ def copy_history_filter(item):
 
 
 def phone_numbers_filter(item):
-    if PhoneNumberMatcher(text=item['text'], region='RU'):
+    if PhoneNumberMatcher(text=item['text'], region='RU').has_next():
         log.debug('delete {} as ad: phone_numbers_filter'.format(item['id']))
         return False
     return True
@@ -116,6 +133,7 @@ def email_filter(item):
 
 
 def filter_out_ads(records):
+    log.info('filter_out_ads called')
     filters = (
         marked_as_ads_filter,
         copy_history_filter,
@@ -198,19 +216,20 @@ def find_url_of_biggest_image(image_dict):
 
 
 def save_record_to_db(donor, record):
+    log.info('save_record_to_db called')
     obj, created = Record.objects.get_or_create(
         donor=donor,
         record_id=record['id'],
         defaults={
             'likes_count': record['likes']['count'],
             'reposts_count': record['reposts']['count'],
-            'views_count': record['views']['count'],
+            'views_count': record.get('views', dict()).get('count', 0),
             'text': record['text'],
-            'post_in_donor_date': record['date'],
-            'add_to_db_date': datetime.datetime.now()
+            'post_in_donor_date': record['date']
         }
     )
     if created:
+        log.info('record {} was in db, modifying'.format(record['id']))
         if 'attachments' in record:
             if any('video' in d for d in record['attachments']):
                 videos = [item for item in record['attachments'] if item['type'] == 'video']
@@ -261,6 +280,16 @@ def rate_records(donor_id, records):
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
         delta_views = record['views']['count'] - record_obj.views_count
 
+        if delta_likes == delta_views == 0:
+            log.info('record {} in group {} NOT rated with deltas likes: {}, reposts: {}, views:{}'.format(
+                record['id'],
+                donor_id,
+                delta_likes,
+                delta_reposts,
+                delta_views
+            ))
+            return
+
         resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
         record_obj.rate = int(resulting_rate)
 
@@ -279,14 +308,14 @@ def rate_records(donor_id, records):
 def main():
     log.info('start main scrapper')
 
-    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, group=None)]
-    log.debug('working with {} tokens: {}'.format(len(tokens), tokens))
+    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, groups=None)]
+    log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
     donors = Donor.objects.filter(is_involved=True)
-    log.debug('got {} active donors'.format(len(donors)))
+    log.info('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
-    log.debug('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
+    log.info('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
 
     for account in accounts_with_donors:
         if not account['donors']:
@@ -313,16 +342,20 @@ def main():
             # now get records that we don't have in our db
             new_records = [record for record in all_records
                            if not Record.objects.filter(record_id=record['id']).first()]
+            log.debug('got {} new records'.format(len(new_records)))
 
             # Filters
             new_records = filter_out_ads(new_records)
 
+            log.info('search for custom filters')
             custom_filters = donor.filters.all()
             if custom_filters:
                 log.debug('got {} custom filters'.format(len(custom_filters)))
                 new_records = filter_with_custom_filters(custom_filters, new_records)
 
             new_records = filter_out_copies(new_records)
+
+            log.debug('got {} records after all filters'.format(len(new_records)))
 
             # Save it to db
             for record in new_records:
@@ -334,31 +367,32 @@ def main():
             non_rated_records = [record for record in all_records
                                  if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
 
-            rate_records(donor.id, non_rated_records)
+            if non_rated_records:
+                rate_records(donor.id, non_rated_records)
 
             all_non_rated = Record.objects.filter(rate__isnull=True)
-            if len(all_non_rated) > 100:
-                log.warning('too many non rated records!')
-                # TODO sort it by date, delete oldest
-                all_non_rated = all_non_rated[:100]
 
-            if donor.id.isdigit():
-                digit_id = donor.id
-            else:
-                digit_id = new_records[0]['from_id']
+            if all_non_rated:
+                if len(all_non_rated) > 100:
+                    log.warning('too many non rated records!')
+                    # TODO sort it by date, delete oldest
+                    all_non_rated = all_non_rated[:100]
 
-            all_non_rated = ['-{}_{}'.format(digit_id, record.id) for record in all_non_rated]
+                # TODO make it clearer
+                if donor.id.isdigit():
+                    digit_id = donor.id
+                else:
+                    digit_id = new_records[0]['from_id']
 
-            try:
-                all_non_rated = api.wall.getById(posts=all_non_rated)
-            except VkAPIError as error_msg:
-                log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+                all_non_rated = [record.id for record in all_non_rated]
 
-            if not all_non_rated:
-                log.warning('got 0 unrated records from api')
-                continue
+                all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
 
-            rate_records(donor.id, all_non_rated)
+                if not all_non_rated:
+                    log.warning('got 0 unrated records from api')
+                    continue
+
+                rate_records(donor.id, all_non_rated)
 
 
 if __name__ == '__main__':
