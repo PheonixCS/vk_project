@@ -226,8 +226,7 @@ def save_record_to_db(donor, record):
             'reposts_count': record['reposts']['count'],
             'views_count': record['views']['count'],
             'text': record['text'],
-            'post_in_donor_date': record['date'],
-            'add_to_db_date': datetime.datetime.now()
+            'post_in_donor_date': record['date']
         }
     )
     if created:
