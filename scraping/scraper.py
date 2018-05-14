@@ -66,6 +66,19 @@ def get_wall(api, group_id):
     return wall
 
 
+def get_wall_by_post_id(api, group_id, posts_ids):
+    log.debug('get_wall_by_post_id api called for group {}'.format(group_id))
+
+    posts = ['-{}_{}'.format(group_id, post) for post in posts_ids]
+    try:
+        all_non_rated = api.wall.getById(posts=posts)
+    except VkAPIError as error_msg:
+        log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+        return None
+
+    return all_non_rated
+
+
 def filter_out_copies(records):
     records_in_db = Record.objects.all()
 
@@ -345,17 +358,15 @@ def main():
                     # TODO sort it by date, delete oldest
                     all_non_rated = all_non_rated[:100]
 
+                # TODO make it clearer
                 if donor.id.isdigit():
                     digit_id = donor.id
                 else:
                     digit_id = new_records[0]['from_id']
 
-                all_non_rated = ['-{}_{}'.format(digit_id, record.id) for record in all_non_rated]
+                all_non_rated = [record.id for record in all_non_rated]
 
-                try:
-                    all_non_rated = api.wall.getById(posts=all_non_rated)
-                except VkAPIError as error_msg:
-                    log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+                all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
 
                 if not all_non_rated:
                     log.warning('got 0 unrated records from api')
