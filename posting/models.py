@@ -22,4 +22,4 @@ class Group(models.Model):
     donors = models.ManyToManyField(Donor, blank=True)
 
     def __str__(self):
-        return self.id
+        return self.domain_or_id

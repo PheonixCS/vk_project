@@ -279,14 +279,14 @@ def rate_records(donor_id, records):
 def main():
     log.info('start main scrapper')
 
-    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, group=None)]
-    log.debug('working with {} tokens: {}'.format(len(tokens), tokens))
+    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, groups=None)]
+    log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
     donors = Donor.objects.filter(is_involved=True)
-    log.debug('got {} active donors'.format(len(donors)))
+    log.info('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
-    log.debug('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
+    log.info('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
 
     for account in accounts_with_donors:
         if not account['donors']:
