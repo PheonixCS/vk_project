@@ -48,7 +48,6 @@ def get_wall(api, group_id):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
-        log.debug('get_wall called, got group_id {}'.format(group_id))
         if group_id.isdigit():
             log.debug('group id is digit')
             wall = api.wall.get(owner_id='-{}'.format(group_id),
@@ -224,7 +223,7 @@ def save_record_to_db(donor, record):
         defaults={
             'likes_count': record['likes']['count'],
             'reposts_count': record['reposts']['count'],
-            'views_count': record['views']['count'],
+            'views_count': record.get('views', dict()).get('count', 0),
             'text': record['text'],
             'post_in_donor_date': record['date']
         }
@@ -281,6 +280,16 @@ def rate_records(donor_id, records):
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
         delta_views = record['views']['count'] - record_obj.views_count
 
+        if delta_likes == delta_views == 0:
+            log.info('record {} in group {} NOT rated with deltas likes: {}, reposts: {}, views:{}'.format(
+                record['id'],
+                donor_id,
+                delta_likes,
+                delta_reposts,
+                delta_views
+            ))
+            return
+
         resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
         record_obj.rate = int(resulting_rate)
 
@@ -333,6 +342,7 @@ def main():
             # now get records that we don't have in our db
             new_records = [record for record in all_records
                            if not Record.objects.filter(record_id=record['id']).first()]
+            log.debug('got {} new records'.format(len(new_records)))
 
             # Filters
             new_records = filter_out_ads(new_records)
@@ -344,6 +354,8 @@ def main():
                 new_records = filter_with_custom_filters(custom_filters, new_records)
 
             new_records = filter_out_copies(new_records)
+
+            log.debug('got {} records after all filters'.format(len(new_records)))
 
             # Save it to db
             for record in new_records:
