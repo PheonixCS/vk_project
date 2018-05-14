@@ -20,7 +20,6 @@ class Group(models.Model):
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='groups', blank=True, null=True)
     donors = models.ManyToManyField(Donor, blank=True)
-    last_post_time_utc = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.id
