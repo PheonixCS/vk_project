@@ -95,7 +95,7 @@ def copy_history_filter(item):
 
 
 def phone_numbers_filter(item):
-    if PhoneNumberMatcher(text=item['text'], region='RU'):
+    if PhoneNumberMatcher(text=item['text'], region='RU').has_next():
         log.debug('delete {} as ad: phone_numbers_filter'.format(item['id']))
         return False
     return True
