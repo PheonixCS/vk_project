@@ -217,6 +217,7 @@ def find_url_of_biggest_image(image_dict):
 
 
 def save_record_to_db(donor, record):
+    log.info('save_record_to_db called')
     obj, created = Record.objects.get_or_create(
         donor=donor,
         record_id=record['id'],
@@ -230,6 +231,7 @@ def save_record_to_db(donor, record):
         }
     )
     if created:
+        log.info('record {} was in db, modifying'.format(record['id']))
         if 'attachments' in record:
             if any('video' in d for d in record['attachments']):
                 videos = [item for item in record['attachments'] if item['type'] == 'video']
