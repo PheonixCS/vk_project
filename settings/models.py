@@ -29,5 +29,5 @@ class Setting(models.Model):
             elif setting.key_type == 'str':
                 value = smart_str(setting.value)
         else:
-            value = config.settings[key]
+            value = config.settings.get(key)
         return value
