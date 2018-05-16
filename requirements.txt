@@ -1,3 +1,4 @@
+alphabet-detector==0.0.7
 amqp==2.2.2
 beautifulsoup4==4.6.0
 billiard==3.5.0.3
