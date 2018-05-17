@@ -27,6 +27,7 @@ def create_vk_api_using_login_password(login, password, app_id):
 
 
 def download_file(url):
+    log.debug('download_file called')
     local_filename = url.split('/')[-1]
     r = requests.get(url, stream=True)
     with open(local_filename, 'wb') as f:
@@ -37,6 +38,7 @@ def download_file(url):
 
 
 def upload_video(api, video_url, group_id):
+    log.debug('upload_video called')
     video_local_filename = download_file(video_url)
     upload = vk_api.VkUpload(api)
     video = upload.video(video_file=video_local_filename,
@@ -48,28 +50,41 @@ def upload_video(api, video_url, group_id):
 
 
 def crop_image(filepath):
+    log.debug('crop_image called')
     img = Image.open(filepath)
     width, height = img.size
     img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
 
 
 def upload_photo(api, photo_url, group_id):
+    log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
     if '.gif' not in photo_url:
         crop_image(image_local_filename)
 
-    upload = vk_api.VkUpload(api)
+    try:
+        upload = vk_api.VkUpload(api)
+    except:
+        log.error('exception while uploading photo', exc_info=True)
     photo = upload.photo(photos=image_local_filename,
                          album_id='{}_00'.format(group_id),
                          group_id=int(group_id))
     if os.path.isfile(image_local_filename):
-        os.remove(image_local_filename)
+        try:
+            os.remove(image_local_filename)
+        except FileNotFoundError:
+            log.warning('File {} not found! Can\'t remove it'.format(image_local_filename))
     return 'photo{}_{}'.format(photo[0]['owner_id'], photo[0]['id'])
 
 
 def fetch_group_id(api, domain_or_id):
     if domain_or_id.isdigit():
-        return domain_or_id
+        group_id = domain_or_id
     else:
-        return api.utils.resolveScreenName(domain_or_id)['object_id']
+        try:
+            group_id = api.utils.resolveScreenName(domain_or_id)['object_id']
+        except:
+            log.error('got exception while fetching group id', exc_info=True)
+            return
+    return group_id

@@ -308,7 +308,7 @@ def rate_records(donor_id, records):
 def main():
     log.info('start main scrapper')
 
-    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False, groups=None)]
+    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False)]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
     donors = Donor.objects.filter(is_involved=True)
@@ -359,7 +359,10 @@ def main():
 
             # Save it to db
             for record in new_records:
-                save_record_to_db(donor, record)
+                try:
+                    save_record_to_db(donor, record)
+                except:
+                    log.error('exception while saving in db', exc_info=True)
                 log.info('saved {} records'.format(len(new_records)))
 
             # Rating part
