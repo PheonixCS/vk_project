@@ -18,7 +18,7 @@ class Group(models.Model):
     domain_or_id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
     group_id = models.IntegerField(null=True)
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='groups', blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='groups', blank=True, null=True)
     donors = models.ManyToManyField(Donor, blank=True)
 
     def __str__(self):
