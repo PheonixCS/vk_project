@@ -6,7 +6,7 @@ import vk_api
 from celery import task
 
 from posting.models import Group
-# from scraping.models import Record
+from scraping.models import Record
 from posting.poster import create_vk_api_using_login_password, fetch_group_id, upload_photo, upload_video
 
 
@@ -48,17 +48,19 @@ def examine_groups():
                                   group.user.password,
                                   group.user.app_id,
                                   group.group_id,
-                                  record_with_max_rate)
+                                  record_with_max_rate.record_id)
             except:
                 log.error('', exc_info=True)
 
 
 @task
-def post_record(login, password, app_id, group_id, record):
+def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
     # create api here coz celery through vk_api exception, idk why
     api = create_vk_api_using_login_password(login, password, app_id)
+
+    record = Record.objects.get(record_id=record_id)
 
     if not api:
         log.error('api not created')
