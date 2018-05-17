@@ -6,6 +6,7 @@ import vk_api
 from celery import task
 
 from posting.models import Group
+from scraping.models import Record
 from posting.poster import create_vk_api_using_login_password, fetch_group_id, upload_photo, upload_video
 
 
@@ -22,7 +23,7 @@ def examine_groups():
     now_minute = datetime.datetime.now().minute
 
     for group in groups_to_post_in:
-        log.debug('working with group {}'.format(group.id))
+        log.debug('working with group {}'.format(group.domain_or_id))
 
         api = create_vk_api_using_login_password(group.user.login, group.user.password, group.user.app_id)
         if not api:
@@ -42,11 +43,19 @@ def examine_groups():
             record_with_max_rate = max(records, key=lambda x: x.rate)
             log.debug('record {} got max rate'.format(record_with_max_rate))
 
-            post_record.delay(api, group.id, record_with_max_rate)
+            post_record.delay(group.user.login,
+                              group.user.password,
+                              group.user.app_id,
+                              group.group_id,
+                              record_with_max_rate.record_id)
 
 
 @task
-def post_record(api, group_id, record):
+def post_record(login, password, app_id, group_id, record_id):
+    api = create_vk_api_using_login_password(login, password, app_id)
+
+    record = Record.objects.filter(record_id=record_id).first()
+
     log.debug('start posting in {} group'.format(group_id))
     try:
         attachments = list()
