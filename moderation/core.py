@@ -29,7 +29,7 @@ def is_group(commentator_id):
 
 
 def handle_comment_event(event_object, group_id):
-    log.info('start handling comment {} in {}'.format(event_object['id'], group_id))
+    log.info('start handling comment {} in {} by {}'.format(event_object['id'], group_id, event_object['from_id']))
 
     group = Group.objects.select_related('user').filter(group_id=group_id).first()
 
