@@ -34,6 +34,8 @@ def download_file(url):
         for chunk in r.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
+
+    log.debug('{} file downloaded'.format(local_filename))
     return local_filename
 
 
@@ -54,6 +56,7 @@ def crop_image(filepath):
     img = Image.open(filepath)
     width, height = img.size
     img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
+    log.debug('image {} cropped'.format(filepath))
 
 
 def upload_photo(api, photo_url, group_id):
