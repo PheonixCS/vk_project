@@ -14,7 +14,7 @@ VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 PIXELS_TO_CUT_FROM_BOTTOM = Setting.get_value(key='PIXELS_TO_CUT_FROM_BOTTOM')
 
 
-def create_vk_api_using_login_password(login, password, app_id):
+def create_vk_session_using_login_password(login, password, app_id):
     log.debug('create api called')
     vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id)
     try:
@@ -23,7 +23,7 @@ def create_vk_api_using_login_password(login, password, app_id):
         log.info('User {} got api error: {}'.format(login, error_msg))
         return None
 
-    return vk_session.get_api()
+    return vk_session
 
 
 def download_file(url):
@@ -59,7 +59,7 @@ def crop_image(filepath):
     log.debug('image {} cropped'.format(filepath))
 
 
-def upload_photo(api, photo_url, group_id):
+def upload_photo(session, photo_url, group_id):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
@@ -67,12 +67,11 @@ def upload_photo(api, photo_url, group_id):
         crop_image(image_local_filename)
 
     try:
-        upload = vk_api.VkUpload(api)
+        upload = vk_api.VkUpload(session)
+        photo = upload.photo_wall(photos=image_local_filename,
+                                  group_id=int(group_id))
     except:
         log.error('exception while uploading photo', exc_info=True)
-    photo = upload.photo(photos=image_local_filename,
-                         album_id='{}_00'.format(group_id),
-                         group_id=int(group_id))
     if os.path.isfile(image_local_filename):
         try:
             os.remove(image_local_filename)

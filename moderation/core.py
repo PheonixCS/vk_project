@@ -6,7 +6,7 @@ from vk_api import ApiError
 
 from posting.models import Group
 from moderation.models import ModerationRule
-from posting.poster import create_vk_api_using_login_password
+from posting.poster import create_vk_session_using_login_password
 from settings.models import Setting
 
 log = logging.getLogger('moderation.core')
@@ -42,7 +42,7 @@ def handle_comment_event(event_object, group_id):
         log.info('from_id {} in white list, cancel moderation'.format(event_object['from_id']))
         return False
 
-    api = create_vk_api_using_login_password(group.user.login, group.user.password, group.user.app_id)
+    api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
     if not api:
         return None
 

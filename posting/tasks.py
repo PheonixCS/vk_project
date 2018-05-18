@@ -7,7 +7,7 @@ from celery import task
 
 from posting.models import Group
 from scraping.models import Record
-from posting.poster import create_vk_api_using_login_password, fetch_group_id, upload_photo, upload_video
+from posting.poster import create_vk_session_using_login_password, fetch_group_id, upload_photo, upload_video
 
 
 log = logging.getLogger('posting.scheduled')
@@ -25,7 +25,7 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
-        # api = create_vk_api_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        # api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
         # if not api:
         #     continue
 
@@ -58,12 +58,13 @@ def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
     # create api here coz celery through vk_api exception, idk why
-    api = create_vk_api_using_login_password(login, password, app_id)
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
 
     record = Record.objects.get(record_id=record_id)
 
-    if not api:
-        log.error('api not created')
+    if not session:
+        log.error('session not created')
         return
     # record = Record.objects.get(record_id=record_id)
 
@@ -78,7 +79,7 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images'.format(len(images)))
         for image in images:
-            attachments.append(upload_photo(api, image.url, group_id))
+            attachments.append(upload_photo(session, image.url, group_id))
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
