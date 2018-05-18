@@ -274,7 +274,7 @@ def rate_records(donor_id, records):
 
     for record in records:
         # TODO make one query with all records instead of one call each record
-        record_obj = Record.objects.get(donor__grop_id=donor_id, record_id=record['id'])
+        record_obj = Record.objects.get(donor__id=donor_id, record_id=record['id'])
 
         delta_likes = record['likes']['count'] - record_obj.likes_count
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
