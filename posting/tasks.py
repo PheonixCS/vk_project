@@ -88,9 +88,10 @@ def post_record(login, password, app_id, group_id, record_id):
         log.debug('{}'.format(post_response))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
-        return False
+        return
     except:
         log.error('caught exception', exc_info=True)
+        return
 
     record.post_in_group_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     record.save(update_fields=['post_in_group_date'])
