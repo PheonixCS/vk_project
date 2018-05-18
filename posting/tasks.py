@@ -79,7 +79,19 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images'.format(len(images)))
         for image in images:
-            attachments.append(upload_photo(session, image.url, group_id))
+            uploaded_photo = upload_photo(session, image.url, group_id)
+
+            # FIXME this is little fix to remove gif
+            if uploaded_photo:
+                attachments.append(uploaded_photo)
+            else:
+                if len(images) > 1:
+                    continue
+                else:
+                    record.post_in_group_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    record.save(update_fields=['post_in_group_date'])
+                    log.info('cannot post, got no images')
+                    return
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,

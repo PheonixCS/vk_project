@@ -55,8 +55,14 @@ def crop_image(filepath):
     log.debug('crop_image called')
     img = Image.open(filepath)
     width, height = img.size
-    img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
+    try:
+        img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
+    except ValueError:
+        log.debug('image not cropped!')
+        os.remove(filepath)
+        return False
     log.debug('image {} cropped'.format(filepath))
+    return True
 
 
 def upload_photo(session, photo_url, group_id):
