@@ -16,7 +16,7 @@ log = logging.getLogger('posting.scheduled')
 @task
 def examine_groups():
     log.debug('start group examination')
-    groups_to_post_in = Group.objects.filter(user__isnull=False, donors__isnull=False)
+    groups_to_post_in = Group.objects.filter(user__isnull=False, donors__isnull=False).distinct()
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
@@ -25,11 +25,11 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
-        api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
-        if not api:
-            continue
-
         if not group.group_id:
+            api = create_vk_session_using_login_password(group.user.login, group.user.password,
+                                                         group.user.app_id).get_api()
+            if not api:
+                continue
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])
 
