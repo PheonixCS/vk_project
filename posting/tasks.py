@@ -91,5 +91,5 @@ def post_record(login, password, app_id, group_id, record_id):
     except:
         log.error('caught exception', exc_info=True)
 
-    record.post_in_group_date = datetime.datetime.fromtimestamp(int(record['date'])).strftime('%Y-%m-%d %H:%M:%S')
+    record.post_in_group_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     record.save(update_fields=['post_in_group_date'])
