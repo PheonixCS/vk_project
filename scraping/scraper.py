@@ -274,7 +274,10 @@ def rate_records(donor_id, records):
 
     for record in records:
         # TODO make one query with all records instead of one call each record
-        record_obj = Record.objects.get(donor__id=donor_id, record_id=record['id'])
+        try:
+            record_obj = Record.objects.get(record_id=record['id'])
+        except:
+            log.error('handling record error', exc_info=True)
 
         delta_likes = record['likes']['count'] - record_obj.likes_count
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
@@ -345,17 +348,18 @@ def main():
             log.debug('got {} new records'.format(len(new_records)))
 
             # Filters
-            new_records = filter_out_ads(new_records)
+            if new_records:
+                new_records = filter_out_ads(new_records)
 
-            log.info('search for custom filters')
-            custom_filters = donor.filters.all()
-            if custom_filters:
-                log.debug('got {} custom filters'.format(len(custom_filters)))
-                new_records = filter_with_custom_filters(custom_filters, new_records)
+                log.info('search for custom filters')
+                custom_filters = donor.filters.all()
+                if custom_filters:
+                    log.debug('got {} custom filters'.format(len(custom_filters)))
+                    new_records = filter_with_custom_filters(custom_filters, new_records)
 
-            new_records = filter_out_copies(new_records)
+                new_records = filter_out_copies(new_records)
 
-            log.debug('got {} records after all filters'.format(len(new_records)))
+                log.debug('got {} records after all filters'.format(len(new_records)))
 
             # Save it to db
             for record in new_records:
@@ -363,6 +367,7 @@ def main():
                     save_record_to_db(donor, record)
                 except:
                     log.error('exception while saving in db', exc_info=True)
+                    continue
                 log.info('saved {} records'.format(len(new_records)))
 
             # Rating part
@@ -371,7 +376,10 @@ def main():
                                  if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
 
             if non_rated_records:
-                rate_records(donor.id, non_rated_records)
+                try:
+                    rate_records(donor.id, non_rated_records)
+                except:
+                    log.error('error while rating', exc_info=True)
 
             all_non_rated = Record.objects.filter(rate__isnull=True)
 
@@ -395,7 +403,10 @@ def main():
                     log.warning('got 0 unrated records from api')
                     continue
 
-                rate_records(donor.id, all_non_rated)
+                try:
+                    rate_records(donor.id, all_non_rated)
+                except:
+                    log.error('error while rating', exc_info=True)
 
 
 if __name__ == '__main__':
