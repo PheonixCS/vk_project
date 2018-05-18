@@ -189,19 +189,19 @@ def filter_with_custom_filters(custom_filters, records):
     for custom_filter in custom_filters:
         filters = tuple()
         if custom_filter.min_quantity_of_line_breaks:
-            filters += (min_quantity_of_line_breaks_filter)
+            filters += (min_quantity_of_line_breaks_filter,)
 
         if custom_filter.min_text_length:
-            filters += (min_text_length_filter)
+            filters += (min_text_length_filter,)
 
         if custom_filter.min_quantity_of_videos:
-            filters += (min_quantity_of_videos_filter)
+            filters += (min_quantity_of_videos_filter,)
 
         if custom_filter.min_quantity_of_images:
-            filters += (min_quantity_of_images_filter)
+            filters += (min_quantity_of_images_filter,)
 
         if custom_filter.min_quantity_of_gifs:
-            filters += (min_quantity_of_gifs_filter)
+            filters += (min_quantity_of_gifs_filter,)
 
         filtered_records = [record for record in filtered_records if
                             all(filter(record, custom_filter) for filter in filters)]
