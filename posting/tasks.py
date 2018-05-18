@@ -25,9 +25,9 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
-        # api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
-        # if not api:
-        #     continue
+        api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
+        if not api:
+            continue
 
         if not group.group_id:
             group.group_id = fetch_group_id(api, group.domain_or_id)
