@@ -23,19 +23,15 @@ def delete_comment(api, owner_id, comment_id):
         log.info('Group {} got api error in deleteComment method: {}'.format(owner_id, error_msg))
 
 
-def is_group(api, commentator_id):
-    response = api.groups.getById(group_id=commentator_id,
-                                  api_version=VK_API_VERSION)
-    error_code = response.get('error_code')
-    if error_code == 100:
-        return False
-    return True
+def is_group(commentator_id):
+    if int(commentator_id) < 0:
+        return True
 
 
 def handle_comment_event(event_object, group_id):
     log.info('start handling comment {} in {}'.format(event_object['id'], group_id))
 
-    group = Group.objects.filter(group_id=group_id)
+    group = Group.objects.select_related('user').filter(group_id=group_id).first()
 
     moderation_rule = ModerationRule.objects.first()
     if event_object['from_id'] in moderation_rule.id_white_list.split():
@@ -68,7 +64,7 @@ def handle_comment_event(event_object, group_id):
                 log.info('delete comment {} in {} : video in attachments'.format(event_object['id'], group_id))
                 return True
 
-    if is_group(api, event_object['id']):
+    if is_group(event_object['from_id']):
         delete_comment(api, group_id, event_object['id'])
         log.info('delete comment {} in {} : comment from group/community'.format(event_object['id'], group_id))
         return True
