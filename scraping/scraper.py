@@ -278,9 +278,9 @@ def rate_records(donor_id, records):
 
         delta_likes = record['likes']['count'] - record_obj.likes_count
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
-        delta_views = record['views']['count'] - record_obj.views_count
+        delta_views = record.get('views', dict()).get('count', 0) - record_obj.views_count
 
-        if delta_likes == delta_views == 0:
+        if delta_likes == 0 or delta_views == 0:
             log.info('record {} in group {} NOT rated with deltas likes: {}, reposts: {}, views:{}'.format(
                 record['id'],
                 donor_id,
@@ -387,7 +387,7 @@ def main():
                 else:
                     digit_id = new_records[0]['from_id']
 
-                all_non_rated = [record.id for record in all_non_rated]
+                all_non_rated = [record.record_id for record in all_non_rated]
 
                 all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
 
