@@ -36,7 +36,7 @@ class Record(models.Model):
     rate = models.IntegerField(null=True)
     post_in_donor_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
-    post_in_group_date = models.DateTimeField(null=True, auto_now=True)
+    post_in_group_date = models.DateTimeField(null=True)
 
 
 class Image(models.Model):

@@ -6,7 +6,8 @@ import vk_api
 from celery import task
 
 from posting.models import Group
-from posting.poster import create_vk_api_using_login_password, fetch_group_id, upload_photo, upload_video
+from scraping.models import Record
+from posting.poster import create_vk_session_using_login_password, fetch_group_id, upload_photo, upload_video
 
 
 log = logging.getLogger('posting.scheduled')
@@ -22,11 +23,11 @@ def examine_groups():
     now_minute = datetime.datetime.now().minute
 
     for group in groups_to_post_in:
-        log.debug('working with group {}'.format(group.id))
+        log.debug('working with group {}'.format(group.domain_or_id))
 
-        api = create_vk_api_using_login_password(group.user.login, group.user.password, group.user.app_id)
-        if not api:
-            continue
+        # api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        # if not api:
+        #     continue
 
         if not group.group_id:
             group.group_id = fetch_group_id(api, group.domain_or_id)
@@ -42,32 +43,55 @@ def examine_groups():
             record_with_max_rate = max(records, key=lambda x: x.rate)
             log.debug('record {} got max rate'.format(record_with_max_rate))
 
-            post_record.delay(api, group.id, record_with_max_rate)
+            try:
+                post_record.delay(group.user.login,
+                                  group.user.password,
+                                  group.user.app_id,
+                                  group.group_id,
+                                  record_with_max_rate.record_id)
+            except:
+                log.error('', exc_info=True)
 
 
 @task
-def post_record(api, group_id, record):
+def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
+
+    # create api here coz celery through vk_api exception, idk why
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
+
+    record = Record.objects.get(record_id=record_id)
+
+    if not session:
+        log.error('session not created')
+        return
+    # record = Record.objects.get(record_id=record_id)
+
     try:
         attachments = list()
 
         videos = record.videos.all()
-        if videos:
-            for video in videos:
-                attachments.append(upload_video(api, video.get_url(), group_id))
+        log.debug('got {} videos in attachments'.format(len(videos)))
+        for video in videos:
+            attachments.append(upload_video(api, video.get_url(), group_id))
 
         images = record.images.all()
-        if images:
-            for image in images:
-                attachments.append(upload_photo(api, image.url, group_id))
+        log.debug('got {} images'.format(len(images)))
+        for image in images:
+            attachments.append(upload_photo(session, image.url, group_id))
 
-        api.wall.post(owner_id='-{}'.format(group_id),
-                      from_group=1,
-                      message=record.text,
-                      attachments=','.join(attachments))
+        post_response = api.wall.post(owner_id='-{}'.format(group_id),
+                                      from_group=1,
+                                      message=record.text,
+                                      attachments=','.join(attachments))
+        log.debug('{}'.format(post_response))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
-        return False
+        return
+    except:
+        log.error('caught exception', exc_info=True)
+        return
 
-    record.post_in_group_date = datetime.datetime.now()
+    record.post_in_group_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     record.save(update_fields=['post_in_group_date'])
