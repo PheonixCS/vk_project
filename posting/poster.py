@@ -1,5 +1,6 @@
 #
 import os
+import re
 
 import vk_api
 import requests
@@ -39,16 +40,40 @@ def download_file(url):
     return local_filename
 
 
-def upload_video(api, video_url, group_id):
+def upload_video(session, video_url, group_id):
     log.debug('upload_video called')
     video_local_filename = download_file(video_url)
-    upload = vk_api.VkUpload(api)
-    video = upload.video(video_file=video_local_filename,
-                         album_id='{}_00'.format(group_id),
-                         group_id=int(group_id))
+
+    try:
+        upload = vk_api.VkUpload(session)
+        video = upload.video(video_file=video_local_filename,
+                             group_id=int(group_id))
+    except:
+        log.error('exception while uploading video', exc_info=True)
+        return
+
     if os.path.isfile(video_local_filename):
         os.remove(video_local_filename)
+
     return 'video{}_{}'.format(video[0]['owner_id'], video[0]['id'])
+
+
+def upload_gif(session, gif_url, group_id):
+    log.debug('upload_gif called')
+    gif_local_filename = download_file(gif_url)
+
+    try:
+        upload = vk_api.VkUpload(session)
+        gif = upload.document(doc=gif_local_filename,
+                              group_id=int(group_id))
+    except:
+        log.error('exception while uploading gif', exc_info=True)
+        return
+
+    if os.path.isfile(gif_local_filename):
+        os.remove(gif_local_filename)
+
+    return 'doc{}_{}'.format(gif[0]['owner_id'], gif[0]['id'])
 
 
 def crop_image(filepath):
@@ -69,8 +94,7 @@ def upload_photo(session, photo_url, group_id):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
-    if '.gif' not in photo_url:
-        crop_image(image_local_filename)
+    crop_image(image_local_filename)
 
     try:
         upload = vk_api.VkUpload(session)
@@ -78,11 +102,11 @@ def upload_photo(session, photo_url, group_id):
                                   group_id=int(group_id))
     except:
         log.error('exception while uploading photo', exc_info=True)
+        return
+
     if os.path.isfile(image_local_filename):
-        try:
-            os.remove(image_local_filename)
-        except FileNotFoundError:
-            log.warning('File {} not found! Can\'t remove it'.format(image_local_filename))
+        os.remove(image_local_filename)
+
     return 'photo{}_{}'.format(photo[0]['owner_id'], photo[0]['id'])
 
 
@@ -96,3 +120,9 @@ def fetch_group_id(api, domain_or_id):
             log.error('got exception while fetching group id', exc_info=True)
             return
     return group_id
+
+
+def delete_hashtags_from_text(text):
+    text_without_hashtags = re.sub('#(\w+)', '', text)
+    text_without_double_spaces = re.sub(' +', ' ', text_without_hashtags)
+    return text_without_double_spaces

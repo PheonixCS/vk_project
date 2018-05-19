@@ -8,7 +8,7 @@ from vk_requests.exceptions import VkAPIError
 from phonenumbers import PhoneNumberMatcher
 
 from posting.models import User
-from scraping.models import Donor, Record, Image, Video
+from scraping.models import Donor, Record, Image, Gif, Video
 from settings.models import Setting
 
 log = logging.getLogger('scraping.scraper')
@@ -132,6 +132,14 @@ def email_filter(item):
     return True
 
 
+def article_filter(item):
+    if item.get('attachments'):
+        for attachment in item['attachments']:
+            if attachment['type'] == 'link':
+                return True
+    return False
+
+
 def filter_out_ads(records):
     log.info('filter_out_ads called')
     filters = (
@@ -139,7 +147,8 @@ def filter_out_ads(records):
         copy_history_filter,
         phone_numbers_filter,
         urls_filter,
-        email_filter
+        email_filter,
+        article_filter
     )
     filtered_records = [record for record in records if all(filter(record) for filter in filters)]
     return filtered_records
@@ -243,7 +252,7 @@ def save_record_to_db(donor, record):
             if any('doc' in d for d in record['attachments']):
                 gifs = [item for item in record['attachments'] if item['type'] == 'doc' and item['doc']['ext'] == 'gif']
                 for gif in gifs:
-                    Image.objects.create(
+                    Gif.objects.create(
                         record=obj,
                         url=gif['doc']['url']
                     )

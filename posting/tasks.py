@@ -7,8 +7,8 @@ from celery import task
 
 from posting.models import Group
 from scraping.models import Record
-from posting.poster import create_vk_session_using_login_password, fetch_group_id, upload_photo, upload_video
-
+from posting.poster import create_vk_session_using_login_password, fetch_group_id, upload_photo, upload_video, \
+    upload_gif, delete_hashtags_from_text
 
 log = logging.getLogger('posting.scheduled')
 
@@ -16,7 +16,9 @@ log = logging.getLogger('posting.scheduled')
 @task
 def examine_groups():
     log.debug('start group examination')
-    groups_to_post_in = Group.objects.filter(user__isnull=False, donors__isnull=False).distinct()
+    groups_to_post_in = Group.objects.filter(user__isnull=False,
+                                             donors__isnull=False,
+                                             is_posting_active=True).distinct()
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
@@ -74,28 +76,21 @@ def post_record(login, password, app_id, group_id, record_id):
         videos = record.videos.all()
         log.debug('got {} videos in attachments'.format(len(videos)))
         for video in videos:
-            attachments.append(upload_video(api, video.get_url(), group_id))
+            attachments.append(upload_video(session, video.get_url(), group_id))
 
         images = record.images.all()
         log.debug('got {} images'.format(len(images)))
         for image in images:
-            uploaded_photo = upload_photo(session, image.url, group_id)
+            attachments.append(upload_photo(session, image.url, group_id))
 
-            # FIXME this is little fix to remove gif
-            if uploaded_photo:
-                attachments.append(uploaded_photo)
-            else:
-                if len(images) > 1:
-                    continue
-                else:
-                    record.post_in_group_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    record.save(update_fields=['post_in_group_date'])
-                    log.info('cannot post, got no images')
-                    return
+        gifs = record.gifs.all()
+        log.debug('got {} gifs'.format(len(gifs)))
+        for gif in gifs:
+            attachments.append(upload_gif(session, gif.url, group_id))
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
-                                      message=record.text,
+                                      message=delete_hashtags_from_text(record.text),
                                       attachments=','.join(attachments))
         log.debug('{}'.format(post_response))
     except vk_api.VkApiError as error_msg:

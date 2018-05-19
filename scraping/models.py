@@ -44,6 +44,11 @@ class Image(models.Model):
     url = models.CharField(max_length=256)
 
 
+class Gif(models.Model):
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='gifs')
+    url = models.CharField(max_length=256)
+
+
 class Video(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='videos')
     owner_id = models.IntegerField(null=True)

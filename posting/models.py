@@ -17,6 +17,7 @@ class User(models.Model):
 class Group(models.Model):
     domain_or_id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
     group_id = models.IntegerField(null=True)
+    is_posting_active = models.BooleanField(default=True, verbose_name='Постинг активен?')
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='groups', blank=True, null=True)
     donors = models.ManyToManyField(Donor, blank=True)
