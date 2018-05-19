@@ -27,9 +27,12 @@ def create_vk_session_using_login_password(login, password, app_id):
     return vk_session
 
 
-def download_file(url):
+def download_file(url, extension=None):
     log.debug('download_file called')
     local_filename = url.split('/')[-1]
+    if extension:
+        local_filename += '.{}'.format(extension)
+
     r = requests.get(url, stream=True)
     with open(local_filename, 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
@@ -40,9 +43,18 @@ def download_file(url):
     return local_filename
 
 
-def upload_video(session, video_url, group_id):
+def upload_video(session, api,  video_url, group_id):
     log.debug('upload_video called')
-    video_local_filename = download_file(video_url)
+
+    try:
+        video = api.video.get(videos=video_url)
+    except:
+        log.error('exception while getting video', exc_info=True)
+        return
+
+    files = video['items'][0]
+    key_of_max_size_photo = max([key for key in files], key=lambda x: int(x.split('_')[1]))
+    video_local_filename = download_file(files[key_of_max_size_photo], key_of_max_size_photo.split('_')[0])
 
     try:
         upload = vk_api.VkUpload(session)
@@ -60,7 +72,7 @@ def upload_video(session, video_url, group_id):
 
 def upload_gif(session, gif_url, group_id):
     log.debug('upload_gif called')
-    gif_local_filename = download_file(gif_url)
+    gif_local_filename = download_file(gif_url, 'mp4')
 
     try:
         upload = vk_api.VkUpload(session)

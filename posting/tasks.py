@@ -76,7 +76,9 @@ def post_record(login, password, app_id, group_id, record_id):
         videos = record.videos.all()
         log.debug('got {} videos in attachments'.format(len(videos)))
         for video in videos:
-            attachments.append(upload_video(session, video.get_url(), group_id))
+            uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
+            if uploaded_video_name:
+                attachments.append(uploaded_video_name)
 
         images = record.images.all()
         log.debug('got {} images'.format(len(images)))

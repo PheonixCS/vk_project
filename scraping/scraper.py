@@ -86,9 +86,6 @@ def filter_out_copies(records):
         log.info('no records in db')
         return records
 
-    # records_in_db_text = [record.text for record in records_in_db]
-    # filtered_records = [record for record in records if record['text'] not in records_in_db_text]
-
     filtered_records = [record for record in records if any(record_in_db for record_in_db in records_in_db if
                                                             SequenceMatcher(None,
                                                                             record['text'],
@@ -169,7 +166,8 @@ def min_text_length_filter(item, custom_filter):
 
 
 def min_quantity_of_videos_filter(item, custom_filter):
-    number_of_videos = len([attachment for attachment in item['attachments'] if attachment['type'] == 'video'])
+    number_of_videos = len([attachment for attachment in item['attachments'] if
+                            attachment['type'] == 'video' and 'platform' not in attachment['video']])
     if number_of_videos < custom_filter.min_quantity_of_videos:
         log.debug('delete {} because of custom filter: min_quantity_of_videos'.format(item['id']))
         return False
@@ -241,7 +239,8 @@ def save_record_to_db(donor, record):
         log.info('record {} was in db, modifying'.format(record['id']))
         if 'attachments' in record:
             if any('video' in d for d in record['attachments']):
-                videos = [item for item in record['attachments'] if item['type'] == 'video']
+                videos = [item for item in record['attachments'] if
+                          item['type'] == 'video' and 'platform' not in item['video']]
                 for video in videos:
                     Video.objects.create(
                         record=obj,
@@ -254,7 +253,7 @@ def save_record_to_db(donor, record):
                 for gif in gifs:
                     Gif.objects.create(
                         record=obj,
-                        url=gif['doc']['url']
+                        url=gif['doc']['preview']['video']['src']
                     )
 
             if any('photo' in d for d in record['attachments']):
