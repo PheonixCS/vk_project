@@ -359,12 +359,13 @@ def main():
             # Filters
             if new_records:
                 new_records = filter_out_ads(new_records)
+                log.debug('got {} records'.format(len(new_records)))
 
-                log.info('search for custom filters')
                 custom_filters = donor.filters.all()
                 if custom_filters:
                     log.debug('got {} custom filters'.format(len(custom_filters)))
                     new_records = filter_with_custom_filters(custom_filters, new_records)
+                    log.debug('got {} records'.format(len(new_records)))
 
                 new_records = filter_out_copies(new_records)
 
