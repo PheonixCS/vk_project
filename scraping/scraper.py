@@ -282,6 +282,7 @@ def rate_records(donor_id, records):
 
     for record in records:
         # TODO make one query with all records instead of one call each record
+        log.debug('rating {}'.format(record['id']))
         try:
             record_obj = Record.objects.get(record_id=record['id'])
         except:
@@ -299,7 +300,7 @@ def rate_records(donor_id, records):
                 delta_reposts,
                 delta_views
             ))
-            return
+            continue
 
         resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
         record_obj.rate = int(resulting_rate)
