@@ -72,7 +72,7 @@ def get_wall_by_post_id(api, group_id, posts_ids):
     try:
         all_non_rated = api.wall.getById(posts=posts)
     except VkAPIError as error_msg:
-        log.warning('group {} got api error while : {}'.format(donor.id, error_msg))
+        log.warning('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
     return all_non_rated
@@ -86,10 +86,19 @@ def filter_out_copies(records):
         log.info('no records in db')
         return records
 
-    filtered_records = [record for record in records if any(record_in_db for record_in_db in records_in_db if
-                                                            SequenceMatcher(None,
-                                                                            record['text'],
-                                                                            record_in_db.text).ratio() < MIN_STRING_MATCH_RATIO)]
+    filtered_records = list()
+
+    for record in records:
+        if any(record_in_db for record_in_db in records_in_db if
+               SequenceMatcher(None, record['text'], records_in_db.text).ratio() < MIN_STRING_MATCH_RATIO):
+            filtered_records.append(record)
+        else:
+            log.debug('record {} was filtered'.format(record['id']))
+
+    # filtered_records = [record for record in records if any(record_in_db for record_in_db in records_in_db if
+    #                                                         SequenceMatcher(None,
+    #                                                                         record['text'],
+    #                                                                         record_in_db.text).ratio() < MIN_STRING_MATCH_RATIO)]
     # TODO проверка изображений на дубликаты
     return filtered_records
 
