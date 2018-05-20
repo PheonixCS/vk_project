@@ -263,7 +263,7 @@ def save_record_to_db(donor, record):
                 for gif in gifs:
                     Gif.objects.create(
                         record=obj,
-                        url=gif['doc']['preview']['video']['src']
+                        url=gif['doc']['url']
                     )
 
             if any('photo' in d for d in record['attachments']):

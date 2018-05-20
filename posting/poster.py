@@ -33,11 +33,9 @@ def download_file(url, extension=None):
     if extension:
         local_filename += '.{}'.format(extension)
 
-    r = requests.get(url, stream=True)
+    r = requests.get(url)
     with open(local_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
+        f.write(r.content)
 
     log.debug('{} file downloaded'.format(local_filename))
     return local_filename
@@ -70,14 +68,13 @@ def upload_video(session, api,  video_url, group_id):
     return 'video{}_{}'.format(video[0]['owner_id'], video[0]['id'])
 
 
-def upload_gif(session, gif_url, group_id):
+def upload_gif(session, gif_url):
     log.debug('upload_gif called')
-    gif_local_filename = download_file(gif_url, 'mp4')
+    gif_local_filename = download_file(gif_url, 'gif')
 
     try:
         upload = vk_api.VkUpload(session)
-        gif = upload.document(doc=gif_local_filename,
-                              group_id=int(group_id))
+        gif = upload.document(doc=gif_local_filename)
     except:
         log.error('exception while uploading gif', exc_info=True)
         return

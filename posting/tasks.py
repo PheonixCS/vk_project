@@ -76,9 +76,10 @@ def post_record(login, password, app_id, group_id, record_id):
         videos = record.videos.all()
         log.debug('got {} videos in attachments'.format(len(videos)))
         for video in videos:
-            uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
-            if uploaded_video_name:
-                attachments.append(uploaded_video_name)
+            # uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
+            # if uploaded_video_name:
+            #     attachments.append(uploaded_video_name)
+            attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
 
         images = record.images.all()
         log.debug('got {} images'.format(len(images)))
@@ -88,7 +89,7 @@ def post_record(login, password, app_id, group_id, record_id):
         gifs = record.gifs.all()
         log.debug('got {} gifs'.format(len(gifs)))
         for gif in gifs:
-            attachments.append(upload_gif(session, gif.url, group_id))
+            attachments.append(upload_gif(session, gif.url))
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
