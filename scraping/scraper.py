@@ -368,18 +368,22 @@ def main():
 
             # Filters
             if new_records:
-                new_records = filter_out_ads(new_records)
-                log.debug('got {} records'.format(len(new_records)))
-
-                custom_filters = donor.filters.all()
-                if custom_filters:
-                    log.debug('got {} custom filters'.format(len(custom_filters)))
-                    new_records = filter_with_custom_filters(custom_filters, new_records)
+                try:
+                    new_records = filter_out_ads(new_records)
                     log.debug('got {} records'.format(len(new_records)))
 
-                new_records = filter_out_copies(new_records)
+                    custom_filters = donor.filters.all()
+                    if custom_filters:
+                        log.debug('got {} custom filters'.format(len(custom_filters)))
+                        new_records = filter_with_custom_filters(custom_filters, new_records)
+                        log.debug('got {} records'.format(len(new_records)))
 
-                log.debug('got {} records after all filters'.format(len(new_records)))
+                    new_records = filter_out_copies(new_records)
+
+                    log.debug('got {} records after all filters'.format(len(new_records)))
+                except:
+                    log.error('error while filter', exc_info=True)
+                    continue
 
             # Save it to db
             for record in new_records:
