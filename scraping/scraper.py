@@ -142,8 +142,9 @@ def article_filter(item):
     if item.get('attachments'):
         for attachment in item['attachments']:
             if attachment['type'] == 'link':
-                return True
-    return False
+                log.debug('delete {} as ad: article_filter'.format(item['id']))
+                return False
+    return True
 
 
 def filter_out_ads(records):
