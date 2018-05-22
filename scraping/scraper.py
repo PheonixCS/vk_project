@@ -355,8 +355,8 @@ def main():
             if not wall:
                 continue
 
-            # Fetch 100 records from donor wall.
-            # That 100 records can content some useless information, adds and
+            # Fetch 20 records from donor wall.
+            # That 20 records can content some useless information, adds and
             # information that we don't need.
             all_records = wall['items']
             log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
