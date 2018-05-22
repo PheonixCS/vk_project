@@ -22,7 +22,9 @@ def delete_oldest():
 
     :return:
     """
+    # TODO add it to settings
     time_threshold = datetime.now() - timedelta(weeks=2)
     log.debug('start deleting records older than {}'.format(time_threshold))
+
     number_of_records, extended = Record.objects.filter(add_to_db_date__lt=time_threshold).delete()
     log.debug('deleted {} records'.format(number_of_records))

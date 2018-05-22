@@ -1,14 +1,14 @@
 #
 import logging
-import datetime
+from datetime import datetime
 
 import vk_api
 from celery import task
 
 from posting.models import Group
 from scraping.models import Record
-from posting.poster import create_vk_session_using_login_password, fetch_group_id, upload_photo, upload_video, \
-    upload_gif, delete_hashtags_from_text
+from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
+                            upload_gif, delete_hashtags_from_text)
 
 log = logging.getLogger('posting.scheduled')
 
@@ -22,7 +22,7 @@ def examine_groups():
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-    now_minute = datetime.datetime.now().minute
+    now_minute = datetime.now().minute
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
@@ -103,5 +103,16 @@ def post_record(login, password, app_id, group_id, record_id):
         log.error('caught exception', exc_info=True)
         return
 
-    record.post_in_group_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    record.post_in_group_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     record.save(update_fields=['post_in_group_date'])
+
+
+@task
+def pin_best():
+    """
+
+    :return:
+    """
+
+
+
