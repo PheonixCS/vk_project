@@ -106,7 +106,7 @@ def post_record(login, password, app_id, group_id, record_id):
         log.error('caught exception', exc_info=True)
         return
 
-    record.post_in_group_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.save(update_fields=['post_in_group_date'])
 
 

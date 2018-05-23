@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 
 from celery import task
+from django.utils import timezone
 from scraping.scraper import main
 from scraping.models import Record
 
@@ -23,7 +24,7 @@ def delete_oldest():
     :return:
     """
     # TODO add it to settings
-    time_threshold = datetime.now() - timedelta(weeks=2)
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(weeks=2)
     log.debug('start deleting records older than {}'.format(time_threshold))
 
     number_of_records, extended = Record.objects.filter(add_to_db_date__lt=time_threshold).delete()
