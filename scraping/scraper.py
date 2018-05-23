@@ -44,7 +44,7 @@ def create_vk_api_using_service_token(token):
     return api
 
 
-def get_wall(api, group_id):
+def get_wall(api, group_id, count=25):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
@@ -52,12 +52,14 @@ def get_wall(api, group_id):
             log.debug('group id is digit')
             wall = api.wall.get(owner_id='-{}'.format(group_id),
                                 filter='owner',
-                                api_version=VK_API_VERSION)
+                                api_version=VK_API_VERSION,
+                                count=count)
         else:
             log.debug('group id os not digit')
             wall = api.wall.get(domain=group_id,
                                 filter='owner',
-                                api_version=VK_API_VERSION)
+                                api_version=VK_API_VERSION,
+                                count=count)
     except VkAPIError as error_msg:
         log.warning('group {} got api error: {}'.format(group_id, error_msg))
         return None
