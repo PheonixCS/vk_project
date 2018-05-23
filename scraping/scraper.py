@@ -44,7 +44,7 @@ def create_vk_api_using_service_token(token):
     return api
 
 
-def get_wall(api, group_id):
+def get_wall(api, group_id, count=25):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
@@ -52,12 +52,14 @@ def get_wall(api, group_id):
             log.debug('group id is digit')
             wall = api.wall.get(owner_id='-{}'.format(group_id),
                                 filter='owner',
-                                api_version=VK_API_VERSION)
+                                api_version=VK_API_VERSION,
+                                count=count)
         else:
             log.debug('group id os not digit')
             wall = api.wall.get(domain=group_id,
                                 filter='owner',
-                                api_version=VK_API_VERSION)
+                                api_version=VK_API_VERSION,
+                                count=count)
     except VkAPIError as error_msg:
         log.warning('group {} got api error: {}'.format(group_id, error_msg))
         return None
@@ -294,6 +296,7 @@ def rate_records(donor_id, records):
         # TODO make one query with all records instead of one call each record
         log.debug('rating {}'.format(record['id']))
         try:
+            # FIXME add donor to query
             record_obj = Record.objects.get(record_id=record['id'])
         except:
             log.error('handling record error', exc_info=True)
@@ -355,13 +358,14 @@ def main():
             if not wall:
                 continue
 
-            # Fetch 100 records from donor wall.
-            # That 100 records can content some useless information, adds and
+            # Fetch 20 records from donor wall.
+            # That 20 records can content some useless information, adds and
             # information that we don't need.
             all_records = wall['items']
             log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
 
             # now get records that we don't have in our db
+            # FIXME add donor to query
             new_records = [record for record in all_records
                            if not Record.objects.filter(record_id=record['id']).first()]
             log.debug('got {} new records'.format(len(new_records)))
@@ -396,6 +400,7 @@ def main():
 
             # Rating part
             # Get all non rated records from this api call
+            # FIXME add donor to query
             non_rated_records = [record for record in all_records
                                  if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
 
@@ -405,6 +410,7 @@ def main():
                 except:
                     log.error('error while rating', exc_info=True)
 
+            # FIXME add donor to query
             all_non_rated = Record.objects.filter(rate__isnull=True)
 
             if all_non_rated:

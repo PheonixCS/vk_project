@@ -26,6 +26,14 @@ CELERY_BEAT_SCHEDULE = {
     'poster_task': {
         'task': 'posting.tasks.examine_groups',
         'schedule': 60  # every 60 seconds
+    },
+    'pin_best_task': {
+        'task': 'posting.tasks.pin_best_post',
+        'schedule': crontab(hour='6')  # at 6 am
+    },
+    'delete_old_task': {
+        'task': 'scraping.tasks.delete_oldest',
+        'schedule': crontab(hour=0)  # at midnight
     }
 }
 

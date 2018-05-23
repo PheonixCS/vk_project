@@ -38,6 +38,9 @@ class Record(models.Model):
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
     post_in_group_date = models.DateTimeField(null=True)
 
+    def __str__(self):
+        return 'record {}'.format(self.record_id)
+
 
 class Image(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='images')
