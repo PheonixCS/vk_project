@@ -7,8 +7,8 @@ import vk_requests
 from vk_requests.exceptions import VkAPIError
 from phonenumbers import PhoneNumberMatcher
 
-from posting.models import User
-from scraping.models import Donor, Record, Image, Gif, Video
+from posting.models import User, ServiceToken
+from scraping.models import Donor, Record, Image, Gif, Video, Audio
 from settings.models import Setting
 
 log = logging.getLogger('scraping.scraper')
@@ -178,8 +178,7 @@ def min_text_length_filter(item, custom_filter):
 
 
 def min_quantity_of_videos_filter(item, custom_filter):
-    number_of_videos = len([attachment for attachment in item['attachments'] if
-                            attachment['type'] == 'video' and 'platform' not in attachment['video']])
+    number_of_videos = len([attachment for attachment in item['attachments'] if attachment['type'] == 'video'])
     if number_of_videos < custom_filter.min_quantity_of_videos:
         log.debug('delete {} because of custom filter: min_quantity_of_videos'.format(item['id']))
         return False
@@ -203,6 +202,14 @@ def min_quantity_of_gifs_filter(item, custom_filter):
     return True
 
 
+def min_quantity_of_audios_filter(item, custom_filter):
+    number_of_audios = len([attachment for attachment in item['attachments'] if attachment['type'] == 'audio'])
+    if number_of_audios < custom_filter.min_quantity_of_audios:
+        log.debug('delete {} because of custom filter: min_quantity_of_audios'.format(item['id']))
+        return False
+    return True
+
+
 def filter_with_custom_filters(custom_filters, records):
     filtered_records = list(records)
     for custom_filter in custom_filters:
@@ -221,6 +228,9 @@ def filter_with_custom_filters(custom_filters, records):
 
         if custom_filter.min_quantity_of_gifs:
             filters += (min_quantity_of_gifs_filter,)
+
+        if custom_filter.min_quantity_of_audios:
+            filters += (min_quantity_of_audios_filter,)
 
         filtered_records = [record for record in filtered_records if
                             all(filter(record, custom_filter) for filter in filters)]
@@ -251,8 +261,7 @@ def save_record_to_db(donor, record):
         log.info('record {} was in db, modifying'.format(record['id']))
         if 'attachments' in record:
             if any('video' in d for d in record['attachments']):
-                videos = [item for item in record['attachments'] if
-                          item['type'] == 'video' and 'platform' not in item['video']]
+                videos = [item for item in record['attachments'] if item['type'] == 'video']
                 for video in videos:
                     Video.objects.create(
                         record=obj,
@@ -275,6 +284,16 @@ def save_record_to_db(donor, record):
                         record=obj,
                         url=find_url_of_biggest_image(image['photo'])
                     )
+
+            if any('audio' in d for d in record['attachments']):
+                audios = [item for item in record['attachments'] if item['type'] == 'audio']
+                for audio in audios:
+                    Audio.objects.create(
+                        record=obj,
+                        owner_id=audio['audio']['owner_id'],
+                        audio_id=audio['audio']['id']
+                    )
+
     return created
 
 
@@ -297,7 +316,7 @@ def rate_records(donor_id, records):
         log.debug('rating {}'.format(record['id']))
         try:
             # FIXME add donor to query
-            record_obj = Record.objects.get(record_id=record['id'])
+            record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
         except:
             log.error('handling record error', exc_info=True)
 
@@ -333,7 +352,7 @@ def rate_records(donor_id, records):
 def main():
     log.info('start main scrapper')
 
-    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False)]
+    tokens = [token.app_service_token for token in ServiceToken.objects.all()]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
     donors = Donor.objects.filter(is_involved=True)
@@ -367,7 +386,7 @@ def main():
             # now get records that we don't have in our db
             # FIXME add donor to query
             new_records = [record for record in all_records
-                           if not Record.objects.filter(record_id=record['id']).first()]
+                           if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
             log.debug('got {} new records'.format(len(new_records)))
 
             # Filters
@@ -402,7 +421,7 @@ def main():
             # Get all non rated records from this api call
             # FIXME add donor to query
             non_rated_records = [record for record in all_records
-                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
+                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True, donor_id=donor.id)]
 
             if non_rated_records:
                 try:
@@ -411,7 +430,7 @@ def main():
                     log.error('error while rating', exc_info=True)
 
             # FIXME add donor to query
-            all_non_rated = Record.objects.filter(rate__isnull=True)
+            all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
 
             if all_non_rated:
                 if len(all_non_rated) > 100:

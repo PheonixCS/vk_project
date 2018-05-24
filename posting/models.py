@@ -9,11 +9,16 @@ class User(models.Model):
     domain_or_id = models.CharField(max_length=128, verbose_name='Domain/id пользователя', blank=True, default='')
     initials = models.CharField(max_length=128, verbose_name='ФИО', blank=True, default='')
     app_id = models.CharField(max_length=256, verbose_name='ID приложения', null=True)
-    app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', null=True,
-                                         blank=True)
 
     def __str__(self):
         return '{} {}'.format(self.login, self.initials)
+
+
+class ServiceToken(models.Model):
+    app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', primary_key=True)
+
+    def __str__(self):
+        return self.app_service_token
 
 
 class Group(models.Model):
