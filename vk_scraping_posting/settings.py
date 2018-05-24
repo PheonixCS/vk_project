@@ -29,11 +29,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'pin_best_task': {
         'task': 'posting.tasks.pin_best_post',
-        'schedule': crontab(hour='6')  # at 6 am
+        'schedule': crontab(minute=0, hour='6')  # at 6 am
     },
     'delete_old_task': {
         'task': 'scraping.tasks.delete_oldest',
-        'schedule': crontab(hour=0)  # at midnight
+        'schedule': crontab(minute=0, hour=0)  # at midnight
     }
 }
 

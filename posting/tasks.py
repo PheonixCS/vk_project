@@ -137,8 +137,8 @@ def pin_best_post():
         time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=24)
         log.debug('search for posts from {} to now'.format(time_threshold))
 
-        wall = [record for record in get_wall(search_api, group.domain_or_id, count=50)
-                if datetime.fromtimestamp(record['date']) >= time_threshold]
+        wall = [record for record in get_wall(search_api, group.domain_or_id, count=50)['items']
+                if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
         if wall:
             log.debug('got {} wall records in last 24 hours'.format(len(wall)))
@@ -147,7 +147,7 @@ def pin_best_post():
                 best = max(wall, key=lambda item: item['likes']['count'])
             except KeyError:
                 log.error('failed to fetch best record', exc_info=True)
-                return
+                continue
             log.debug('got best record with id: {}'.format(best['id']))
 
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
@@ -162,8 +162,8 @@ def pin_best_post():
                 log.debug(response)
             except:
                 log.error('failed to pin post', exc_info=True)
-                return
+                continue
 
         else:
             log.warning('have no post in last 24 hours')
-            return
+            continue
