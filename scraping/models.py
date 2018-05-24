@@ -21,6 +21,8 @@ class Filter(models.Model):
                                                  verbose_name='Минимальное количество изображений')
     min_quantity_of_gifs = models.IntegerField(blank=True, null=True,
                                                verbose_name='Минимальное количество гифок')
+    min_quantity_of_audios = models.IntegerField(blank=True, null=True,
+                                                 verbose_name='Минимальное количество аудиозаписей')
 
     def __str__(self):
         return 'Фильтр #{} для группы {}'.format(self.id, self.donor)
@@ -52,10 +54,13 @@ class Gif(models.Model):
     url = models.CharField(max_length=256)
 
 
+class Audio(models.Model):
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='audios')
+    owner_id = models.IntegerField(null=True)
+    audio_id = models.IntegerField(null=True)
+
+
 class Video(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='videos')
     owner_id = models.IntegerField(null=True)
     video_id = models.IntegerField(null=True)
-
-    def get_url(self):
-        return 'https://vk.com/video{}_{}'.format(self.owner_id, self.video_id)

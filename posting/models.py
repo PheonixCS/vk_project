@@ -7,11 +7,16 @@ class User(models.Model):
     login = models.CharField(max_length=64, verbose_name='Логин', unique=True)
     password = models.CharField(max_length=64, verbose_name='Пароль')
     app_id = models.CharField(max_length=256, verbose_name='ID приложения', null=True)
-    app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', null=True,
-                                         blank=True)
 
     def __str__(self):
         return self.login
+
+
+class ServiceToken(models.Model):
+    app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', primary_key=True)
+
+    def __str__(self):
+        return self.app_service_token
 
 
 class Group(models.Model):

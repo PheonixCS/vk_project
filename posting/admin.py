@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Group
+from .models import User, ServiceToken, Group
 
 
 class MembershipInline(admin.TabularInline):
@@ -22,4 +22,5 @@ class GroupAdmin(admin.ModelAdmin):
 
 
 admin.site.register(User)
+admin.site.register(ServiceToken)
 admin.site.register(Group, GroupAdmin)

@@ -7,7 +7,7 @@ import vk_api
 from celery import task
 from django.utils import timezone
 
-from posting.models import Group, User
+from posting.models import Group, ServiceToken
 from scraping.models import Record
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             upload_gif, delete_hashtags_from_text)
@@ -84,6 +84,11 @@ def post_record(login, password, app_id, group_id, record_id):
             #     attachments.append(uploaded_video_name)
             attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
 
+        audios = record.audios.all()
+        log.debug('got {} audios'.format(len(audios)))
+        for audio in audios:
+            attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
+
         images = record.images.all()
         log.debug('got {} images'.format(len(images)))
         for image in images:
@@ -118,7 +123,7 @@ def pin_best_post():
     """
 
     active_groups = Group.objects.filter(user__isnull=False, is_posting_active=True).distinct()
-    tokens = [acc.app_service_token for acc in User.objects.filter(app_service_token__isnull=False)]
+    tokens = [token.app_service_token for token in ServiceToken.objects.all()]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
     if not tokens:
