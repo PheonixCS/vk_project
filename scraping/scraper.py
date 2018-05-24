@@ -316,7 +316,7 @@ def rate_records(donor_id, records):
         log.debug('rating {}'.format(record['id']))
         try:
             # FIXME add donor to query
-            record_obj = Record.objects.get(record_id=record['id'])
+            record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
         except:
             log.error('handling record error', exc_info=True)
 
@@ -386,7 +386,7 @@ def main():
             # now get records that we don't have in our db
             # FIXME add donor to query
             new_records = [record for record in all_records
-                           if not Record.objects.filter(record_id=record['id']).first()]
+                           if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
             log.debug('got {} new records'.format(len(new_records)))
 
             # Filters
@@ -421,7 +421,7 @@ def main():
             # Get all non rated records from this api call
             # FIXME add donor to query
             non_rated_records = [record for record in all_records
-                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True)]
+                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True, donor_id=donor.id)]
 
             if non_rated_records:
                 try:
@@ -430,7 +430,7 @@ def main():
                     log.error('error while rating', exc_info=True)
 
             # FIXME add donor to query
-            all_non_rated = Record.objects.filter(rate__isnull=True)
+            all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
 
             if all_non_rated:
                 if len(all_non_rated) > 100:
