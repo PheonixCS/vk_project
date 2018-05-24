@@ -3,10 +3,11 @@ from django.db import models
 
 class Donor(models.Model):
     id = models.CharField(max_length=32, verbose_name='Domain/id группы донора', primary_key=True)
+    name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
 
     def __str__(self):
-        return self.id
+        return '{} {}'.format(self.id, self.name)
 
 
 class Filter(models.Model):

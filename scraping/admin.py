@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
-from .models import Donor, Filter, Record
+from .models import Donor, Filter
 
 
 class FilterInLine(admin.StackedInline):
@@ -9,7 +10,16 @@ class FilterInLine(admin.StackedInline):
 
 
 class DonorAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'vk_url_field',)
+
     inlines = [FilterInLine]
+
+    def vk_url_field(self, obj):
+        return format_html(
+            '<a href="https://vk.com/{}">https://vk.com/{}</a>'.format(obj.id, obj.id))
+
+    vk_url_field.allow_tags = True
+    vk_url_field.short_description = 'Ссылка'
 
 
 admin.site.register(Donor, DonorAdmin)
