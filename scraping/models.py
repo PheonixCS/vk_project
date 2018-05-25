@@ -3,8 +3,13 @@ from django.db import models
 
 class Donor(models.Model):
     id = models.CharField(max_length=32, verbose_name='Domain/id группы донора', primary_key=True)
+    url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
+
+    def save(self, *args, **kwargs):
+        self.url = 'https://vk.com/club{}'.format(self.id)
+        return super(Donor, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} {}'.format(self.id, self.name)

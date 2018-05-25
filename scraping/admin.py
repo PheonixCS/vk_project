@@ -10,13 +10,15 @@ class FilterInLine(admin.StackedInline):
 
 
 class DonorAdmin(admin.ModelAdmin):
+    exclude = ('url',)
+    readonly_fields = ('vk_url_field',)
     list_display = ('id', 'name', 'vk_url_field',)
 
     inlines = [FilterInLine]
 
     def vk_url_field(self, obj):
         return format_html(
-            '<a href="https://vk.com/club{}">https://vk.com/club{}</a>'.format(obj.id, obj.id))
+            '<a href="{}">{}</a>'.format(obj.url, obj.url))
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
