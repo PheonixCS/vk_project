@@ -16,29 +16,32 @@ class DonorAdmin(admin.ModelAdmin):
 
 
 class GroupAdmin(admin.ModelAdmin):
+    exclude = ('url', 'group_id', 'donors')
+    readonly_fields = ('vk_url_field',)
     list_display = ('domain_or_id', 'name', 'vk_url_field',)
 
     inlines = [
         MembershipInline,
     ]
-    exclude = ('group_id', 'donors')
 
     def vk_url_field(self, obj):
-        return format_html('<a href="https://vk.com/{}">https://vk.com/{}</a>'.format(obj.name, obj.name))
+        return format_html('<a href="{}">{}</a>'.format(obj.url, obj.url))
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
 
 
 class UserAdmin(admin.ModelAdmin):
+    exclude = ('url',)
+    readonly_fields = ('vk_url_field',)
     list_display = ('login', 'initials', 'vk_url_field',)
 
     def vk_url_field(self, obj):
-        return format_html(
-            '<a href="https://vk.com/{}">https://vk.com/{}</a>'.format(obj.domain_or_id, obj.domain_or_id))
+        return format_html('<a href="{}">{}</a>'.format(obj.url, obj.url))
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
+
 
 
 admin.site.register(User, UserAdmin)
