@@ -8,6 +8,8 @@ from posting.models import Group
 from moderation.models import ModerationRule
 from posting.poster import create_vk_session_using_login_password
 from settings.models import Setting
+from django.db.models import Q
+
 
 log = logging.getLogger('moderation.core')
 
@@ -70,3 +72,19 @@ def handle_comment_event(event_object, group_id):
         return True
 
     log.info('comment {} in {} was moderated, everything ok'.format(event_object['id'], group_id))
+
+
+def does_group_exist(group_id):
+    # TODO may be this is slow
+    group = Group.objects.filter(Q(group_id=group_id) | Q(domain_or_id__contains=str(group_id))).first()
+
+    return group
+
+
+def get_callback_api_key(group_id):
+    group = Group.objects.filter(Q(group_id=group_id) | Q(domain_or_id__contains=str(group_id))).first()
+    token = group.callback_api_token
+
+    log.debug('got callback token for group {}'.format(group_id))
+
+    return token

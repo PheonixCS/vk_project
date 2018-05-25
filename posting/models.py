@@ -28,6 +28,7 @@ class Group(models.Model):
     is_posting_active = models.BooleanField(default=True, verbose_name='Постинг активен?')
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='groups', blank=True, null=True)
+    callback_api_token = models.CharField(max_length=128, verbose_name='Ответ для callback api', blank=True, default='')
     donors = models.ManyToManyField(Donor, blank=True)
 
     def __str__(self):
