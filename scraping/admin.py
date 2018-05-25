@@ -16,7 +16,7 @@ class DonorAdmin(admin.ModelAdmin):
 
     def vk_url_field(self, obj):
         return format_html(
-            '<a href="https://vk.com/{}">https://vk.com/{}</a>'.format(obj.id, obj.id))
+            '<a href="https://vk.com/club{}">https://vk.com/club{}</a>'.format(obj.id, obj.id))
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'

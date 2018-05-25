@@ -24,7 +24,7 @@ class GroupAdmin(admin.ModelAdmin):
     exclude = ('group_id', 'donors')
 
     def vk_url_field(self, obj):
-        return format_html('<a href="https://vk.com/{}">https://vk.com/{}</a>'.format(obj.name, obj.name))
+        return format_html('<a href="https://vk.com/club{}">https://vk.com/club{}</a>'.format(obj.name, obj.name))
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
