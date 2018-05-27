@@ -44,7 +44,7 @@ def is_post_ad(api, post_id, group_id):
     except ApiError as error_msg:
         log.info('Group {} post {} got api error in getById method: {}'.format(group_id, post_id, error_msg))
         return None
-    return post.get('marked_as_ads', False)
+    return post[0].get('marked_as_ads', False)
 
 
 def handle_comment_event(event_object, group_id):
