@@ -132,6 +132,7 @@ def fetch_group_id(api, domain_or_id):
 
 
 def delete_hashtags_from_text(text):
-    text_without_hashtags = re.sub('#(\w+)', '', text)
-    text_without_double_spaces = re.sub(' +', ' ', text_without_hashtags)
+    # link hashtag looks like '#hello@user', common looks like '#hello'
+    text_without_link_hashtags = re.sub('(@\w*)', '', text)
+    text_without_double_spaces = re.sub(' +', ' ', text_without_link_hashtags)
     return text_without_double_spaces

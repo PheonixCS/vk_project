@@ -36,6 +36,7 @@ class Filter(models.Model):
 
 class Record(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records')
+    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='records', null=True)
     record_id = models.IntegerField(null=True)
     likes_count = models.IntegerField(null=True)
     reposts_count = models.IntegerField(null=True)
