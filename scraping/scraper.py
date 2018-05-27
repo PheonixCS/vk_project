@@ -6,6 +6,7 @@ import logging
 import vk_requests
 from vk_requests.exceptions import VkAPIError
 from phonenumbers import PhoneNumberMatcher
+from urlextract import URLExtract
 
 from posting.models import User, ServiceToken
 from scraping.models import Donor, Record, Image, Gif, Video, Audio
@@ -127,7 +128,8 @@ def phone_numbers_filter(item):
 
 
 def urls_filter(item):
-    if re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', item['text']):
+    extractor = URLExtract()
+    if extractor.has_urls(item['text']):
         log.debug('delete {} as ad: urls_filter'.format(item['id']))
         return False
     return True
