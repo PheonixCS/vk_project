@@ -28,6 +28,8 @@ def examine_groups():
 
     now_minute = datetime.now().minute
 
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
@@ -39,7 +41,10 @@ def examine_groups():
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])
 
-        if group.posting_time.minute == now_minute:
+        posts_in_last_hour_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        log.debug('got {} posts in last hour and 5 minutes'.format(posts_in_last_hour_count))
+
+        if group.posting_time.minute == now_minute or posts_in_last_hour_count < 1:
             records = [record for donor in group.donors.all() for record in
                        donor.records.filter(rate__isnull=False, post_in_group_date__isnull=True)]
             log.debug('got {} ready to post records'.format(len(records)))
@@ -68,6 +73,7 @@ def post_record(login, password, app_id, group_id, record_id):
     api = session.get_api()
 
     record = Record.objects.get(record_id=record_id)
+    group = Group.objects.get(group_id=group_id)
 
     if not session:
         log.error('session not created')
@@ -112,7 +118,8 @@ def post_record(login, password, app_id, group_id, record_id):
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    record.save(update_fields=['post_in_group_date'])
+    record.group = group
+    record.save(update_fields=['post_in_group_date', 'group'])
 
 
 @task
