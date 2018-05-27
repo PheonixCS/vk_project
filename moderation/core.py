@@ -1,6 +1,7 @@
 import re
 
 from alphabet_detector import AlphabetDetector
+from urlextract import URLExtract
 import logging
 from vk_api import ApiError
 
@@ -30,19 +31,40 @@ def is_group(commentator_id):
         return True
 
 
+def prepare_id_white_list(white_list):
+    white_list = re.sub('(id)', '', white_list)
+    white_list = re.sub('[^\s\d]+', '-', white_list)
+    return white_list.split()
+
+
+def is_post_ad(api, post_id, group_id):
+    try:
+        post = api.wall.getById(posts='{}_{}'.format(group_id, post_id),
+                                api_version=VK_API_VERSION)
+    except ApiError as error_msg:
+        log.info('Group {} post {} got api error in getById method: {}'.format(group_id, post_id, error_msg))
+        return None
+    return post.get('marked_as_ads', False)
+
+
 def handle_comment_event(event_object, group_id):
     log.info('start handling comment {} in {} by {}'.format(event_object['id'], group_id, event_object['from_id']))
 
     group = Group.objects.select_related('user').filter(group_id=group_id).first()
 
     moderation_rule = ModerationRule.objects.first()
-    if event_object['from_id'] in moderation_rule.id_white_list.split():
+    if event_object['from_id'] in prepare_id_white_list(moderation_rule.id_white_list):
         log.info('from_id {} in white list, cancel moderation'.format(event_object['from_id']))
         return False
 
     api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
     if not api:
         return None
+
+    if is_post_ad(api, event_object['post_id'], group_id):
+        delete_comment(api, group_id, event_object['id'])
+        log.info('delete comment {} in {} : post marked as ad'.format(event_object['id'], group_id))
+        return True
 
     words_stop_list = set(moderation_rule.words_stop_list.split())
     words_in_text = re.sub("[^\w]", " ", event_object['text']).split()
@@ -69,6 +91,12 @@ def handle_comment_event(event_object, group_id):
     if is_group(event_object['from_id']):
         delete_comment(api, group_id, event_object['id'])
         log.info('delete comment {} in {} : comment from group/community'.format(event_object['id'], group_id))
+        return True
+
+    extractor = URLExtract()
+    if extractor.has_urls(event_object['text']):
+        delete_comment(api, group_id, event_object['id'])
+        log.info('delete comment {} in {} : contains links'.format(event_object['id'], group_id))
         return True
 
     log.info('comment {} in {} was moderated, everything ok'.format(event_object['id'], group_id))
