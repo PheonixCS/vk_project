@@ -97,10 +97,6 @@ def filter_out_copies(records):
         else:
             log.debug('record {} was filtered'.format(record['id']))
 
-    # filtered_records = [record for record in records if any(record_in_db for record_in_db in records_in_db if
-    #                                                         SequenceMatcher(None,
-    #                                                                         record['text'],
-    #                                                                         record_in_db.text).ratio() < MIN_STRING_MATCH_RATIO)]
     # TODO проверка изображений на дубликаты
     return filtered_records
 
@@ -149,6 +145,13 @@ def article_filter(item):
     return True
 
 
+def vk_link_filter(item):
+    if re.findall(r'\[.*?\|.*?\]', item['text']):
+        log.debug('delete {} as ad: vk_link_filter'.format(item['id']))
+        return False
+    return True
+
+
 def filter_out_ads(records):
     log.info('filter_out_ads called')
     filters = (
@@ -157,7 +160,8 @@ def filter_out_ads(records):
         phone_numbers_filter,
         urls_filter,
         email_filter,
-        article_filter
+        article_filter,
+        vk_link_filter
     )
     filtered_records = [record for record in records if all(filter(record) for filter in filters)]
     return filtered_records
