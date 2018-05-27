@@ -53,7 +53,7 @@ def handle_comment_event(event_object, group_id):
     group = Group.objects.select_related('user').filter(group_id=group_id).first()
 
     moderation_rule = ModerationRule.objects.first()
-    if event_object['from_id'] in prepare_id_white_list(moderation_rule.id_white_list):
+    if event_object['from_id'] in list(map(int, prepare_id_white_list(moderation_rule.id_white_list))):
         log.info('from_id {} in white list, cancel moderation'.format(event_object['from_id']))
         return False
 
