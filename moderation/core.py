@@ -39,7 +39,7 @@ def prepare_id_white_list(white_list):
 
 def is_post_ad(api, post_id, group_id):
     try:
-        post = api.wall.getById(posts='{}_{}'.format(group_id, post_id),
+        post = api.wall.getById(posts='-{}_{}'.format(group_id, post_id),
                                 api_version=VK_API_VERSION)
     except ApiError as error_msg:
         log.info('Group {} post {} got api error in getById method: {}'.format(group_id, post_id, error_msg))
@@ -59,6 +59,7 @@ def handle_comment_event(event_object, group_id):
 
     api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
     if not api:
+        log.warning('no api created!')
         return None
 
     if is_post_ad(api, event_object['post_id'], group_id):
