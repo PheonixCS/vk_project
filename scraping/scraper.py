@@ -260,7 +260,7 @@ def save_record_to_db(donor, record):
             'reposts_count': record['reposts']['count'],
             'views_count': record.get('views', dict()).get('count', 0),
             'text': record['text'],
-            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date'])).strftime('%Y-%m-%d %H:%M:%S')
+            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         }
     )
     if created:
