@@ -7,8 +7,9 @@ import vk_requests
 from vk_requests.exceptions import VkAPIError
 from phonenumbers import PhoneNumberMatcher
 from urlextract import URLExtract
+from django.utils import timezone
 
-from posting.models import User, ServiceToken
+from posting.models import ServiceToken
 from scraping.models import Donor, Record, Image, Gif, Video, Audio
 from settings.models import Setting
 
