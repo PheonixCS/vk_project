@@ -103,7 +103,8 @@ def post_record(login, password, app_id, group_id, record_id):
         gifs = record.gifs.all()
         log.debug('got {} gifs'.format(len(gifs)))
         for gif in gifs:
-            attachments.append(upload_gif(session, gif.url))
+            # attachments.append(upload_gif(session, gif.url))
+            attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,

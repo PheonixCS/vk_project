@@ -280,7 +280,9 @@ def save_record_to_db(donor, record):
                 for gif in gifs:
                     Gif.objects.create(
                         record=obj,
-                        url=gif['doc']['url']
+                        url=gif['doc']['url'],
+                        owner_id=gif['doc']['owner_id'],
+                        gif_id=gif['doc']['id'],
                     )
 
             if any('photo' in d for d in record['attachments']):

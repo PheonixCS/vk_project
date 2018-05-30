@@ -59,6 +59,8 @@ class Image(models.Model):
 class Gif(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='gifs')
     url = models.CharField(max_length=256)
+    owner_id = models.IntegerField(null=True)
+    gif_id = models.IntegerField(null=True)
 
 
 class Audio(models.Model):
