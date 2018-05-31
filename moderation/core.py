@@ -90,6 +90,10 @@ def handle_comment_event(event_object, group_id):
                 delete_comment(api, group_id, event_object['id'])
                 log.info('delete comment {} in {} : video in attachments'.format(event_object['id'], group_id))
                 return True
+            if attachment['type'] == 'link':
+                delete_comment(api, group_id, event_object['id'])
+                log.info('delete comment {} in {} : link in attachments'.format(event_object['id'], group_id))
+                return True
 
     if is_group(event_object['from_id']):
         delete_comment(api, group_id, event_object['id'])
@@ -100,6 +104,11 @@ def handle_comment_event(event_object, group_id):
     if extractor.has_urls(event_object['text']):
         delete_comment(api, group_id, event_object['id'])
         log.info('delete comment {} in {} : contains links'.format(event_object['id'], group_id))
+        return True
+
+    if re.findall(r'\[.*?\|.*?\]', event_object['text'])
+        delete_comment(api, group_id, event_object['id'])
+        log.info('delete comment {} in {} : contains vk links'.format(event_object['id'], group_id))
         return True
 
     log.info('comment {} in {} was moderated, everything ok'.format(event_object['id'], group_id))
