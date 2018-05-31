@@ -106,7 +106,7 @@ def handle_comment_event(event_object, group_id):
         log.info('delete comment {} in {} : contains links'.format(event_object['id'], group_id))
         return True
 
-    if re.findall(r'\[.*?\|.*?\]', event_object['text'])
+    if re.findall(r'\[.*?\|.*?\]', event_object['text']):
         delete_comment(api, group_id, event_object['id'])
         log.info('delete comment {} in {} : contains vk links'.format(event_object['id'], group_id))
         return True
