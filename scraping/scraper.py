@@ -218,7 +218,7 @@ def min_quantity_of_audios_filter(item, custom_filter):
 
 
 def filter_with_custom_filters(custom_filters, records):
-    filtered_records = list(records)
+    filtered_records = list()
     for custom_filter in custom_filters:
         filters = tuple()
         if custom_filter.min_quantity_of_line_breaks:
@@ -239,8 +239,8 @@ def filter_with_custom_filters(custom_filters, records):
         if custom_filter.min_quantity_of_audios:
             filters += (min_quantity_of_audios_filter,)
 
-        filtered_records = [record for record in filtered_records if
-                            all(filter(record, custom_filter) for filter in filters)]
+        filtered_records.append([record for record in records if all(
+            filter(record, custom_filter) for filter in filters) and record not in filtered_records])
 
     return filtered_records
 
@@ -261,7 +261,8 @@ def save_record_to_db(donor, record):
             'reposts_count': record['reposts']['count'],
             'views_count': record.get('views', dict()).get('count', 0),
             'text': record['text'],
-            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
+                '%Y-%m-%d %H:%M:%S')
         }
     )
     if created:
