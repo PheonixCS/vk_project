@@ -239,7 +239,7 @@ def filter_with_custom_filters(custom_filters, records):
         if custom_filter.min_quantity_of_audios:
             filters += (min_quantity_of_audios_filter,)
 
-        filtered_records.append([record for record in records if all(
+        filtered_records.extend([record for record in records if all(
             filter(record, custom_filter) for filter in filters) and record not in filtered_records])
 
     return filtered_records
@@ -397,23 +397,23 @@ def main():
             # FIXME add donor to query
             new_records = [record for record in all_records
                            if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
-            log.debug('got {} new records'.format(len(new_records)))
+            log.debug('got {} new records in donor {}'.format(len(new_records), donor.id))
 
             # Filters
             if new_records:
                 try:
                     new_records = filter_out_ads(new_records)
-                    log.debug('got {} records'.format(len(new_records)))
+                    log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
 
                     custom_filters = donor.filters.all()
                     if custom_filters:
                         log.debug('got {} custom filters'.format(len(custom_filters)))
                         new_records = filter_with_custom_filters(custom_filters, new_records)
-                        log.debug('got {} records'.format(len(new_records)))
+                        log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
 
                     new_records = filter_out_copies(new_records)
 
-                    log.debug('got {} records after all filters'.format(len(new_records)))
+                    log.debug('got {} records after all filters in donor {}'.format(len(new_records), donor.id))
                 except:
                     log.error('error while filter', exc_info=True)
                     continue
@@ -425,11 +425,10 @@ def main():
                 except:
                     log.error('exception while saving in db', exc_info=True)
                     continue
-                log.info('saved {} records'.format(len(new_records)))
+                log.info('saved {} records in group {}'.format(len(new_records), donor.id))
 
             # Rating part
             # Get all non rated records from this api call
-            # FIXME add donor to query
             non_rated_records = [record for record in all_records
                                  if Record.objects.filter(record_id=record['id'], rate__isnull=True, donor_id=donor.id)]
 
