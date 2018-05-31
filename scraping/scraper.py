@@ -171,21 +171,22 @@ def filter_out_ads(records):
 
 
 def min_quantity_of_line_breaks_filter(item, custom_filter):
-    if len(item['text'].splitlines()) < custom_filter.min_quantity_of_line_breaks:
+    if len(item.get('text', str()).splitlines()) < custom_filter.min_quantity_of_line_breaks:
         log.debug('delete {} because of custom filter: min_quantity_of_line_breaks'.format(item['id']))
         return False
     return True
 
 
 def min_text_length_filter(item, custom_filter):
-    if len(item['text']) < custom_filter.min_text_length:
+    if len(item.get('text', str())) < custom_filter.min_text_length:
         log.debug('delete {} because of custom filter: min_text_length'.format(item['id']))
         return False
     return True
 
 
 def min_quantity_of_videos_filter(item, custom_filter):
-    number_of_videos = len([attachment for attachment in item['attachments'] if attachment['type'] == 'video'])
+    number_of_videos = len(
+        [attachment for attachment in item.get('attachments', list()) if attachment['type'] == 'video'])
     if number_of_videos < custom_filter.min_quantity_of_videos:
         log.debug('delete {} because of custom filter: min_quantity_of_videos'.format(item['id']))
         return False
@@ -193,7 +194,8 @@ def min_quantity_of_videos_filter(item, custom_filter):
 
 
 def min_quantity_of_images_filter(item, custom_filter):
-    number_of_images = len([attachment for attachment in item['attachments'] if attachment['type'] == 'photo'])
+    number_of_images = len(
+        [attachment for attachment in item.get('attachments', list()) if attachment['type'] == 'photo'])
     if number_of_images < custom_filter.min_quantity_of_images:
         log.debug('delete {} because of custom filter: min_quantity_of_images'.format(item['id']))
         return False
@@ -201,8 +203,8 @@ def min_quantity_of_images_filter(item, custom_filter):
 
 
 def min_quantity_of_gifs_filter(item, custom_filter):
-    number_of_gifs = len([attachment for attachment in item['attachments'] if attachment['type'] == 'doc' and
-                          attachment['doc']['ext'] == 'gif'])
+    number_of_gifs = len([attachment for attachment in item.get('attachments', list()) if
+                          attachment['type'] == 'doc' and attachment['doc']['ext'] == 'gif'])
     if number_of_gifs < custom_filter.min_quantity_of_gifs:
         log.debug('delete {} because of custom filter: min_quantity_of_gifs'.format(item['id']))
         return False
@@ -210,7 +212,8 @@ def min_quantity_of_gifs_filter(item, custom_filter):
 
 
 def min_quantity_of_audios_filter(item, custom_filter):
-    number_of_audios = len([attachment for attachment in item['attachments'] if attachment['type'] == 'audio'])
+    number_of_audios = len(
+        [attachment for attachment in item.get('attachments', list()) if attachment['type'] == 'audio'])
     if number_of_audios < custom_filter.min_quantity_of_audios:
         log.debug('delete {} because of custom filter: min_quantity_of_audios'.format(item['id']))
         return False
