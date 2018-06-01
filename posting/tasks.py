@@ -73,11 +73,19 @@ def post_record(login, password, app_id, group_id, record_id):
     session = create_vk_session_using_login_password(login, password, app_id)
     api = session.get_api()
 
-    record = Record.objects.get(record_id=record_id)
-    group = Group.objects.get(group_id=group_id)
+    try:
+        record = Record.objects.get(record_id=record_id)
+        group = Group.objects.get(group_id=group_id)
+    except:
+        log.error('got unexpected exception in post_record for group {}'.format(group_id), exc_info=True)
+        return
 
     if not session:
         log.error('session not created in group {}'.format(group_id))
+        return
+
+    if not api:
+        log.error('no api was created in group {}'.format(group_id))
         return
 
     try:
@@ -111,7 +119,7 @@ def post_record(login, password, app_id, group_id, record_id):
                                       from_group=1,
                                       message=delete_hashtags_from_text(record.text),
                                       attachments=','.join(attachments))
-        log.debug('{}'.format(post_response))
+        log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
         return
