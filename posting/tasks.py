@@ -91,14 +91,6 @@ def post_record(login, password, app_id, group_id, record_id):
     try:
         attachments = list()
 
-        videos = record.videos.all()
-        log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
-        for video in videos:
-            # uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
-            # if uploaded_video_name:
-            #     attachments.append(uploaded_video_name)
-            attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
-
         audios = record.audios.all()
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
         for audio in audios:
@@ -114,6 +106,14 @@ def post_record(login, password, app_id, group_id, record_id):
         for gif in gifs:
             # attachments.append(upload_gif(session, gif.url))
             attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
+
+        videos = record.videos.all()
+        log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
+        for video in videos:
+            # uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
+            # if uploaded_video_name:
+            #     attachments.append(uploaded_video_name)
+            attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
