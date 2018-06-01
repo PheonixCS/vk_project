@@ -468,7 +468,3 @@ def main():
                     rate_records(donor.id, all_non_rated)
                 except:
                     log.error('error while rating', exc_info=True)
-
-
-if __name__ == '__main__':
-    main()
