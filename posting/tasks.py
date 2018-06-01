@@ -41,18 +41,19 @@ def examine_groups():
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])
 
+        log.debug('start searching for posted records since {}'.format(time_threshold))
         posts_in_last_hour_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         log.debug('got {} posts in last hour and 5 minutes'.format(posts_in_last_hour_count))
 
         if group.posting_time.minute == now_minute or posts_in_last_hour_count < 1:
             records = [record for donor in group.donors.all() for record in
                        donor.records.filter(rate__isnull=False, post_in_group_date__isnull=True)]
-            log.debug('got {} ready to post records'.format(len(records)))
+            log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
 
             record_with_max_rate = max(records, key=lambda x: x.rate)
-            log.debug('record {} got max rate'.format(record_with_max_rate))
+            log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
 
             try:
                 post_record.delay(group.user.login,
@@ -76,14 +77,14 @@ def post_record(login, password, app_id, group_id, record_id):
     group = Group.objects.get(group_id=group_id)
 
     if not session:
-        log.error('session not created')
+        log.error('session not created in group {}'.format(group_id))
         return
 
     try:
         attachments = list()
 
         videos = record.videos.all()
-        log.debug('got {} videos in attachments'.format(len(videos)))
+        log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
         for video in videos:
             # uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
             # if uploaded_video_name:
@@ -91,17 +92,17 @@ def post_record(login, password, app_id, group_id, record_id):
             attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
 
         audios = record.audios.all()
-        log.debug('got {} audios'.format(len(audios)))
+        log.debug('got {} audios for group {}'.format(len(audios), group_id))
         for audio in audios:
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         images = record.images.all()
-        log.debug('got {} images'.format(len(images)))
+        log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images:
             attachments.append(upload_photo(session, image.url, group_id))
 
         gifs = record.gifs.all()
-        log.debug('got {} gifs'.format(len(gifs)))
+        log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
         for gif in gifs:
             # attachments.append(upload_gif(session, gif.url))
             attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
@@ -115,12 +116,13 @@ def post_record(login, password, app_id, group_id, record_id):
         log.info('group {} got api error: {}'.format(group_id, error_msg))
         return
     except:
-        log.error('caught exception', exc_info=True)
+        log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
     record.save(update_fields=['post_in_group_date', 'group'])
+    log.debug('post in group {} finished'.format(group_id))
 
 
 @task

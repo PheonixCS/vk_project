@@ -23,6 +23,8 @@ def create_vk_session_using_login_password(login, password, app_id):
     except vk_api.AuthError as error_msg:
         log.info('User {} got api error: {}'.format(login, error_msg))
         return None
+    except:
+        log.error('got unexpected error in create_vk_session_using_login_password', exc_info=True)
 
     return vk_session
 
@@ -120,6 +122,7 @@ def upload_photo(session, photo_url, group_id):
 
 
 def fetch_group_id(api, domain_or_id):
+    log.debug('fetch_group_id called for group {}'.format(domain_or_id))
     if domain_or_id.isdigit():
         group_id = domain_or_id
     else:
