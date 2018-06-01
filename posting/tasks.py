@@ -60,7 +60,7 @@ def examine_groups():
                                   group.user.password,
                                   group.user.app_id,
                                   group.group_id,
-                                  record_with_max_rate.record_id)
+                                  record_with_max_rate.id)
             except:
                 log.error('', exc_info=True)
 
@@ -74,8 +74,8 @@ def post_record(login, password, app_id, group_id, record_id):
     api = session.get_api()
 
     try:
-        record = Record.objects.get(record_id=record_id)
         group = Group.objects.get(group_id=group_id)
+        record = Record.objects.get(pk=record_id)
     except:
         log.error('got unexpected exception in post_record for group {}'.format(group_id), exc_info=True)
         return
