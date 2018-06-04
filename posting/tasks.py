@@ -29,6 +29,7 @@ def examine_groups():
     now_minute = datetime.now().minute
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+    allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
@@ -47,7 +48,9 @@ def examine_groups():
 
         if group.posting_time.minute == now_minute or posts_in_last_hour_count < 1:
             records = [record for donor in group.donors.all() for record in
-                       donor.records.filter(rate__isnull=False, post_in_group_date__isnull=True)]
+                       donor.records.filter(rate__isnull=False,
+                                            post_in_group_date__isnull=True,
+                                            post_in_donor_date__gt=allowed_time_threshold)]
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue

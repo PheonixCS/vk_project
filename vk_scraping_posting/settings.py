@@ -25,15 +25,15 @@ CELERY_BEAT_SCHEDULE = {
     },
     'poster_task': {
         'task': 'posting.tasks.examine_groups',
-        'schedule': 60  # every 60 seconds
+        'schedule': crontab(minute='*')  # every minute
     },
     'pin_best_task': {
         'task': 'posting.tasks.pin_best_post',
-        'schedule': crontab(minute=1, hour='1')  # at 1:01 am (4:01 am by MSK)
+        'schedule': crontab(minute=1, hour='1')  # at 1:01 am UTC (4:01 am by MSK)
     },
     'delete_old_task': {
         'task': 'scraping.tasks.delete_oldest',
-        'schedule': crontab(minute=0, hour=0)  # at midnight
+        'schedule': crontab(minute=0, hour=5)  # at 5:00 am UTC (8:00 am by MSK)
     }
 }
 
@@ -45,9 +45,9 @@ CELERY_BEAT_SCHEDULE = {
 SECRET_KEY = '3(p-@#k$mrd0_*lw=u%kh7%oh!vp9iv@anxxk)-bcbbvup4^^0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1']
+ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81']
 
 
 # Application definition
