@@ -14,7 +14,7 @@ class User(models.Model):
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
             self.url = 'https://vk.com/id{}'.format(self.domain_or_id)
-        else:
+        elif self.domain_or_id:
             self.url = 'https://vk.com/{}'.format(self.domain_or_id)
         super(User, self).save(*args, **kwargs)
 
