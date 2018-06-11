@@ -143,7 +143,11 @@ def pin_best_post():
     :return:
     """
 
-    active_groups = Group.objects.filter(user__isnull=False, is_posting_active=True).distinct()
+    active_groups = Group.objects.filter(
+        user__isnull=False,
+        is_posting_active=True,
+        is_pin_enabled=True).distinct()
+
     tokens = [token.app_service_token for token in ServiceToken.objects.all()]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
