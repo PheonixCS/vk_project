@@ -13,3 +13,11 @@ class ModerationRule(models.Model):
         if ModerationRule.objects.exists() and not self.pk:
             raise ValidationError('There is can be only one ModerationRule instance')
         return super(ModerationRule, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Правило модерации'
+
+    class Meta:
+        app_label = 'posting'
+        verbose_name = 'Правило модерации'
+        verbose_name_plural = 'Правила модерации'

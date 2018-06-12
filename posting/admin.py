@@ -26,9 +26,9 @@ class GroupAdmin(admin.ModelAdmin):
 
     def vk_url_field(self, obj):
         if obj.name:
-            return format_html('<a href="{}">{}</a>'.format(obj.url, obj.name))
+            return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.name}</a>')
         else:
-            return format_html('<a href="{}">{}</a>'.format(obj.url, obj.url))
+            return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.url}</a>')
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
@@ -42,9 +42,9 @@ class UserAdmin(admin.ModelAdmin):
     def vk_url_field(self, obj):
         if obj.url:
             if obj.initials:
-                return format_html('<a href="{}">{}</a>'.format(obj.url, obj.initials))
+                return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.initials}</a>')
             else:
-                return format_html('<a href="{}">{}</a>'.format(obj.url, obj.url))
+                return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.url}</a>')
         else:
             return obj.initials
 
