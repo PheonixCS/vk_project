@@ -18,9 +18,9 @@ class DonorAdmin(admin.ModelAdmin):
 
     def vk_url_field(self, obj):
         if obj.name:
-            return format_html(f'<a href="{obj.url}">{obj.name}</a>')
+            return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.name}</a>')
         else:
-            return format_html(f'<a href="{obj.url}">{obj.url}</a>')
+            return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.url}</a>')
 
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
