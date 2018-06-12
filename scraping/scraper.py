@@ -1,13 +1,13 @@
 import datetime
+import logging
 import re
 from difflib import SequenceMatcher
-import logging
 
 import vk_requests
-from vk_requests.exceptions import VkAPIError
+from django.utils import timezone
 from phonenumbers import PhoneNumberMatcher
 from urlextract import URLExtract
-from django.utils import timezone
+from vk_requests.exceptions import VkAPIError
 
 from posting.models import ServiceToken
 from scraping.models import Donor, Record, Image, Gif, Video, Audio
@@ -90,7 +90,7 @@ def filter_out_copies(records):
         log.info('no records in db')
         return records
 
-    filtered_records = list()
+    filtered_records = []
 
     for record in records:
         if any(record_in_db for record_in_db in records_in_db if
@@ -100,6 +100,24 @@ def filter_out_copies(records):
             log.debug('record {} was filtered'.format(record['id']))
 
     # TODO проверка изображений на дубликаты
+    return filtered_records
+
+
+def filter_out_records_with_unsuitable_attachments(records):
+    suitable_attachments = ['video', 'audio', 'doc', 'photo']
+
+    filtered_records = []
+    for record in records:
+        attachments = record.get('attachments')
+        if not attachments:
+            filtered_records.append(record)
+        else:
+            for attachment in attachments:
+                if attachment['type'] not in suitable_attachments:
+                    break
+                if attachment['type'] == 'doc' and attachment['doc']['ext'] != 'gif':
+                    break
+                filtered_records.append(record)
     return filtered_records
 
 
@@ -186,7 +204,7 @@ def min_text_length_filter(item, custom_filter):
 
 def min_quantity_of_videos_filter(item, custom_filter):
     number_of_videos = len(
-        [attachment for attachment in item.get('attachments', list()) if attachment['type'] == 'video'])
+        [attachment for attachment in item.get('attachments', []) if attachment['type'] == 'video'])
     if number_of_videos < custom_filter.min_quantity_of_videos:
         log.debug('delete {} because of custom filter: min_quantity_of_videos'.format(item['id']))
         return False
@@ -195,7 +213,7 @@ def min_quantity_of_videos_filter(item, custom_filter):
 
 def min_quantity_of_images_filter(item, custom_filter):
     number_of_images = len(
-        [attachment for attachment in item.get('attachments', list()) if attachment['type'] == 'photo'])
+        [attachment for attachment in item.get('attachments', []) if attachment['type'] == 'photo'])
     if number_of_images < custom_filter.min_quantity_of_images:
         log.debug('delete {} because of custom filter: min_quantity_of_images'.format(item['id']))
         return False
@@ -203,7 +221,7 @@ def min_quantity_of_images_filter(item, custom_filter):
 
 
 def min_quantity_of_gifs_filter(item, custom_filter):
-    number_of_gifs = len([attachment for attachment in item.get('attachments', list()) if
+    number_of_gifs = len([attachment for attachment in item.get('attachments', []) if
                           attachment['type'] == 'doc' and attachment['doc']['ext'] == 'gif'])
     if number_of_gifs < custom_filter.min_quantity_of_gifs:
         log.debug('delete {} because of custom filter: min_quantity_of_gifs'.format(item['id']))
@@ -213,7 +231,7 @@ def min_quantity_of_gifs_filter(item, custom_filter):
 
 def min_quantity_of_audios_filter(item, custom_filter):
     number_of_audios = len(
-        [attachment for attachment in item.get('attachments', list()) if attachment['type'] == 'audio'])
+        [attachment for attachment in item.get('attachments', []) if attachment['type'] == 'audio'])
     if number_of_audios < custom_filter.min_quantity_of_audios:
         log.debug('delete {} because of custom filter: min_quantity_of_audios'.format(item['id']))
         return False
@@ -221,7 +239,7 @@ def min_quantity_of_audios_filter(item, custom_filter):
 
 
 def filter_with_custom_filters(custom_filters, records):
-    filtered_records = list()
+    filtered_records = []
     for custom_filter in custom_filters:
         filters = tuple()
         if custom_filter.min_quantity_of_line_breaks:
@@ -415,6 +433,8 @@ def main():
                         log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
 
                     new_records = filter_out_copies(new_records)
+
+                    new_records = filter_out_records_with_unsuitable_attachments(new_records)
 
                     log.debug('got {} records after all filters in donor {}'.format(len(new_records), donor.id))
                 except:
