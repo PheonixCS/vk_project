@@ -14,6 +14,10 @@ class Donor(models.Model):
     def __str__(self):
         return '{} {}'.format(self.id, self.name)
 
+    class Meta:
+        verbose_name = 'Источник'
+        verbose_name_plural = 'Источники'
+
 
 class Filter(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='filters')
