@@ -23,12 +23,20 @@ class User(models.Model):
     def __str__(self):
         return '{} {}'.format(self.login, self.initials)
 
+    class Meta:
+        verbose_name = 'Администратор'
+        verbose_name_plural = 'Администраторы'
+
 
 class ServiceToken(models.Model):
     app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', primary_key=True)
 
     def __str__(self):
         return self.app_service_token
+
+    class Meta:
+        verbose_name = 'Сервисный токен'
+        verbose_name_plural = 'Сервисные токены'
 
 
 class Group(models.Model):
@@ -52,6 +60,10 @@ class Group(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.domain_or_id, self.name)
+
+    class Meta:
+        verbose_name = 'Сообщество'
+        verbose_name_plural = 'Сообщества'
 
 
 class AdRecord(models.Model):
