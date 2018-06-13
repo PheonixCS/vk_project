@@ -1,6 +1,8 @@
-from django.db import models
-from scraping.models import Donor
 import datetime
+
+from django.db import models
+
+from scraping.models import Donor
 
 
 class User(models.Model):
@@ -50,4 +52,3 @@ class Group(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.domain_or_id, self.name)
-

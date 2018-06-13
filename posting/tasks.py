@@ -8,11 +8,10 @@ from celery import task
 from django.utils import timezone
 
 from posting.models import Group, ServiceToken
-from scraping.models import Record
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
-                            upload_gif, delete_hashtags_from_text)
+                            delete_hashtags_from_text)
+from scraping.models import Record
 from scraping.scraper import get_wall, create_vk_api_using_service_token
-
 
 log = logging.getLogger('posting.scheduled')
 
