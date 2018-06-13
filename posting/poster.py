@@ -150,8 +150,8 @@ def get_ad_in_last_hour(api, group_id):
 
     try:
         wall = [record for record in get_wall(api, group_id)['items']
-                if datetime.fromtimestamp(record['date'], tz=timezone.utc and
-                                          record.get('marked_as_ads', False)) >= time_threshold]
+                if datetime.fromtimestamp(record['date'], tz=timezone.utc) and
+                record.get('marked_as_ads', False) >= time_threshold]
 
         if wall and wall[0].get('id', None) and wall[0].get('date', None):
             ad = {'id': wall[0].get('id'),
