@@ -182,6 +182,7 @@ def pin_best_post():
         time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=24)
         log.debug('search for posts from {} to now'.format(time_threshold))
 
+        # TODO count in live settings
         wall = [record for record in get_wall(search_api, group.domain_or_id, count=50)['items']
                 if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
@@ -212,3 +213,42 @@ def pin_best_post():
         else:
             log.warning('have no post in last 24 hours')
             continue
+
+@task
+def delete_old_ads():
+    """
+
+    :return:
+    """
+    log.info('delete_old_ads called')
+
+    active_groups = Group.objects.filter(
+        user__isnull=False,
+        is_posting_active=True,
+        is_pin_enabled=True).distinct()
+
+    for group in active_groups:
+
+        # TODO hours in live settings
+        time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=30)
+
+        ads = AdRecord.objects.filter(group=group, post_in_group_date__lt=time_threshold)
+        log.debug('got {} ads in last 30 hours'.format(len(ads)))
+
+        if len(ads):
+
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+
+            api = session.get_api()
+            if not api:
+                continue
+
+            for ad in ads:
+                try:
+                    resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
+                                           post_id=ad.record_id)
+                    log.debug('delete_post response: {}'.format(resp))
+                except:
+                    log.error('got unexpected error in delete_post', exc_info=True)

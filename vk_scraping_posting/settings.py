@@ -33,7 +33,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'delete_old_task': {
         'task': 'scraping.tasks.delete_oldest',
-        'schedule': crontab(minute=0, hour=5)  # at 5:00 am UTC (8:00 am by MSK)
+        'schedule': crontab(minute=15, hour=5)  # at 5:15 am UTC (8:15 am by MSK)
+    },
+    'delete_old_ads': {
+        'task': 'posting.tasks.delete_old_ads',
+        'schedule': crontab(minute=30)  # every hour at 30 minute
     }
 }
 
