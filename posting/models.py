@@ -52,3 +52,9 @@ class Group(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.domain_or_id, self.name)
+
+
+class AdRecord(models.Model):
+    ad_record_id = models.IntegerField()
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ad_records')
+    post_in_group_date = models.DateTimeField()
