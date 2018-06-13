@@ -1,6 +1,8 @@
-from django.db import models
-from scraping.models import Donor
 import datetime
+
+from django.db import models
+
+from scraping.models import Donor
 
 
 class User(models.Model):
@@ -62,3 +64,9 @@ class Group(models.Model):
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'
+
+
+class AdRecord(models.Model):
+    ad_record_id = models.IntegerField()
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ad_records')
+    post_in_group_date = models.DateTimeField()

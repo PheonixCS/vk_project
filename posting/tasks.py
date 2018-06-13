@@ -7,12 +7,11 @@ import vk_api
 from celery import task
 from django.utils import timezone
 
-from posting.models import Group, ServiceToken
-from scraping.models import Record
+from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
-                            upload_gif, delete_hashtags_from_text)
+                            delete_hashtags_from_text, get_ad_in_last_hour)
+from scraping.models import Record
 from scraping.scraper import get_wall, create_vk_api_using_service_token
-
 
 log = logging.getLogger('posting.scheduled')
 
@@ -35,7 +34,8 @@ def examine_groups():
         log.debug('working with group {}'.format(group.domain_or_id))
 
         if not group.group_id:
-            api = create_vk_session_using_login_password(group.user.login, group.user.password,
+            api = create_vk_session_using_login_password(group.user.login,
+                                                         group.user.password,
                                                          group.user.app_id).get_api()
             if not api:
                 continue
@@ -43,10 +43,30 @@ def examine_groups():
             group.save(update_fields=['group_id'])
 
         log.debug('start searching for posted records since {}'.format(time_threshold))
-        posts_in_last_hour_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-        log.debug('got {} posts in last hour and 5 minutes'.format(posts_in_last_hour_count))
+        last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        log.debug('got {} posts in last hour and 5 minutes'.format(last_hour_posts_count))
 
-        if group.posting_time.minute == now_minute or posts_in_last_hour_count < 1:
+        log.debug('start searching for ads in last hour and 5 minutes')
+        last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
+
+        if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
+
+            api = create_vk_session_using_login_password(group.user.login,
+                                                         group.user.password,
+                                                         group.user.app_id).get_api()
+            if api:
+                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
+                if ad_record:
+                    AdRecord.objects.create(ad_record_id=ad_record['id'],
+                                            group=group,
+                                            post_in_group_date=ad_record['date'])
+                    log.info('pass group {} due to ad in last hour')
+                    continue
+            if not api:
+                # if we got no api here, we still can continue posting
+                pass
+
             records = [record for donor in group.donors.all() for record in
                        donor.records.filter(rate__isnull=False,
                                             post_in_group_date__isnull=True,
@@ -65,7 +85,7 @@ def examine_groups():
                                   group.group_id,
                                   record_with_max_rate.id)
             except:
-                log.error('', exc_info=True)
+                log.error('got unexpected exception in examine_groups', exc_info=True)
 
 
 @task
@@ -162,6 +182,7 @@ def pin_best_post():
         time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=24)
         log.debug('search for posts from {} to now'.format(time_threshold))
 
+        # TODO count in live settings
         wall = [record for record in get_wall(search_api, group.domain_or_id, count=50)['items']
                 if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
@@ -192,3 +213,42 @@ def pin_best_post():
         else:
             log.warning('have no post in last 24 hours')
             continue
+
+@task
+def delete_old_ads():
+    """
+
+    :return:
+    """
+    log.info('delete_old_ads called')
+
+    active_groups = Group.objects.filter(
+        user__isnull=False,
+        is_posting_active=True,
+        is_pin_enabled=True).distinct()
+
+    for group in active_groups:
+
+        # TODO hours in live settings
+        time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=30)
+
+        ads = AdRecord.objects.filter(group=group, post_in_group_date__lt=time_threshold)
+        log.debug('got {} ads in last 30 hours'.format(len(ads)))
+
+        if len(ads):
+
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+
+            api = session.get_api()
+            if not api:
+                continue
+
+            for ad in ads:
+                try:
+                    resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
+                                           post_id=ad.record_id)
+                    log.debug('delete_post response: {}'.format(resp))
+                except:
+                    log.error('got unexpected error in delete_post', exc_info=True)

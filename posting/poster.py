@@ -1,12 +1,15 @@
 #
+import logging
 import os
 import re
+from datetime import datetime, timedelta
 
-import vk_api
 import requests
-import logging
+import vk_api
 from PIL import Image
+from django.utils import timezone
 
+from scraping.scraper import get_wall
 from settings.models import Setting
 
 log = logging.getLogger('posting.poster')
@@ -43,7 +46,7 @@ def download_file(url, extension=None):
     return local_filename
 
 
-def upload_video(session, api,  video_url, group_id):
+def upload_video(session, api, video_url, group_id):
     log.debug('upload_video called')
 
     try:
@@ -139,3 +142,21 @@ def delete_hashtags_from_text(text):
     text_without_link_hashtags = re.sub('(@\w*)', '', text)
     text_without_double_spaces = re.sub(' +', ' ', text_without_link_hashtags)
     return text_without_double_spaces
+
+
+def get_ad_in_last_hour(api, group_id):
+    log.debug('get_ad_in_last_hour called')
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1)
+
+    try:
+        wall = [record for record in get_wall(api, group_id)['items']
+                if datetime.fromtimestamp(record['date'], tz=timezone.utc and
+                                          record.get('marked_as_ads', False)) >= time_threshold]
+
+        if wall and wall[0].get('id', None) and wall[0].get('date', None):
+            ad = {'id': wall[0].get('id'),
+                  'date': wall[0].get('date')}
+            log.debug('got ad with id {} in group {}'.format(ad['id'], group_id))
+            return ad
+    except:
+        log.error('got unexpected error in get_ad_in_last_hour', exc_info=True)
