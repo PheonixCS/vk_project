@@ -114,9 +114,9 @@ def filter_out_records_with_unsuitable_attachments(records):
         else:
             for attachment in attachments:
                 if attachment['type'] not in suitable_attachments:
-                    continue
+                    break
                 if attachment['type'] == 'doc' and attachment['doc']['ext'] != 'gif':
-                    continue
+                    break
                 filtered_records.append(record)
     return filtered_records
 
