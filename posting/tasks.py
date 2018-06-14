@@ -58,12 +58,15 @@ def examine_groups():
             if api:
                 ad_record = get_ad_in_last_hour(api, group.domain_or_id)
                 if ad_record:
-                    AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                            group=group,
-                                            post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                      tz=timezone.utc))
-                    log.info('pass group {} due to ad in last hour')
-                    continue
+                    try:
+                        AdRecord.objects.create(ad_record_id=ad_record['id'],
+                                                group=group,
+                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                          tz=timezone.utc))
+                        log.info('pass group {} due to ad in last hour')
+                        continue
+                    except:
+                        log.error('got unexpected error', exc_info=True)
             if not api:
                 # if we got no api here, we still can continue posting
                 pass
