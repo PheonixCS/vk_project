@@ -60,7 +60,8 @@ def examine_groups():
                 if ad_record:
                     AdRecord.objects.create(ad_record_id=ad_record['id'],
                                             group=group,
-                                            post_in_group_date=ad_record['date'])
+                                            post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                      tz=timezone.utc))
                     log.info('pass group {} due to ad in last hour')
                     continue
             if not api:
