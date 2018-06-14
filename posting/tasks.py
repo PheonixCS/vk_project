@@ -63,7 +63,7 @@ def examine_groups():
                                                 group=group,
                                                 post_in_group_date=datetime.fromtimestamp(ad_record['date'],
                                                                                           tz=timezone.utc))
-                        log.info('pass group {} due to ad in last hour')
+                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
                         continue
                     except:
                         log.error('got unexpected error', exc_info=True)
