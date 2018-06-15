@@ -252,7 +252,7 @@ def delete_old_ads():
             for ad in ads:
                 try:
                     resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
-                                           post_id=ad.record_id)
+                                           post_id=ad.ad_record_id)
                     log.debug('delete_post response: {}'.format(resp))
                 except:
                     log.error('got unexpected error in delete_post', exc_info=True)
