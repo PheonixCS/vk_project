@@ -175,9 +175,7 @@ def check_docs_availability(api, docs):
     try:
         resp = api.docs.getById(docs=','.join(docs))
 
-        resp = resp.get('response', None)
-
-        if resp and len(resp) == len(docs):
+        if len(resp) == len(docs):
             return True
         else:
             log.info('check_docs_availability failed')
@@ -201,7 +199,7 @@ def check_video_availability(api, owner_id, video_id):
     try:
         resp = api.video.get(owner_id=owner_id, videos='{}_{}'.format(owner_id, video_id))
 
-        if resp.get('response', None) and resp.get('response').get('items'):
+        if resp.get('items'):
             return True
         else:
             log.info('check_video_availability failed')
