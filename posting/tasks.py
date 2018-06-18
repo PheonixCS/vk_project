@@ -134,7 +134,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
-        for image in images:
+        for image in images[::-1]:
             attachments.append(upload_photo(session, image.url, group_id))
 
         gifs = record.gifs.all()
