@@ -9,7 +9,8 @@ from django.utils import timezone
 
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
-                            delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability, check_video_availability)
+                            delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
+                            check_video_availability)
 from scraping.models import Record
 from scraping.scraper import get_wall, create_vk_api_using_service_token
 
@@ -231,6 +232,7 @@ def pin_best_post():
         else:
             log.warning('have no post in last 24 hours')
             continue
+
 
 @task
 def delete_old_ads():

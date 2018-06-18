@@ -184,7 +184,7 @@ def check_docs_availability(api, docs):
             return False
 
     except:
-        log.error('got unexpected error in check_docs_availability', ecc_info=True)
+        log.error('got unexpected error in check_docs_availability', exc_info=True)
 
 
 def check_video_availability(api, owner_id, video_id):
@@ -208,4 +208,4 @@ def check_video_availability(api, owner_id, video_id):
             return False
 
     except:
-        log.error('got unexpected error in check_video_availability')
+        log.error('got unexpected error in check_video_availability', exc_info=True)
