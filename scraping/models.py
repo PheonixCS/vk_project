@@ -50,6 +50,7 @@ class Record(models.Model):
     post_in_donor_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
     post_in_group_date = models.DateTimeField(null=True)
+    failed_date = models.DateTimeField(null=True)
 
     def __str__(self):
         return 'record {}'.format(self.record_id)
