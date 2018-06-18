@@ -142,7 +142,7 @@ def post_record(login, password, app_id, group_id, record_id):
         if gifs and check_docs_availability(api, ['{}_{}'.format(gif.owner_id, gif.gif_id) for gif in gifs]):
             for gif in gifs:
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
-        else:
+        elif gifs:
             record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             record.save()
             return
