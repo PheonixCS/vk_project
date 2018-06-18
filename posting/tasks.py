@@ -139,7 +139,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
-        if check_docs_availability(api, ['{}_{}'.format(gif.owner_id, gif.gif_id) for gif in gifs]):
+        if gifs and check_docs_availability(api, ['{}_{}'.format(gif.owner_id, gif.gif_id) for gif in gifs]):
             for gif in gifs:
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
         else:
