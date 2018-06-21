@@ -9,7 +9,7 @@ from phonenumbers import PhoneNumberMatcher
 from urlextract import URLExtract
 from vk_requests.exceptions import VkAPIError
 
-from posting.models import ServiceToken
+from posting.models import ServiceToken, Group
 from scraping.models import Donor, Record, Image, Gif, Video, Audio
 from settings.models import Setting
 
@@ -272,7 +272,26 @@ def find_url_of_biggest_image(image_dict):
     return image_dict[key_of_max_size_photo]
 
 
-def save_record_to_db(donor, record):
+def find_horoscopes(records):
+    zodiac_signs = ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
+                    'Весы', 'Скорпион', 'Стрелец', 'Козерог', 'Водолей', 'Рыбы']
+
+    horoscopes_records = []
+    for record in records:
+        text = record.get('text')
+        if text:
+            first_line = text.splitlines()[0]
+        else:
+            continue
+
+        if any(zodiac_sign.lower() in first_line.lower() for zodiac_sign in zodiac_signs) \
+                and bool(re.search(r'\d', first_line)):
+            horoscopes_records.append(record)
+
+    return horoscopes_records
+
+
+def save_record_to_db(donor, record, addition=None):
     log.info('save_record_to_db called')
     obj, created = Record.objects.get_or_create(
         donor=donor,
@@ -441,7 +460,19 @@ def main():
                     log.error('error while filter', exc_info=True)
                     continue
 
-            # Save it to db
+            # Horoscopes
+            horoscopes_donor_id = '83815413'
+
+            if horoscopes_donor_id in donor.id:
+                horoscopes_records = find_horoscopes(new_records)
+
+                if horoscopes_records:
+                    for horoscope_record in horoscopes_records:
+                        new_records.remove(horoscope_record)
+
+                        # Save horoscopes to db
+
+            # Save records to db
             for record in new_records:
                 try:
                     save_record_to_db(donor, record)
