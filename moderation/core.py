@@ -52,6 +52,11 @@ def handle_comment_event(event_object, group_id):
 
     group = Group.objects.select_related('user').filter(group_id=group_id).first()
 
+    # Комментарий от нашего сообщества
+    if group_id == group.group_id or str(group_id) in group.domain_or_id:
+        log.info('from_id {} is our group, cancel moderation'.format(event_object['from_id']))
+        return False
+
     moderation_rule = ModerationRule.objects.first()
     white_list = list(map(int, prepare_id_white_list(moderation_rule.id_white_list)))
     log.debug('white list contains {}'.format(white_list))
