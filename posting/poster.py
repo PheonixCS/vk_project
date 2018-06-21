@@ -160,3 +160,50 @@ def get_ad_in_last_hour(api, group_id):
             return ad
     except:
         log.error('got unexpected error in get_ad_in_last_hour', exc_info=True)
+
+
+def check_docs_availability(api, docs):
+    """
+
+    :param docs: list of dictionaries
+    :type docs: list
+    :return: true if all docs are available
+    :rtype: bool
+    """
+    log.debug('check_docs_availability called')
+
+    try:
+        resp = api.docs.getById(docs=','.join(docs))
+
+        if len(resp) == len(docs):
+            return True
+        else:
+            log.info('check_docs_availability failed')
+            return False
+
+    except:
+        log.error('got unexpected error in check_docs_availability', exc_info=True)
+
+
+def check_video_availability(api, owner_id, video_id):
+    """
+
+    :param api: api object
+    :param video_id: video id from vk
+    :param owner_id: string  representing video owner in vk way
+    :return: true if video available
+    """
+
+    log.debug('check_video_availability called')
+
+    try:
+        resp = api.video.get(owner_id=owner_id, videos='{}_{}'.format(owner_id, video_id))
+
+        if resp.get('items'):
+            return True
+        else:
+            log.info('check_video_availability failed')
+            return False
+
+    except:
+        log.error('got unexpected error in check_video_availability', exc_info=True)

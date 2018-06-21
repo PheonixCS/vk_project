@@ -9,7 +9,8 @@ from django.utils import timezone
 
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
-                            delete_hashtags_from_text, get_ad_in_last_hour)
+                            delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
+                            check_video_availability)
 from scraping.models import Record
 from scraping.scraper import get_wall, create_vk_api_using_service_token
 
@@ -71,9 +72,17 @@ def examine_groups():
                 # if we got no api here, we still can continue posting
                 pass
 
-            records = [record for donor in group.donors.all() for record in
+            donors = group.donors.all()
+
+            if len(donors) > 1:
+                # find last record id and its donor id
+                last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
+                donors = donors.exclude(pk=last_record.donor_id)
+
+            records = [record for donor in donors for record in
                        donor.records.filter(rate__isnull=False,
                                             post_in_group_date__isnull=True,
+                                            failed_date__isnull=True,
                                             post_in_donor_date__gt=allowed_time_threshold)]
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
@@ -125,22 +134,28 @@ def post_record(login, password, app_id, group_id, record_id):
 
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
-        for image in images:
+        for image in images[::-1]:
             attachments.append(upload_photo(session, image.url, group_id))
 
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
-        for gif in gifs:
-            # attachments.append(upload_gif(session, gif.url))
-            attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
+        if gifs and check_docs_availability(api, ['{}_{}'.format(gif.owner_id, gif.gif_id) for gif in gifs]):
+            for gif in gifs:
+                attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
+        elif gifs:
+            record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+            record.save()
+            return
 
         videos = record.videos.all()
         log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
         for video in videos:
-            # uploaded_video_name = upload_video(session, api, video.get_url(), group_id)
-            # if uploaded_video_name:
-            #     attachments.append(uploaded_video_name)
-            attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
+            if check_video_availability(api, video.owner_id, video.video_id):
+                attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
+            else:
+                record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                record.save()
+                return
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
@@ -156,7 +171,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
-    record.save(update_fields=['post_in_group_date', 'group'])
+    record.save()
     log.debug('post in group {} finished'.format(group_id))
 
 
@@ -218,6 +233,7 @@ def pin_best_post():
             log.warning('have no post in last 24 hours')
             continue
 
+
 @task
 def delete_old_ads():
     """
@@ -237,7 +253,7 @@ def delete_old_ads():
         time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=30)
 
         ads = AdRecord.objects.filter(group=group, post_in_group_date__lt=time_threshold)
-        log.debug('got {} ads in last 30 hours'.format(len(ads)))
+        log.debug('got {} ads in last 30 hours in group {}'.format(len(ads), group.group_id))
 
         if len(ads):
 
@@ -252,7 +268,7 @@ def delete_old_ads():
             for ad in ads:
                 try:
                     resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
-                                           post_id=ad.record_id)
-                    log.debug('delete_post response: {}'.format(resp))
+                                           post_id=ad.ad_record_id)
+                    log.debug('delete_old_ads {} response: {}'.format(ad.ad_record_id, resp))
                 except:
-                    log.error('got unexpected error in delete_post', exc_info=True)
+                    log.error('got unexpected error in delete_old_ads for {}'.format(ad.ad_record_id), exc_info=True)
