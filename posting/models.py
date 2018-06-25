@@ -45,6 +45,7 @@ class Group(models.Model):
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     group_id = models.IntegerField(null=True)
     is_posting_active = models.BooleanField(default=True, verbose_name='Постинг активен?')
+    is_horoscopes = models.BooleanField(default=False, verbose_name='Постинг гороскопов задействован?')
     is_pin_enabled = models.BooleanField(default=True, verbose_name='Закреплять лучшие посты?')
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='groups', blank=True, null=True)

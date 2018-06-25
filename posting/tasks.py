@@ -51,6 +51,38 @@ def examine_groups():
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
 
+        horoscope_posting_interval = 3
+        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
+                and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
+                and not last_hour_ads_count:
+            api = create_vk_session_using_login_password(group.user.login,
+                                                         group.user.password,
+                                                         group.user.app_id).get_api()
+            if api:
+                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
+                if ad_record:
+                    try:
+                        AdRecord.objects.create(ad_record_id=ad_record['id'],
+                                                group=group,
+                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                          tz=timezone.utc))
+                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
+                        continue
+                    except:
+                        log.error('got unexpected error', exc_info=True)
+            if not api:
+                # if we got no api here, we still can continue posting
+                pass
+
+            try:
+                post_horoscope.delay(group.user.login,
+                                     group.user.password,
+                                     group.user.app_id,
+                                     group.group_id,
+                                     group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
+            except:
+                log.error('got unexpected exception in examine_groups', exc_info=True)
+
         if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
 
             api = create_vk_session_using_login_password(group.user.login,
@@ -99,6 +131,47 @@ def examine_groups():
                                   record_with_max_rate.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
+
+
+@task
+def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
+    log.debug('start posting horoscopes in {} group'.format(group_id))
+
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
+
+    if not session:
+        log.error('session not created in group {}'.format(group_id))
+        return
+
+    if not api:
+        log.error('no api was created in group {}'.format(group_id))
+        return
+
+    group = Group.objects.get(group_id=group_id)
+    horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
+    log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
+
+    try:
+        attachments = ''
+        if horoscope_record.image_url:
+            attachments = upload_photo(session, horoscope_record.image_url, group_id)
+
+        post_response = api.wall.post(owner_id='-{}'.format(group_id),
+                                      from_group=1,
+                                      message=delete_hashtags_from_text(horoscope_record.text),
+                                      attachments=attachments)
+        log.debug('{} in group {}'.format(post_response, group_id))
+    except vk_api.VkApiError as error_msg:
+        log.info('group {} got api error: {}'.format(group_id, error_msg))
+        return
+    except:
+        log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        return
+
+    horoscope_record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    horoscope_record.save()
+    log.debug('post horoscopes in group {} finished'.format(group_id))
 
 
 @task
