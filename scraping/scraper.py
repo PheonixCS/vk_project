@@ -505,10 +505,10 @@ def main():
                         log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
                         for group in groups_with_horoscope_posting:
                             record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
-                            log.debug('record {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
+                            log.debug('record {} got {} zodiac sigh'.format(group.domain_or_id,
                                                                             record_zodiac_sign))
                             group_zodiac_sign = fetch_zodiac_sign(group.name)
-                            log.debug('group {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
+                            log.debug('group {} got {} zodiac sigh'.format(group.domain_or_id,
                                                                            group_zodiac_sign))
                             if group_zodiac_sign:
                                 if not group_zodiac_sign == record_zodiac_sign:
