@@ -503,32 +503,20 @@ def main():
                     log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
                     for group in groups_with_horoscope_posting:
                         record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
-                        log.debug('record {} got {} zodiac sigh'.format(horoscope_record['id'],
-                                                                        record_zodiac_sign))
                         group_zodiac_sign = fetch_zodiac_sign(group.name)
-                        log.debug('group {} got {} zodiac sigh'.format(horoscope_record['id'],
-                                                                       group_zodiac_sign))
                         if group_zodiac_sign:
                             if not group_zodiac_sign == record_zodiac_sign:
                                 continue
 
                         log.debug('saving horoscope record {} in db'.format(horoscope_record['id']))
-                        try:
-                            save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
-                        except:
-                            log.error('exception while saving horoscope in db', exc_info=True)
-                            continue
+                        save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
             log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
                                                                                           donor.id))
 
             # Save records to db
             for record in new_records:
-                try:
-                    save_record_to_db(donor, record)
-                except:
-                    log.error('exception while saving record in db', exc_info=True)
-                    continue
-                log.info('saved {} records in group {}'.format(len(new_records), donor.id))
+                save_record_to_db(donor, record)
+            log.info('saved {} records in group {}'.format(len(new_records), donor.id))
 
             # Rating part
             # Get all non rated records from this api call
@@ -553,6 +541,7 @@ def main():
                 if donor.id.isdigit():
                     digit_id = donor.id
                 else:
+                    # TODO fix this
                     # digit_id = fetch_group_id(api, donor.id)
                     digit_id = donor.id
 

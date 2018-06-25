@@ -19,128 +19,120 @@ log = logging.getLogger('posting.scheduled')
 
 @task
 def examine_groups():
-    try:
-        log.debug('start group examination')
-        groups_to_post_in = Group.objects.filter(user__isnull=False,
-                                                 donors__isnull=False,
-                                                 is_posting_active=True).distinct()
+    log.debug('start group examination')
+    groups_to_post_in = Group.objects.filter(user__isnull=False,
+                                             donors__isnull=False,
+                                             is_posting_active=True).distinct()
 
-        log.debug('got {} groups'.format(len(groups_to_post_in)))
+    log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-        now_minute = datetime.now().minute
+    now_minute = datetime.now().minute
 
-        # time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
-        # TODO remove it
-        time_threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=5)
-        allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+    allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
 
-        for group in groups_to_post_in:
-            log.debug('working with group {}'.format(group.domain_or_id))
+    for group in groups_to_post_in:
+        log.debug('working with group {}'.format(group.domain_or_id))
 
-            if not group.group_id:
-                api = create_vk_session_using_login_password(group.user.login,
-                                                             group.user.password,
-                                                             group.user.app_id).get_api()
-                if not api:
-                    continue
-                group.group_id = fetch_group_id(api, group.domain_or_id)
-                group.save(update_fields=['group_id'])
+        if not group.group_id:
+            api = create_vk_session_using_login_password(group.user.login,
+                                                         group.user.password,
+                                                         group.user.app_id).get_api()
+            if not api:
+                continue
+            group.group_id = fetch_group_id(api, group.domain_or_id)
+            group.save(update_fields=['group_id'])
 
-            log.debug('start searching for posted records since {}'.format(time_threshold))
-            last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-            log.debug('got {} posts in last hour and 5 minutes'.format(last_hour_posts_count))
+        log.debug('start searching for posted records since {}'.format(time_threshold))
+        last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        log.debug('got {} posts in last hour and 5 minutes'.format(last_hour_posts_count))
 
-            log.debug('start searching for ads in last hour and 5 minutes')
-            last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-            log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
+        log.debug('start searching for ads in last hour and 5 minutes')
+        last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
 
-            try:
-                horoscope_posting_interval = 3
-                if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
-                        and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
-                        and not last_hour_ads_count:
-                    api = create_vk_session_using_login_password(group.user.login,
-                                                                 group.user.password,
-                                                                 group.user.app_id).get_api()
-                    if api:
-                        ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                        if ad_record:
-                            try:
-                                AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                        group=group,
-                                                        post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                                  tz=timezone.utc))
-                                log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                                continue
-                            except:
-                                log.error('got unexpected error', exc_info=True)
-                    if not api:
-                        # if we got no api here, we still can continue posting
-                        pass
-
+        horoscope_posting_interval = 3
+        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
+                and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
+                and not last_hour_ads_count:
+            api = create_vk_session_using_login_password(group.user.login,
+                                                         group.user.password,
+                                                         group.user.app_id).get_api()
+            if api:
+                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
+                if ad_record:
                     try:
-                        post_horoscope.delay(group.user.login,
-                                             group.user.password,
-                                             group.user.app_id,
-                                             group.group_id,
-                                             group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
+                        AdRecord.objects.create(ad_record_id=ad_record['id'],
+                                                group=group,
+                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                          tz=timezone.utc))
+                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
                         continue
                     except:
-                        log.error('got unexpected exception in examine_groups', exc_info=True)
+                        log.error('got unexpected error', exc_info=True)
+            if not api:
+                # if we got no api here, we still can continue posting
+                pass
+
+            try:
+                post_horoscope.delay(group.user.login,
+                                     group.user.password,
+                                     group.user.app_id,
+                                     group.group_id,
+                                     group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
+                continue
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
 
-            if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
+        if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
 
-                api = create_vk_session_using_login_password(group.user.login,
-                                                             group.user.password,
-                                                             group.user.app_id).get_api()
-                if api:
-                    ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                    if ad_record:
-                        try:
-                            AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                    group=group,
-                                                    post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                              tz=timezone.utc))
-                            log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                            continue
-                        except:
-                            log.error('got unexpected error', exc_info=True)
-                if not api:
-                    # if we got no api here, we still can continue posting
-                    pass
+            api = create_vk_session_using_login_password(group.user.login,
+                                                         group.user.password,
+                                                         group.user.app_id).get_api()
+            if api:
+                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
+                if ad_record:
+                    try:
+                        AdRecord.objects.create(ad_record_id=ad_record['id'],
+                                                group=group,
+                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                          tz=timezone.utc))
+                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
+                        continue
+                    except:
+                        log.error('got unexpected error', exc_info=True)
+            if not api:
+                # if we got no api here, we still can continue posting
+                pass
 
-                donors = group.donors.all()
+            donors = group.donors.all()
 
-                if len(donors) > 1:
-                    # find last record id and its donor id
-                    last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
-                    if last_record:
-                        donors = donors.exclude(pk=last_record.donor_id)
+            if len(donors) > 1:
+                # find last record id and its donor id
+                last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
+                if last_record:
+                    donors = donors.exclude(pk=last_record.donor_id)
 
-                records = [record for donor in donors for record in
-                           donor.records.filter(rate__isnull=False,
-                                                post_in_group_date__isnull=True,
-                                                failed_date__isnull=True,
-                                                post_in_donor_date__gt=allowed_time_threshold)]
-                log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
-                if not records:
-                    continue
+            records = [record for donor in donors for record in
+                       donor.records.filter(rate__isnull=False,
+                                            post_in_group_date__isnull=True,
+                                            failed_date__isnull=True,
+                                            post_in_donor_date__gt=allowed_time_threshold)]
+            log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
+            if not records:
+                continue
 
-                record_with_max_rate = max(records, key=lambda x: x.rate)
-                log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
+            record_with_max_rate = max(records, key=lambda x: x.rate)
+            log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
 
-                try:
-                    post_record.delay(group.user.login,
-                                      group.user.password,
-                                      group.user.app_id,
-                                      group.group_id,
-                                      record_with_max_rate.id)
-                except:
-                    log.error('got unexpected exception in examine_groups', exc_info=True)
-    except:
-        log.error('got unexpected exception in examine_groups', exc_info=True)
+            try:
+                post_record.delay(group.user.login,
+                                  group.user.password,
+                                  group.user.app_id,
+                                  group.group_id,
+                                  record_with_max_rate.id)
+            except:
+                log.error('got unexpected exception in examine_groups', exc_info=True)
 
 @task
 def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
