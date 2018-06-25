@@ -10,7 +10,6 @@ from urlextract import URLExtract
 from vk_requests.exceptions import VkAPIError
 
 from posting.models import ServiceToken, Group
-from posting.poster import fetch_group_id
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
 from settings.models import Setting
 
@@ -556,7 +555,8 @@ def main():
                     if donor.id.isdigit():
                         digit_id = donor.id
                     else:
-                        digit_id = fetch_group_id(api, donor.id)
+                        # digit_id = fetch_group_id(api, donor.id)
+                        digit_id = donor.id
 
                     all_non_rated = [record.record_id for record in all_non_rated]
 
