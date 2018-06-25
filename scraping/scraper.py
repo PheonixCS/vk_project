@@ -46,7 +46,7 @@ def create_vk_api_using_service_token(token):
     return api
 
 
-def get_wall(api, group_id, count=25):
+def get_wall(api, group_id, count=75):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
@@ -490,36 +490,38 @@ def main():
 
             # Horoscopes
             horoscopes_donor_id = '83815413'
+            try:
+                if horoscopes_donor_id in donor.id:
+                    log.debug('start scraping horoscope donor')
+                    horoscopes_records = find_horoscopes(new_records)
+                    log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
 
-            if horoscopes_donor_id in donor.id:
-                log.debug('start scraping horoscope donor')
-                horoscopes_records = find_horoscopes(new_records)
-                log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
+                    for horoscope_record in horoscopes_records:
+                        new_records.remove(horoscope_record)
+                        log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
+                                                                                                      donor.id))
+                        # Save horoscope to db
+                        groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+                        log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
+                        for group in groups_with_horoscope_posting:
+                            record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
+                            log.debug('record {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
+                                                                            record_zodiac_sign))
+                            group_zodiac_sign = fetch_zodiac_sign(group.name)
+                            log.debug('group {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
+                                                                           group_zodiac_sign))
+                            if group_zodiac_sign:
+                                if not group_zodiac_sign == record_zodiac_sign:
+                                    continue
 
-                for horoscope_record in horoscopes_records:
-                    new_records.remove(horoscope_record)
-                    log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
-                                                                                                  donor.id))
-                    # Save horoscope to db
-                    groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
-                    log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
-                    for group in groups_with_horoscope_posting:
-                        record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
-                        log.debug('record {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
-                                                                        record_zodiac_sign))
-                        group_zodiac_sign = fetch_zodiac_sign(group.name)
-                        log.debug('group {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
-                                                                       group_zodiac_sign))
-                        if group_zodiac_sign:
-                            if not group_zodiac_sign == record_zodiac_sign:
+                            log.debug('saving horoscope record {} in db'.format(horoscope_record.id))
+                            try:
+                                save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
+                            except:
+                                log.error('exception while saving horoscope in db', exc_info=True)
                                 continue
-
-                        log.debug('saving horoscope record {} in db'.format(horoscope_record.id))
-                        try:
-                            save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
-                        except:
-                            log.error('exception while saving horoscope in db', exc_info=True)
-                            continue
+            except:
+                log.error('got unexpected error in horoscopes', exc_info=True)
 
             # Save records to db
             for record in new_records:
