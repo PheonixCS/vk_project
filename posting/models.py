@@ -2,8 +2,6 @@ import datetime
 
 from django.db import models
 
-from scraping.models import Donor
-
 
 class User(models.Model):
     login = models.CharField(max_length=64, verbose_name='Логин', unique=True)
@@ -50,7 +48,7 @@ class Group(models.Model):
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='groups', blank=True, null=True)
     callback_api_token = models.CharField(max_length=128, verbose_name='Ответ для callback api', blank=True, default='')
-    donors = models.ManyToManyField(Donor, blank=True)
+    donors = models.ManyToManyField('scraping.Donor', blank=True)
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
