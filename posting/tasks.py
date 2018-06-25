@@ -80,6 +80,7 @@ def examine_groups():
                                      group.user.app_id,
                                      group.group_id,
                                      group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
+                continue
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
 
@@ -109,7 +110,8 @@ def examine_groups():
             if len(donors) > 1:
                 # find last record id and its donor id
                 last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
-                donors = donors.exclude(pk=last_record.donor_id)
+                if last_record:
+                    donors = donors.exclude(pk=last_record.donor_id)
 
             records = [record for donor in donors for record in
                        donor.records.filter(rate__isnull=False,
@@ -131,7 +133,6 @@ def examine_groups():
                                   record_with_max_rate.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
-
 
 @task
 def post_horoscope(login, password, app_id, group_id, horoscope_record_id):

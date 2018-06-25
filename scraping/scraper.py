@@ -46,7 +46,7 @@ def create_vk_api_using_service_token(token):
     return api
 
 
-def get_wall(api, group_id, count=25):
+def get_wall(api, group_id, count=75):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
@@ -393,7 +393,6 @@ def rate_records(donor_id, records):
         # TODO make one query with all records instead of one call each record
         log.debug('rating {}'.format(record['id']))
         try:
-            # FIXME add donor to query
             record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
         except:
             log.error('handling record error', exc_info=True)
@@ -490,7 +489,6 @@ def main():
 
             # Horoscopes
             horoscopes_donor_id = '83815413'
-
             if horoscopes_donor_id in donor.id:
                 log.debug('start scraping horoscope donor')
                 horoscopes_records = find_horoscopes(new_records)
@@ -498,37 +496,26 @@ def main():
 
                 for horoscope_record in horoscopes_records:
                     new_records.remove(horoscope_record)
-                    log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
-                                                                                                  donor.id))
+
                     # Save horoscope to db
                     groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
                     log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
                     for group in groups_with_horoscope_posting:
                         record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
-                        log.debug('record {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
-                                                                        record_zodiac_sign))
                         group_zodiac_sign = fetch_zodiac_sign(group.name)
-                        log.debug('group {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
-                                                                       group_zodiac_sign))
                         if group_zodiac_sign:
                             if not group_zodiac_sign == record_zodiac_sign:
                                 continue
 
-                        log.debug('saving horoscope record {} in db'.format(horoscope_record.id))
-                        try:
-                            save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
-                        except:
-                            log.error('exception while saving horoscope in db', exc_info=True)
-                            continue
+                        log.debug('saving horoscope record {} in db'.format(horoscope_record['id']))
+                        save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
+            log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
+                                                                                          donor.id))
 
             # Save records to db
             for record in new_records:
-                try:
-                    save_record_to_db(donor, record)
-                except:
-                    log.error('exception while saving record in db', exc_info=True)
-                    continue
-                log.info('saved {} records in group {}'.format(len(new_records), donor.id))
+                save_record_to_db(donor, record)
+            log.info('saved {} records in group {}'.format(len(new_records), donor.id))
 
             # Rating part
             # Get all non rated records from this api call
@@ -541,7 +528,6 @@ def main():
                 except:
                     log.error('error while rating', exc_info=True)
 
-            # FIXME add donor to query
             all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
 
             if all_non_rated:
@@ -550,11 +536,12 @@ def main():
                     # TODO sort it by date, delete oldest
                     all_non_rated = all_non_rated[:100]
 
-                # TODO make it clearer
                 if donor.id.isdigit():
                     digit_id = donor.id
                 else:
-                    digit_id = new_records[0]['from_id']
+                    # TODO fix this
+                    # digit_id = fetch_group_id(api, donor.id)
+                    digit_id = donor.id
 
                 all_non_rated = [record.record_id for record in all_non_rated]
 
@@ -564,7 +551,4 @@ def main():
                     log.warning('got 0 unrated records from api')
                     continue
 
-                try:
-                    rate_records(donor.id, all_non_rated)
-                except:
-                    log.error('error while rating', exc_info=True)
+                rate_records(donor.id, all_non_rated)
