@@ -490,38 +490,36 @@ def main():
 
             # Horoscopes
             horoscopes_donor_id = '83815413'
-            try:
-                if horoscopes_donor_id in donor.id:
-                    log.debug('start scraping horoscope donor')
-                    horoscopes_records = find_horoscopes(new_records)
-                    log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
+            if horoscopes_donor_id in donor.id:
+                log.debug('start scraping horoscope donor')
+                horoscopes_records = find_horoscopes(new_records)
+                log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
 
-                    for horoscope_record in horoscopes_records:
-                        new_records.remove(horoscope_record)
-                        log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
-                                                                                                      donor.id))
-                        # Save horoscope to db
-                        groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
-                        log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
-                        for group in groups_with_horoscope_posting:
-                            record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
-                            log.debug('record {} got {} zodiac sigh'.format(group.domain_or_id,
-                                                                            record_zodiac_sign))
-                            group_zodiac_sign = fetch_zodiac_sign(group.name)
-                            log.debug('group {} got {} zodiac sigh'.format(group.domain_or_id,
-                                                                           group_zodiac_sign))
-                            if group_zodiac_sign:
-                                if not group_zodiac_sign == record_zodiac_sign:
-                                    continue
+                for horoscope_record in horoscopes_records:
+                    new_records.remove(horoscope_record)
 
-                            log.debug('saving horoscope record {} in db'.format(horoscope_record['id']))
-                            try:
-                                save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
-                            except:
-                                log.error('exception while saving horoscope in db', exc_info=True)
+                    # Save horoscope to db
+                    groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+                    log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
+                    for group in groups_with_horoscope_posting:
+                        record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
+                        log.debug('record {} got {} zodiac sigh'.format(horoscope_record['id'],
+                                                                        record_zodiac_sign))
+                        group_zodiac_sign = fetch_zodiac_sign(group.name)
+                        log.debug('group {} got {} zodiac sigh'.format(horoscope_record['id'],
+                                                                       group_zodiac_sign))
+                        if group_zodiac_sign:
+                            if not group_zodiac_sign == record_zodiac_sign:
                                 continue
-            except:
-                log.error('got unexpected error in horoscopes', exc_info=True)
+
+                        log.debug('saving horoscope record {} in db'.format(horoscope_record['id']))
+                        try:
+                            save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
+                        except:
+                            log.error('exception while saving horoscope in db', exc_info=True)
+                            continue
+            log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
+                                                                                          donor.id))
 
             # Save records to db
             for record in new_records:
@@ -547,27 +545,23 @@ def main():
             all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
 
             if all_non_rated:
-                # TODO remove this try
-                try:
-                    if len(all_non_rated) > 100:
-                        log.warning('too many non rated records!')
-                        # TODO sort it by date, delete oldest
-                        all_non_rated = all_non_rated[:100]
+                if len(all_non_rated) > 100:
+                    log.warning('too many non rated records!')
+                    # TODO sort it by date, delete oldest
+                    all_non_rated = all_non_rated[:100]
 
-                    if donor.id.isdigit():
-                        digit_id = donor.id
-                    else:
-                        # digit_id = fetch_group_id(api, donor.id)
-                        digit_id = donor.id
+                if donor.id.isdigit():
+                    digit_id = donor.id
+                else:
+                    # digit_id = fetch_group_id(api, donor.id)
+                    digit_id = donor.id
 
-                    all_non_rated = [record.record_id for record in all_non_rated]
+                all_non_rated = [record.record_id for record in all_non_rated]
 
-                    all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
+                all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
 
-                    if not all_non_rated:
-                        log.warning('got 0 unrated records from api')
-                        continue
+                if not all_non_rated:
+                    log.warning('got 0 unrated records from api')
+                    continue
 
-                    rate_records(donor.id, all_non_rated)
-                except:
-                    log.error('error while rating', exc_info=True)
+                rate_records(donor.id, all_non_rated)
