@@ -113,7 +113,8 @@ def examine_groups():
                 if len(donors) > 1:
                     # find last record id and its donor id
                     last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
-                    donors = donors.exclude(pk=last_record.donor_id)
+                    if last_record:
+                        donors = donors.exclude(pk=last_record.donor_id)
 
                 records = [record for donor in donors for record in
                            donor.records.filter(rate__isnull=False,
