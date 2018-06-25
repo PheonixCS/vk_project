@@ -51,37 +51,40 @@ def examine_groups():
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
 
-        horoscope_posting_interval = 3
-        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
-                and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
-                and not last_hour_ads_count:
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
-            if api:
-                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                if ad_record:
-                    try:
-                        AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                group=group,
-                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                          tz=timezone.utc))
-                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                        continue
-                    except:
-                        log.error('got unexpected error', exc_info=True)
-            if not api:
-                # if we got no api here, we still can continue posting
-                pass
+        try:
+            horoscope_posting_interval = 3
+            if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
+                    and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
+                    and not last_hour_ads_count:
+                api = create_vk_session_using_login_password(group.user.login,
+                                                             group.user.password,
+                                                             group.user.app_id).get_api()
+                if api:
+                    ad_record = get_ad_in_last_hour(api, group.domain_or_id)
+                    if ad_record:
+                        try:
+                            AdRecord.objects.create(ad_record_id=ad_record['id'],
+                                                    group=group,
+                                                    post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                              tz=timezone.utc))
+                            log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
+                            continue
+                        except:
+                            log.error('got unexpected error', exc_info=True)
+                if not api:
+                    # if we got no api here, we still can continue posting
+                    pass
 
-            try:
-                post_horoscope.delay(group.user.login,
-                                     group.user.password,
-                                     group.user.app_id,
-                                     group.group_id,
-                                     group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
-            except:
-                log.error('got unexpected exception in examine_groups', exc_info=True)
+                try:
+                    post_horoscope.delay(group.user.login,
+                                         group.user.password,
+                                         group.user.app_id,
+                                         group.group_id,
+                                         group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
+                except:
+                    log.error('got unexpected exception in examine_groups', exc_info=True)
+        except:
+            log.error('got unexpected exception in examine_groups', exc_info=True)
 
         if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
 

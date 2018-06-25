@@ -10,6 +10,7 @@ from urlextract import URLExtract
 from vk_requests.exceptions import VkAPIError
 
 from posting.models import ServiceToken, Group
+from posting.poster import fetch_group_id
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
 from settings.models import Setting
 
@@ -545,26 +546,26 @@ def main():
             all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
 
             if all_non_rated:
-                if len(all_non_rated) > 100:
-                    log.warning('too many non rated records!')
-                    # TODO sort it by date, delete oldest
-                    all_non_rated = all_non_rated[:100]
-
-                # TODO make it clearer
-                if donor.id.isdigit():
-                    digit_id = donor.id
-                else:
-                    digit_id = new_records[0]['from_id']
-
-                all_non_rated = [record.record_id for record in all_non_rated]
-
-                all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
-
-                if not all_non_rated:
-                    log.warning('got 0 unrated records from api')
-                    continue
-
+                # TODO remove this try
                 try:
+                    if len(all_non_rated) > 100:
+                        log.warning('too many non rated records!')
+                        # TODO sort it by date, delete oldest
+                        all_non_rated = all_non_rated[:100]
+
+                    if donor.id.isdigit():
+                        digit_id = donor.id
+                    else:
+                        digit_id = fetch_group_id(api, donor.id)
+
+                    all_non_rated = [record.record_id for record in all_non_rated]
+
+                    all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
+
+                    if not all_non_rated:
+                        log.warning('got 0 unrated records from api')
+                        continue
+
                     rate_records(donor.id, all_non_rated)
                 except:
                     log.error('error while rating', exc_info=True)
