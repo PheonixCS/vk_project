@@ -10,7 +10,7 @@ from urlextract import URLExtract
 from vk_requests.exceptions import VkAPIError
 
 from posting.models import ServiceToken, Group
-from scraping.models import Donor, Record, Image, Gif, Video, Audio
+from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
 from settings.models import Setting
 
 log = logging.getLogger('scraping.scraper')
@@ -274,10 +274,16 @@ def find_url_of_biggest_image(image_dict):
     return image_dict[key_of_max_size_photo]
 
 
-def find_horoscopes(records):
+def fetch_zodiac_sign(text):
     zodiac_signs = ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
                     'Весы', 'Скорпион', 'Стрелец', 'Козерог', 'Водолей', 'Рыбы']
+    for zodiac_sign in zodiac_signs:
+        if zodiac_sign.lower() in text.lower():
+            return zodiac_sign.lower()
+    return None
 
+
+def find_horoscopes(records):
     horoscopes_records = []
     for record in records:
         text = record.get('text')
@@ -286,14 +292,13 @@ def find_horoscopes(records):
         else:
             continue
 
-        if any(zodiac_sign.lower() in first_line.lower() for zodiac_sign in zodiac_signs) \
-                and bool(re.search(r'\d', first_line)):
+        if fetch_zodiac_sign(first_line) and bool(re.search(r'\d', first_line)):
             horoscopes_records.append(record)
 
     return horoscopes_records
 
 
-def save_record_to_db(donor, record, addition=None):
+def save_record_to_db(donor, record):
     log.info('save_record_to_db called')
     obj, created = Record.objects.get_or_create(
         donor=donor,
@@ -345,6 +350,27 @@ def save_record_to_db(donor, record, addition=None):
                         owner_id=audio['audio']['owner_id'],
                         audio_id=audio['audio']['id']
                     )
+
+    return created
+
+
+def save_horoscope_record_to_db(group, record, zodiac_sign):
+    log.info('save_horoscope_record_to_db called')
+    obj, created = Horoscope.objects.get_or_create(
+        group=group,
+        zodiac_sign=zodiac_sign,
+        defaults={
+            'text': record['text'],
+        }
+    )
+    if created:
+        log.info('record {} was in db, modifying'.format(record['id']))
+        if 'attachments' in record:
+            if any('photo' in d for d in record['attachments']):
+                images = [item for item in record['attachments'] if item['type'] == 'photo']
+                for image in images:
+                    obj.image_url = find_url_of_biggest_image(image['photo'])
+                obj.save(update_fields=['image_url'])
 
     return created
 
@@ -466,20 +492,41 @@ def main():
             horoscopes_donor_id = '83815413'
 
             if horoscopes_donor_id in donor.id:
+                log.debug('start scraping horoscope donor')
                 horoscopes_records = find_horoscopes(new_records)
+                log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
 
-                if horoscopes_records:
-                    for horoscope_record in horoscopes_records:
-                        new_records.remove(horoscope_record)
+                for horoscope_record in horoscopes_records:
+                    new_records.remove(horoscope_record)
+                    log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
+                                                                                                  donor.id))
+                    # Save horoscope to db
+                    groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+                    log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
+                    for group in groups_with_horoscope_posting:
+                        record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
+                        log.debug('record {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
+                                                                        record_zodiac_sign))
+                        group_zodiac_sign = fetch_zodiac_sign(group.name)
+                        log.debug('group {} got {} zodiac sigh'.format(groups_with_horoscope_posting.domain_or_id,
+                                                                       group_zodiac_sign))
+                        if group_zodiac_sign:
+                            if not group_zodiac_sign == record_zodiac_sign:
+                                continue
 
-                        # Save horoscopes to db
+                        log.debug('saving horoscope record {} in db'.format(horoscope_record.id))
+                        try:
+                            save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
+                        except:
+                            log.error('exception while saving horoscope in db', exc_info=True)
+                            continue
 
             # Save records to db
             for record in new_records:
                 try:
                     save_record_to_db(donor, record)
                 except:
-                    log.error('exception while saving in db', exc_info=True)
+                    log.error('exception while saving record in db', exc_info=True)
                     continue
                 log.info('saved {} records in group {}'.format(len(new_records), donor.id))
 

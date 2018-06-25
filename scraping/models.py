@@ -78,3 +78,11 @@ class Video(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='videos')
     owner_id = models.IntegerField(null=True)
     video_id = models.IntegerField(null=True)
+
+
+class Horoscope(models.Model):
+    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='horoscopes')
+    zodiac_sign = models.CharField(max_length=128, null=True)
+    text = models.TextField(max_length=2048, null=True)
+    post_in_group_date = models.DateTimeField(null=True)
+    image_url = models.CharField(max_length=256, null=True)
