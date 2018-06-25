@@ -29,7 +29,9 @@ def examine_groups():
 
         now_minute = datetime.now().minute
 
-        time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+        # time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+        # TODO remove it
+        time_threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=5)
         allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
 
         for group in groups_to_post_in:
