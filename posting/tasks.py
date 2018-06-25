@@ -84,6 +84,7 @@ def examine_groups():
                                              group.user.app_id,
                                              group.group_id,
                                              group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
+                        continue
                     except:
                         log.error('got unexpected exception in examine_groups', exc_info=True)
             except:
