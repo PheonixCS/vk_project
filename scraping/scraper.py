@@ -514,7 +514,7 @@ def main():
                                 if not group_zodiac_sign == record_zodiac_sign:
                                     continue
 
-                            log.debug('saving horoscope record {} in db'.format(horoscope_record.id))
+                            log.debug('saving horoscope record {} in db'.format(horoscope_record['id']))
                             try:
                                 save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
                             except:
