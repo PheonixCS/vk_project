@@ -361,6 +361,8 @@ def save_horoscope_record_to_db(group, record, zodiac_sign):
         zodiac_sign=zodiac_sign,
         defaults={
             'text': record['text'],
+            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
+                '%Y-%m-%d %H:%M:%S')
         }
     )
     if created:
