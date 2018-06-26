@@ -46,7 +46,7 @@ def create_vk_api_using_service_token(token):
     return api
 
 
-def get_wall(api, group_id, count=75):
+def get_wall(api, group_id, count=20):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     try:
