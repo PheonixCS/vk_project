@@ -10,7 +10,7 @@ from django.utils import timezone
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
-                            check_video_availability)
+                            check_video_availability, delete_emoji_from_text)
 from scraping.models import Record
 from scraping.scraper import get_wall, create_vk_api_using_service_token
 
@@ -141,6 +141,7 @@ def examine_groups():
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
 
+
 @task
 def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('start posting horoscopes in {} group'.format(group_id))
@@ -162,12 +163,18 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
     try:
         attachments = ''
+
+        record_text = horoscope_record.text
+        record_text = delete_hashtags_from_text(record_text)
+
         if horoscope_record.image_url:
-            attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone)
+            record_text = delete_emoji_from_text(record_text)
+            attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone, record_text)
+            record_text = ''
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
-                                      message=delete_hashtags_from_text(horoscope_record.text),
+                                      message=record_text,
                                       attachments=attachments)
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
@@ -207,6 +214,10 @@ def post_record(login, password, app_id, group_id, record_id):
 
     try:
         attachments = list()
+        image_text_filling_active = record.is_text_filling_enabled
+
+        record_text = record.text
+        record_text = delete_hashtags_from_text(record_text)
 
         audios = record.audios.all()
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
@@ -216,7 +227,12 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images[::-1]:
-            attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone))
+            if len(images) == 1 and image_text_filling_active:
+                record_text = delete_emoji_from_text(record_text)
+                attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone, record_text))
+                record_text = ''
+            else:
+                attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone))
 
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
@@ -240,7 +256,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
-                                      message=delete_hashtags_from_text(record.text),
+                                      message=record_text,
                                       attachments=','.join(attachments))
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:

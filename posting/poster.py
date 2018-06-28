@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import requests
 import vk_api
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 from django.utils import timezone
 
 from posting.transforms import RGBTransform
@@ -118,7 +118,38 @@ def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.30):
     return True
 
 
-def upload_photo(session, photo_url, group_id, RGB_tone):
+def expand_image_with_white_color(filepath, pixels):
+    white_color = (255, 255, 255)
+
+    old_image = Image.open(filepath)
+    new_image = Image.new('RGB', (old_image.width, old_image.height+pixels), white_color)
+
+    new_image.paste(old_image, (0, pixels))
+
+    new_image.save(filepath)
+
+    return filepath
+
+
+def fil_image_with_text(filepath, text, size=26, font_name='SFUIDisplay-Regular.otf'):
+    black_color = (0, 0, 0)
+    offset = text.count('\n')
+
+    if offset > 2:
+        return
+
+    filepath = expand_image_with_white_color(filepath, offset*(size+3))
+
+    image = Image.open(filepath)
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(font_name, size)
+
+    draw.text((5, 5), text, black_color, font=font)
+
+    image.save(filepath)
+
+
+def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
@@ -127,6 +158,9 @@ def upload_photo(session, photo_url, group_id, RGB_tone):
     if RGB_tone:
         red_tone, green_tone, blue_tone = list(map(int, RGB_tone.split()))
         color_image_in_tone(image_local_filename, red_tone, green_tone, blue_tone)
+
+    if text:
+        fil_image_with_text(image_local_filename, text)
 
     try:
         upload = vk_api.VkUpload(session)
@@ -155,10 +189,21 @@ def fetch_group_id(api, domain_or_id):
     return group_id
 
 
+def delete_double_spaces_from_text(text):
+    text = re.sub(' +', ' ', text)
+    return text
+
+
 def delete_hashtags_from_text(text):
     # link hashtag looks like '#hello@user', common looks like '#hello'
-    text_without_link_hashtags = re.sub('(@\w*)', '', text)
-    text_without_double_spaces = re.sub(' +', ' ', text_without_link_hashtags)
+    text_without_link_hashtags = re.sub(r'(@\w*)', '', text)
+    text_without_double_spaces = delete_double_spaces_from_text(text_without_link_hashtags)
+    return text_without_double_spaces
+
+
+def delete_emoji_from_text(text):
+    text_without_emoji = re.sub(r'([0-9]?&#\d+;)', '', text)
+    text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
     return text_without_double_spaces
 
 
