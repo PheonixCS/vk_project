@@ -167,10 +167,16 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         record_text = horoscope_record.text
         record_text = delete_hashtags_from_text(record_text)
 
+        image_text_filling_active = group.is_text_filling_enabled
+
         if horoscope_record.image_url:
-            record_text = delete_emoji_from_text(record_text)
-            attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone, record_text)
-            record_text = ''
+            if image_text_filling_active:
+                record_text = delete_emoji_from_text(record_text)
+                attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone,
+                                           record_text)
+                record_text = ''
+            else:
+                attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone)
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
@@ -214,7 +220,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
     try:
         attachments = list()
-        image_text_filling_active = record.is_text_filling_enabled
+        image_text_filling_active = group.is_text_filling_enabled
 
         record_text = record.text
         record_text = delete_hashtags_from_text(record_text)
