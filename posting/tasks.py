@@ -163,7 +163,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     try:
         attachments = ''
         if horoscope_record.image_url:
-            attachments = upload_photo(session, horoscope_record.image_url, group_id)
+            attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone)
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
@@ -216,7 +216,7 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images[::-1]:
-            attachments.append(upload_photo(session, image.url, group_id))
+            attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone))
 
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
