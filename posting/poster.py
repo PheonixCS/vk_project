@@ -136,7 +136,7 @@ def expand_image_with_white_color(filepath, pixels):
 
 def fil_image_with_text(filepath, text, size=26, font_name='SFUIDisplay-Regular.otf'):
     black_color = (0, 0, 0)
-    offset = text.count('\n')
+    offset = text.count('\n') + 1
 
     if offset > 2:
         return
