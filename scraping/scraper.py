@@ -359,10 +359,10 @@ def save_horoscope_record_to_db(group, record, zodiac_sign):
     obj, created = Horoscope.objects.get_or_create(
         group=group,
         zodiac_sign=zodiac_sign,
+        post_in_donor_date=datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
+            '%Y-%m-%d %H:%M:%S'),
         defaults={
             'text': record['text'],
-            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
-                '%Y-%m-%d %H:%M:%S')
         }
     )
     if created:
@@ -373,6 +373,7 @@ def save_horoscope_record_to_db(group, record, zodiac_sign):
                 for image in images:
                     obj.image_url = find_url_of_biggest_image(image['photo'])
                 obj.save(update_fields=['image_url'])
+    log.info('save_horoscope_record_to_db result: {}'.format(created))
 
     return created
 
@@ -496,12 +497,13 @@ def main():
                 horoscopes_records = find_horoscopes(new_records)
                 log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
 
+                groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+                log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
+
                 for horoscope_record in horoscopes_records:
                     new_records.remove(horoscope_record)
 
                     # Save horoscope to db
-                    groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
-                    log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
                     for group in groups_with_horoscope_posting:
                         record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
                         group_zodiac_sign = fetch_zodiac_sign(group.name)
