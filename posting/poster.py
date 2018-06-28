@@ -1,4 +1,3 @@
-#
 import logging
 import os
 import re
@@ -9,6 +8,7 @@ import vk_api
 from PIL import Image
 from django.utils import timezone
 
+from posting.transforms import RGBTransform
 from scraping.scraper import get_wall
 from settings.models import Setting
 
@@ -104,11 +104,29 @@ def crop_image(filepath):
     return True
 
 
-def upload_photo(session, photo_url, group_id):
+def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.30):
+    log.debug('color_image_in_tone called')
+    img = Image.open(filepath)
+    img = img.convert('RGB')
+    try:
+        RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor).applied_to(img).save(filepath)
+    except:
+        log.debug('image not toned!')
+        os.remove(filepath)
+        return False
+    log.debug('image {} colored in tone {}{}{}'.format(filepath, red_tone, green_tone, blue_tone))
+    return True
+
+
+def upload_photo(session, photo_url, group_id, RGB_tone):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
     crop_image(image_local_filename)
+
+    if RGB_tone:
+        red_tone, green_tone, blue_tone = list(map(int, RGB_tone.split()))
+        color_image_in_tone(image_local_filename, red_tone, green_tone, blue_tone)
 
     try:
         upload = vk_api.VkUpload(session)

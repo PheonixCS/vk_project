@@ -26,10 +26,12 @@ def examine_groups():
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-    now_minute = datetime.now().minute
+    now_time = datetime.now(tz=timezone.utc)
+    now_minute = now_time.minute
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
     allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
+    today_start = now_time.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
@@ -75,12 +77,17 @@ def examine_groups():
                 pass
 
             try:
-                post_horoscope.delay(group.user.login,
-                                     group.user.password,
-                                     group.user.app_id,
-                                     group.group_id,
-                                     group.horoscopes.filter(post_in_group_date__isnull=True).last().id)
-                continue
+                horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
+                                                              post_in_donor_date__gt=today_start).last().id
+                if horoscope_record_id:
+                    post_horoscope.delay(group.user.login,
+                                         group.user.password,
+                                         group.user.app_id,
+                                         group.group_id,
+                                         horoscope_record_id)
+                    continue
+                else:
+                    log.warning('got no horoscopes records')
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
 
@@ -156,7 +163,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     try:
         attachments = ''
         if horoscope_record.image_url:
-            attachments = upload_photo(session, horoscope_record.image_url, group_id)
+            attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone)
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
@@ -209,7 +216,7 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images[::-1]:
-            attachments.append(upload_photo(session, image.url, group_id))
+            attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone))
 
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
