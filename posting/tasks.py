@@ -251,7 +251,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
                 record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                record.save()
+                record.save(update_fields=['failed_date'])
                 return
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
@@ -261,14 +261,18 @@ def post_record(login, password, app_id, group_id, record_id):
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
+        record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.save(update_fields=['failed_date'])
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.save(update_fields=['failed_date'])
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
-    record.save()
+    record.save(update_fields=['group', 'post_in_group_date'])
     log.debug('post in group {} finished'.format(group_id))
 
 
