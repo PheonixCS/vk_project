@@ -168,7 +168,9 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         record_text = delete_hashtags_from_text(record_text)
 
         if horoscope_record.image_url:
+            record_text = delete_emoji_from_text(record_text)
             attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone, record_text)
+            record_text = ''
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
