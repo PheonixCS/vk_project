@@ -7,6 +7,7 @@ import requests
 import vk_api
 from PIL import Image, ImageFont, ImageDraw
 from django.utils import timezone
+from django.conf import settings
 
 from posting.transforms import RGBTransform
 from scraping.scraper import get_wall
@@ -92,7 +93,7 @@ def upload_gif(session, gif_url):
 
 def crop_image(filepath):
     log.debug('crop_image called')
-    img = Image.open(filepath)
+    img = Image.open(settings.BASE_DIR+filepath)
     width, height = img.size
     try:
         img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
@@ -119,6 +120,7 @@ def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.30):
 
 
 def expand_image_with_white_color(filepath, pixels):
+    log.debug('expand_image_with_white_color called')
     white_color = (255, 255, 255)
 
     old_image = Image.open(filepath)
@@ -127,6 +129,7 @@ def expand_image_with_white_color(filepath, pixels):
     new_image.paste(old_image, (0, pixels))
 
     new_image.save(filepath)
+    log.debug('expand_image_with_white_color finished')
 
     return filepath
 
