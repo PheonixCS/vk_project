@@ -362,6 +362,8 @@ def delete_old_ads():
             if not api:
                 continue
 
+            ignore_ad_ids = []
+
             for ad in ads:
                 try:
                     resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
@@ -369,3 +371,10 @@ def delete_old_ads():
                     log.debug('delete_old_ads {} response: {}'.format(ad.ad_record_id, resp))
                 except:
                     log.error('got unexpected error in delete_old_ads for {}'.format(ad.ad_record_id), exc_info=True)
+                    ignore_ad_ids.append(ad.id)
+                    continue
+
+            ads = ads.exclude(pk__in=ignore_ad_ids)
+            number_of_records, extended = ads.delete()
+            log.debug('delete {} ads out of db'.format(number_of_records))
+        log.info('finish deleting old ads')
