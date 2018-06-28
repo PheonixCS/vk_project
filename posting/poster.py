@@ -93,7 +93,7 @@ def upload_gif(session, gif_url):
 
 def crop_image(filepath):
     log.debug('crop_image called')
-    img = Image.open(settings.BASE_DIR+filepath)
+    img = Image.open(os.path.join(settings.BASE_DIR+filepath))
     width, height = img.size
     try:
         img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
