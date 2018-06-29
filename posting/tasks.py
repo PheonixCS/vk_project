@@ -257,7 +257,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
                 record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                record.save()
+                record.save(update_fields=['failed_date'])
                 return
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
@@ -267,14 +267,18 @@ def post_record(login, password, app_id, group_id, record_id):
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
+        record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.save(update_fields=['failed_date'])
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.save(update_fields=['failed_date'])
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
-    record.save()
+    record.save(update_fields=['group', 'post_in_group_date'])
     log.debug('post in group {} finished'.format(group_id))
 
 
@@ -368,6 +372,8 @@ def delete_old_ads():
             if not api:
                 continue
 
+            ignore_ad_ids = []
+
             for ad in ads:
                 try:
                     resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
@@ -375,3 +381,10 @@ def delete_old_ads():
                     log.debug('delete_old_ads {} response: {}'.format(ad.ad_record_id, resp))
                 except:
                     log.error('got unexpected error in delete_old_ads for {}'.format(ad.ad_record_id), exc_info=True)
+                    ignore_ad_ids.append(ad.id)
+                    continue
+
+            ads = ads.exclude(pk__in=ignore_ad_ids)
+            number_of_records, extended = ads.delete()
+            log.debug('delete {} ads out of db'.format(number_of_records))
+        log.info('finish deleting old ads')

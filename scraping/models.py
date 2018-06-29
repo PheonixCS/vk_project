@@ -27,6 +27,9 @@ class Filter(models.Model):
                                                       verbose_name='Минимальное количество переносов строк')
     min_quantity_of_videos = models.IntegerField(blank=True, null=True,
                                                  verbose_name='Минимальное количество видео')
+    min_quantity_of_films = models.IntegerField(blank=True, null=True,
+                                                verbose_name='Минимальное количество фильмов '
+                                                             '(видео длинной от 20 минут)')
     min_quantity_of_images = models.IntegerField(blank=True, null=True,
                                                  verbose_name='Минимальное количество изображений')
     min_quantity_of_gifs = models.IntegerField(blank=True, null=True,
