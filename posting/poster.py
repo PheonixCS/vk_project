@@ -105,9 +105,9 @@ def crop_image(filepath):
     return True
 
 
-def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.30):
+def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.15):
     log.debug('color_image_in_tone called')
-    img = Image.open(filepath)
+    img = Image.open(os.path.join(settings.BASE_DIR, filepath))
     img = img.convert('RGB')
     try:
         RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor).applied_to(img).save(filepath)
@@ -123,7 +123,7 @@ def expand_image_with_white_color(filepath, pixels):
     log.debug('expand_image_with_white_color called')
     white_color = (255, 255, 255)
 
-    old_image = Image.open(filepath)
+    old_image = Image.open(os.path.join(settings.BASE_DIR, filepath))
     new_image = Image.new('RGB', (old_image.width, old_image.height+pixels), white_color)
 
     new_image.paste(old_image, (0, pixels))
@@ -134,22 +134,31 @@ def expand_image_with_white_color(filepath, pixels):
     return filepath
 
 
-def fil_image_with_text(filepath, text, size=26, font_name='SFUIDisplay-Regular.otf'):
+def fil_image_with_text(filepath, text, percent=5, font_name='SFUIDisplay-Regular.otf'):
+    log.debug('fil_image_with_text called')
     black_color = (0, 0, 0)
     offset = text.count('\n')
 
+    with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
+        height = temp.height
+
+    size = int(height*percent/100)
+    log.debug('offset = {}, size = {}'.format(offset, size))
+
     if offset > 2:
+        log.warning('text in fil_image_with_text contains too many new line')
         return
 
-    filepath = expand_image_with_white_color(filepath, offset*(size+3))
+    filepath = expand_image_with_white_color(filepath, int(offset*size*1.2))
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(font_name, size)
 
-    draw.text((5, 5), text, black_color, font=font)
+    draw.multiline_text((1, 5), text, black_color, font=font)
 
     image.save(filepath)
+    log.debug('fil_image_with_text finished')
 
 
 def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
@@ -205,7 +214,9 @@ def delete_hashtags_from_text(text):
 
 
 def delete_emoji_from_text(text):
+    log.debug('delete_emoji_from_text called. Text: "{}"'.format(text))
     text_without_emoji = re.sub(r'([0-9]?&#\d+;)', '', text)
+    log.debug('text after deleting "{}"'.format(text_without_emoji))
     text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
     return text_without_double_spaces
 
