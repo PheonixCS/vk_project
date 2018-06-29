@@ -105,7 +105,7 @@ def crop_image(filepath):
     return True
 
 
-def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.30):
+def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.15):
     log.debug('color_image_in_tone called')
     img = Image.open(filepath)
     img = img.convert('RGB')
@@ -141,13 +141,13 @@ def fil_image_with_text(filepath, text, size=26, font_name='SFUIDisplay-Regular.
     if offset > 2:
         return
 
-    filepath = expand_image_with_white_color(filepath, offset*(size+3))
+    filepath = expand_image_with_white_color(filepath, offset*(size+4))
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(font_name, size)
 
-    draw.text((5, 5), text, black_color, font=font)
+    draw.text((5, 1), text, black_color, font=font)
 
     image.save(filepath)
 
