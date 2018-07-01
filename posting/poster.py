@@ -105,12 +105,12 @@ def crop_image(filepath):
     return True
 
 
-def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor=.15):
+def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor):
     log.debug('color_image_in_tone called')
     img = Image.open(os.path.join(settings.BASE_DIR, filepath))
     img = img.convert('RGB')
     try:
-        RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor).applied_to(img).save(filepath)
+        RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor/100).applied_to(img).save(filepath)
     except:
         log.debug('image not toned!')
         os.remove(filepath)
@@ -168,8 +168,8 @@ def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
     crop_image(image_local_filename)
 
     if RGB_tone:
-        red_tone, green_tone, blue_tone = list(map(int, RGB_tone.split()))
-        color_image_in_tone(image_local_filename, red_tone, green_tone, blue_tone)
+        red_tone, green_tone, blue_tone, factor = list(map(int, RGB_tone.split()))
+        color_image_in_tone(image_local_filename, red_tone, green_tone, blue_tone, factor)
 
     if text:
         fil_image_with_text(image_local_filename, text)
