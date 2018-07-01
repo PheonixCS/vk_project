@@ -124,7 +124,7 @@ def expand_image_with_white_color(filepath, pixels):
     white_color = (255, 255, 255)
 
     old_image = Image.open(os.path.join(settings.BASE_DIR, filepath))
-    new_image = Image.new('RGB', (old_image.width, old_image.height+pixels), white_color)
+    new_image = Image.new('RGB', (old_image.width, old_image.height + pixels), white_color)
 
     new_image.paste(old_image, (0, pixels))
 
@@ -142,20 +142,20 @@ def fil_image_with_text(filepath, text, percent=5, font_name='SFUIDisplay-Regula
     with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
         height = temp.height
 
-    size = int(height*percent/100)
+    size = int(height * percent / 100)
     log.debug('offset = {}, size = {}'.format(offset, size))
 
     if offset > 2:
         log.warning('text in fil_image_with_text contains too many new line')
         return
 
-    filepath = expand_image_with_white_color(filepath, int(offset*size*1.2))
+    filepath = expand_image_with_white_color(filepath, int(offset * size * 1.3))
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(font_name, size)
 
-    draw.multiline_text((1, 5), text, black_color, font=font)
+    draw.multiline_text((5, 1), text, black_color, font=font)
 
     image.save(filepath)
     log.debug('fil_image_with_text finished')
@@ -215,7 +215,15 @@ def delete_hashtags_from_text(text):
 
 def delete_emoji_from_text(text):
     log.debug('delete_emoji_from_text called. Text: "{}"'.format(text))
-    text_without_emoji = re.sub(r'([0-9]?&#\d+;)', '', text)
+    emoji_pattern = re.compile(
+        u"(\ud83d[\ude00-\ude4f])|"  # emoticons
+        u"(\ud83c[\udf00-\uffff])|"  # symbols & pictographs (1 of 2)
+        u"(\ud83d[\u0000-\uddff])|"  # symbols & pictographs (2 of 2)
+        u"(\ud83d[\ude80-\udeff])|"  # transport & map symbols
+        u"(\ud83c[\udde0-\uddff])"  # flags (iOS)
+        "+", flags=re.UNICODE)
+    # text_without_emoji = re.sub(r'([0-9]?&#\d+;)', '', text)
+    text_without_emoji = emoji_pattern.sub('', text)
     log.debug('text after deleting "{}"'.format(text_without_emoji))
     text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
     return text_without_double_spaces
