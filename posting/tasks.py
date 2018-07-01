@@ -174,7 +174,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         image_text_filling_active = group.is_text_filling_enabled
 
         if horoscope_record.image_url:
-            if image_text_filling_active:
+            if image_text_filling_active and record_text.count('\n') <= 2:
                 record_text = delete_emoji_from_text(record_text)
                 attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone,
                                            record_text)
@@ -241,7 +241,7 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images[::-1]:
-            if len(images) == 1 and image_text_filling_active:
+            if len(images) == 1 and image_text_filling_active and record_text.count('\n') <= 2:
                 record_text = delete_emoji_from_text(record_text)
                 attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone, record_text))
                 record_text = ''
