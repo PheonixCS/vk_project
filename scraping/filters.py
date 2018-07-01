@@ -8,7 +8,7 @@ from urlextract import URLExtract
 from scraping.models import Record
 from settings.models import Setting
 
-log = logging.getLogger('scraping.scraper')
+log = logging.getLogger('scraping.filters')
 
 MIN_STRING_MATCH_RATIO = Setting.get_value(key='MIN_STRING_MATCH_RATIO')
 
