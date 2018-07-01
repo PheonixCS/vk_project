@@ -1,4 +1,3 @@
-#
 import logging
 import os
 import re
@@ -6,9 +5,11 @@ from datetime import datetime, timedelta
 
 import requests
 import vk_api
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 from django.utils import timezone
+from django.conf import settings
 
+from posting.transforms import RGBTransform
 from scraping.scraper import get_wall
 from settings.models import Setting
 
@@ -92,10 +93,14 @@ def upload_gif(session, gif_url):
 
 def crop_image(filepath):
     log.debug('crop_image called')
-    img = Image.open(filepath)
+    img = Image.open(os.path.join(settings.BASE_DIR, filepath))
     width, height = img.size
     try:
-        img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
+        image = img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM))
+        if filepath.endswith('.jpg'):
+            image.save(filepath, 'JPEG', quality=95, progressive=True)
+        else:
+            image.save(filepath)
     except ValueError:
         log.debug('image not cropped!')
         os.remove(filepath)
@@ -104,11 +109,81 @@ def crop_image(filepath):
     return True
 
 
-def upload_photo(session, photo_url, group_id):
+def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor):
+    log.debug('color_image_in_tone called')
+    img = Image.open(os.path.join(settings.BASE_DIR, filepath))
+    img = img.convert('RGB')
+    try:
+        RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor / 100).applied_to(img).save(filepath)
+    except:
+        log.debug('image not toned!')
+        os.remove(filepath)
+        return False
+    log.debug(
+        'image {} colored in tone {} {} {} and factor {}'.format(filepath, red_tone, green_tone, blue_tone, factor))
+    return True
+
+
+def expand_image_with_white_color(filepath, pixels):
+    log.debug('expand_image_with_white_color called')
+    white_color = (255, 255, 255)
+
+    old_image = Image.open(os.path.join(settings.BASE_DIR, filepath))
+    new_image = Image.new('RGB', (old_image.width, old_image.height + pixels), white_color)
+
+    new_image.paste(old_image, (0, pixels))
+
+    if filepath.endswith('.jpg'):
+        new_image.save(filepath, 'JPEG', quality=95, progressive=True)
+    else:
+        new_image.save(filepath)
+    log.debug('expand_image_with_white_color finished')
+
+    return filepath
+
+
+def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regular.otf'):
+    log.debug('fil_image_with_text called')
+    black_color = (0, 0, 0)
+    offset = text.count('\n') + 1
+
+    with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
+        height = temp.height
+
+    size = int(height * percent / 100)
+    log.debug('offset = {}, size = {}'.format(offset, size))
+
+    if offset > 2:
+        log.warning('text in fil_image_with_text contains too many new line')
+        return
+
+    filepath = expand_image_with_white_color(filepath, int(offset * size * 1.4))
+
+    image = Image.open(filepath)
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(font_name, size)
+
+    draw.multiline_text((5, 1), text, black_color, font=font)
+
+    if filepath.endswith('.jpg'):
+        image.save(filepath, 'JPEG', quality=95, progressive=True)
+    else:
+        image.save(filepath)
+    log.debug('fil_image_with_text finished')
+
+
+def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
     crop_image(image_local_filename)
+
+    if RGB_tone:
+        red_tone, green_tone, blue_tone, factor = list(map(int, RGB_tone.split()))
+        color_image_in_tone(image_local_filename, red_tone, green_tone, blue_tone, factor)
+
+    if text:
+        fil_image_with_text(image_local_filename, text)
 
     try:
         upload = vk_api.VkUpload(session)
@@ -137,10 +212,25 @@ def fetch_group_id(api, domain_or_id):
     return group_id
 
 
+def delete_double_spaces_from_text(text):
+    text = re.sub(' +', ' ', text)
+    return text
+
+
 def delete_hashtags_from_text(text):
     # link hashtag looks like '#hello@user', common looks like '#hello'
-    text_without_link_hashtags = re.sub('(@\w*)', '', text)
-    text_without_double_spaces = re.sub(' +', ' ', text_without_link_hashtags)
+    text_without_link_hashtags = re.sub(r'(@\w*)', '', text)
+    text_without_double_spaces = delete_double_spaces_from_text(text_without_link_hashtags)
+    return text_without_double_spaces
+
+
+def delete_emoji_from_text(text):
+    log.debug('delete_emoji_from_text called. Text: "{}"'.format(text))
+    # text_without_emoji = re.sub(u'[\u0000-\u052F]+', ' ', text)
+    last_char_code = ord('я')
+    text_without_emoji = ''.join(letter for letter in text if ord(letter) <= last_char_code)
+    log.debug('text after deleting "{}"'.format(text_without_emoji))
+    text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
     return text_without_double_spaces
 
 

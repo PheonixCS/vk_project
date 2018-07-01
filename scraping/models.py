@@ -27,6 +27,9 @@ class Filter(models.Model):
                                                       verbose_name='Минимальное количество переносов строк')
     min_quantity_of_videos = models.IntegerField(blank=True, null=True,
                                                  verbose_name='Минимальное количество видео')
+    min_quantity_of_films = models.IntegerField(blank=True, null=True,
+                                                verbose_name='Минимальное количество фильмов '
+                                                             '(видео длинной от 20 минут)')
     min_quantity_of_images = models.IntegerField(blank=True, null=True,
                                                  verbose_name='Минимальное количество изображений')
     min_quantity_of_gifs = models.IntegerField(blank=True, null=True,
@@ -51,6 +54,7 @@ class Record(models.Model):
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
     post_in_group_date = models.DateTimeField(null=True)
     failed_date = models.DateTimeField(null=True)
+    is_involved_now = models.BooleanField(default=False)
 
     def __str__(self):
         return 'record {}'.format(self.record_id)
