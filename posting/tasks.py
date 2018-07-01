@@ -132,7 +132,7 @@ def examine_groups():
 
             record_with_max_rate = max(records, key=lambda x: x.rate)
             record_with_max_rate.is_involved_now = True
-            record_with_max_rate.save(update_fields='is_involved_now')
+            record_with_max_rate.save(update_fields=['is_involved_now'])
             log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
 
             try:
