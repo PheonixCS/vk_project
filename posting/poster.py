@@ -137,7 +137,7 @@ def expand_image_with_white_color(filepath, pixels):
 def fil_image_with_text(filepath, text, percent=5, font_name='SFUIDisplay-Regular.otf'):
     log.debug('fil_image_with_text called')
     black_color = (0, 0, 0)
-    offset = text.count('\n')
+    offset = text.count('\n') + 1
 
     with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
         height = temp.height
