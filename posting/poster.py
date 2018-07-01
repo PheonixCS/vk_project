@@ -96,7 +96,11 @@ def crop_image(filepath):
     img = Image.open(os.path.join(settings.BASE_DIR, filepath))
     width, height = img.size
     try:
-        img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM)).save(filepath)
+        image = img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM))
+        if filepath.endswith('.jpg'):
+            image.save(filepath, 'JPEG', quality=95, progressive=True)
+        else:
+            image.save(filepath)
     except ValueError:
         log.debug('image not cropped!')
         os.remove(filepath)
@@ -161,7 +165,10 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
 
     draw.multiline_text((5, 1), text, black_color, font=font)
 
-    image.save(filepath)
+    if filepath.endswith('.jpg'):
+        image.save(filepath, 'JPEG', quality=95, progressive=True)
+    else:
+        image.save(filepath)
     log.debug('fil_image_with_text finished')
 
 
