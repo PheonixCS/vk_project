@@ -225,7 +225,7 @@ def delete_emoji_from_text(text):
     #     "+", flags=re.UNICODE)
     # text_without_emoji = re.sub(r'([0-9]?&#\d+;)', '', text)
     # text_without_emoji = emoji_pattern.sub('', text)
-    text_without_emoji = re.sub(r'[^\x00-\x7F]+', ' ', text)
+    text_without_emoji = re.sub(u'[\u0000-\u052F]+', ' ', text)
     log.debug('text after deleting "{}"'.format(text_without_emoji))
     text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
     return text_without_double_spaces
