@@ -122,6 +122,7 @@ def examine_groups():
 
             records = [record for donor in donors for record in
                        donor.records.filter(rate__isnull=False,
+                                            is_involved_now=False,
                                             post_in_group_date__isnull=True,
                                             failed_date__isnull=True,
                                             post_in_donor_date__gt=allowed_time_threshold)]
