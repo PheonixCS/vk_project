@@ -110,12 +110,13 @@ def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor):
     img = Image.open(os.path.join(settings.BASE_DIR, filepath))
     img = img.convert('RGB')
     try:
-        RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor/100).applied_to(img).save(filepath)
+        RGBTransform().mix_with((red_tone, green_tone, blue_tone), factor=factor / 100).applied_to(img).save(filepath)
     except:
         log.debug('image not toned!')
         os.remove(filepath)
         return False
-    log.debug('image {} colored in tone {}{}{}'.format(filepath, red_tone, green_tone, blue_tone))
+    log.debug(
+        'image {} colored in tone {} {} {} and factor {}'.format(filepath, red_tone, green_tone, blue_tone, factor))
     return True
 
 
