@@ -128,13 +128,16 @@ def expand_image_with_white_color(filepath, pixels):
 
     new_image.paste(old_image, (0, pixels))
 
-    new_image.save(filepath)
+    if filepath.endswith('.jpg'):
+        new_image.save(filepath, 'JPEG', quality=95, progressive=True)
+    else:
+        new_image.save(filepath)
     log.debug('expand_image_with_white_color finished')
 
     return filepath
 
 
-def fil_image_with_text(filepath, text, percent=5, font_name='SFUIDisplay-Regular.otf'):
+def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regular.otf'):
     log.debug('fil_image_with_text called')
     black_color = (0, 0, 0)
     offset = text.count('\n') + 1
@@ -149,7 +152,7 @@ def fil_image_with_text(filepath, text, percent=5, font_name='SFUIDisplay-Regula
         log.warning('text in fil_image_with_text contains too many new line')
         return
 
-    filepath = expand_image_with_white_color(filepath, int(offset * size * 1.3))
+    filepath = expand_image_with_white_color(filepath, int(offset * size * 1.4))
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
