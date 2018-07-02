@@ -168,15 +168,15 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
         return
 
     black_color = (0, 0, 0)
-    offset = text.count('\n') + 1
 
     with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
         width, height = temp.width, temp.height
 
     size = int(height * percent / 100)
-    log.debug('offset = {}, size = {}'.format(offset, size))
     text_max_width = width // size
     text = normalize_text_width(text, text_max_width)
+    offset = text.count('\n') + 1
+    log.debug('offset = {}, size = {}'.format(offset, size))
 
     if offset > 3:
         log.warning('text in fil_image_with_text contains too many new line')
