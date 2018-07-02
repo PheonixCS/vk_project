@@ -142,18 +142,43 @@ def expand_image_with_white_color(filepath, pixels):
     return filepath
 
 
+def normalize_text_width(text, width):
+
+    disturbed_text = text.split()
+
+    text = []
+    temp = []
+    for word in disturbed_text:
+        if sum(len(x) for x in temp) + len(temp) - 1 < width:
+            temp.append(word)
+        else:
+            text.append(' '.join(temp))
+            del temp[:]
+            temp.append(word)
+    else:
+        text.append(' '.join(temp))
+    text = '\n'.join(text)
+    return text
+
+
 def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regular.otf'):
     log.debug('fil_image_with_text called')
+    if not text:
+        log.debug('got no text in fil_image_with_text')
+        return
+
     black_color = (0, 0, 0)
     offset = text.count('\n') + 1
 
     with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
-        height = temp.height
+        width, height = temp.width, temp.height
 
     size = int(height * percent / 100)
     log.debug('offset = {}, size = {}'.format(offset, size))
+    text_max_width = width // size
+    text = normalize_text_width(text, text_max_width)
 
-    if offset > 2:
+    if offset > 3:
         log.warning('text in fil_image_with_text contains too many new line')
         return
 
