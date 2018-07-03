@@ -201,7 +201,7 @@ def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
-    crop_image(image_local_filename)
+    #crop_image(image_local_filename)
 
     if RGB_tone:
         red_tone, green_tone, blue_tone, factor = list(map(int, RGB_tone.split()))
