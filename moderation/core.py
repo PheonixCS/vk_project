@@ -21,7 +21,17 @@ def delete_comment(api, owner_id, comment_id):
                                comment_id=comment_id,
                                api_version=VK_API_VERSION)
     except ApiError as error_msg:
-        log.info('Group {} got api error in deleteComment method: {}'.format(owner_id, error_msg))
+        log.info('group {} got api error in deleteComment method: {}'.format(owner_id, error_msg))
+
+
+def ban_user(api, group_id, user_id):
+    try:
+        api.group.ban(group_id=group_id,
+                      owner_id=user_id,
+                      end_date='',
+                      api_version=VK_API_VERSION)
+    except ApiError as error_msg:
+        log.info('group {} got api error in ban method: {}'.format(group_id, error_msg))
 
 
 def prepare_id_white_list(white_list):
@@ -59,6 +69,21 @@ def is_moderation_needed(from_id, group_id, white_list):
     return True
 
 
+def is_reason_for_ban_exists(event_object):
+    # TODO 3 одинаковых сообщения
+
+    if checks.is_group(event_object['from_id']):
+        log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
+        return True
+
+    if checks.is_audio_and_photo_in_attachments(event_object.get('attachments')):
+        log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
+        return True
+
+    log.info('no reason for ban user {}'.format(event_object['from_id']))
+    return False
+
+
 def handle_comment_event(event_object, group_id):
     log.info('start handling comment {} in {} by {}'.format(event_object['id'], group_id, event_object['from_id']))
 
@@ -85,11 +110,17 @@ def handle_comment_event(event_object, group_id):
                   checks.is_link_in_attachments(event_object.get('attachments')),
                   checks.is_group(event_object['from_id']),
                   checks.is_links_in_text(event_object['text']),
-                  checks.is_vk_links_in_text(event_object['text']))
+                  checks.is_vk_links_in_text(event_object['text']),
+                  checks.is_audio_and_photo_in_attachments(event_object.get('attachments')))
 
     if any(all_checks):
         delete_comment(api, group_id, event_object['id'])
         log.info('delete comment {} in {}'.format(event_object['id'], group_id))
+
+        if is_reason_for_ban_exists(event_object):
+            ban_user(api, group_id, event_object['from_id'])
+            log.info('ban user {} in {}'.format(event_object['from_id'], group_id))
+
         return True
 
     log.info('comment {} in {} was moderated, everything ok'.format(event_object['id'], group_id))
