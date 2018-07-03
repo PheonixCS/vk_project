@@ -161,7 +161,7 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
             break
 
     if not is_text_fit_to_width(text, max_width_in_chars, width_in_pixels, font_object):
-        max_width_in_chars = max(wrap(text, max_width_in_chars), key=lambda line: font_object.getsize(line)[0])
+        max_width_in_chars = len(max(wrap(text, max_width_in_chars), key=lambda line: font_object.getsize(line)[0]))
 
     log.debug('max_width_in_chars = {}'.format(max_width_in_chars))
     return max_width_in_chars
