@@ -185,7 +185,7 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
 
     if not is_text_fit_to_width(text, len(text), image_width, font):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
-        text = '\n'.format(wrap(text, text_max_width_in_chars))
+        text = '\n'.join(wrap(text, text_max_width_in_chars))
 
     offset = (text.count('\n') + 1) * size + 10
     log.debug('offset = {}, size = {}'.format(offset, size))
@@ -259,7 +259,7 @@ def delete_hashtags_from_text(text):
 def delete_emoji_from_text(text):
     log.debug('delete_emoji_from_text called. Text: "{}"'.format(text))
     # text_without_emoji = re.sub(u'[\u0000-\u052F]+', ' ', text)
-    last_char_code = ord('я')
+    last_char_code = 1279  # 04FF
     text_without_emoji = ''.join(letter for letter in text if ord(letter) <= last_char_code)
     log.debug('text after deleting "{}"'.format(text_without_emoji))
     text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
