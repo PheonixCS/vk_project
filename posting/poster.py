@@ -2,12 +2,14 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta
+from math import ceil
+from textwrap import wrap
 
 import requests
 import vk_api
 from PIL import Image, ImageFont, ImageDraw
-from django.utils import timezone
 from django.conf import settings
+from django.utils import timezone
 
 from posting.transforms import RGBTransform
 from scraping.scraper import get_wall
@@ -142,23 +144,27 @@ def expand_image_with_white_color(filepath, pixels):
     return filepath
 
 
-def normalize_text_width(text, width):
+def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
+    for line in wrap(text, width_in_chars):
+        if font_object.getsize(line)[0] > width_in_pixels:
+            return False
+    return True
 
-    disturbed_text = text.split()
 
-    text = []
-    temp = []
-    for word in disturbed_text:
-        if sum(len(x) for x in temp) + len(temp) - 1 < width:
-            temp.append(word)
+def calculate_max_len_in_chars(text, width_in_pixels, font_object):
+    log.debug('calculate_max_len_in_chars called')
+    max_width_in_chars = 0
+    while max_width_in_chars != len(text):
+        if font_object.getsize(text[:max_width_in_chars])[0] < width_in_pixels:
+            max_width_in_chars += 1
         else:
-            text.append(' '.join(temp))
-            del temp[:]
-            temp.append(word)
-    else:
-        text.append(' '.join(temp))
-    text = '\n'.join(text)
-    return text
+            break
+
+    if not is_text_fit_to_width(text, max_width_in_chars, width_in_pixels, font_object):
+        max_width_in_chars = max(wrap(text, max_width_in_chars), key=lambda line: font_object.getsize(line)[0])
+
+    log.debug('max_width_in_chars = {}'.format(max_width_in_chars))
+    return max_width_in_chars
 
 
 def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regular.otf'):
@@ -170,23 +176,24 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
     black_color = (0, 0, 0)
 
     with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
-        width, height = temp.width, temp.height
+        image_width, image_height = temp.width, temp.height
 
-    size = int(height * percent / 100)
-    text_max_width = width // size
-    text = normalize_text_width(text, text_max_width)
-    offset = text.count('\n') + 1
+    # size in pixels
+    size = ceil(image_height * percent / 100)
+
+    font = ImageFont.truetype(font_name, size)
+
+    if not is_text_fit_to_width(text, len(text), image_width, font):
+        text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
+        text = '\n'.format(wrap(text, text_max_width_in_chars))
+
+    offset = (text.count('\n') + 1) * size + 10
     log.debug('offset = {}, size = {}'.format(offset, size))
 
-    if offset > 3:
-        log.warning('text in fil_image_with_text contains too many new line')
-        return
-
-    filepath = expand_image_with_white_color(filepath, int(offset * size * 1.4))
+    filepath = expand_image_with_white_color(filepath, offset)
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(font_name, size)
 
     draw.multiline_text((5, 1), text, black_color, font=font)
 
@@ -201,7 +208,7 @@ def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
     log.debug('upload_photo called')
     image_local_filename = download_file(photo_url)
 
-    #crop_image(image_local_filename)
+    # crop_image(image_local_filename)
 
     if RGB_tone:
         red_tone, green_tone, blue_tone, factor = list(map(int, RGB_tone.split()))
