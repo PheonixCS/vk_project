@@ -82,8 +82,8 @@ def handle_comment_event(event_object, group_id):
         all_checks = (checks.is_post_ad(api, event_object['post_id'], group_id),
                       checks.is_stop_words_in_text(words_stop_list, words_in_text),
                       checks.is_scam_words_in_text(words_in_text),
-                      checks.is_video_in_attachments(event_object.get('attachments')),
-                      checks.is_link_in_attachments(event_object.get('attachments')),
+                      checks.is_video_in_attachments(event_object.get('attachments', [])),
+                      checks.is_link_in_attachments(event_object.get('attachments', [])),
                       checks.is_group(event_object['from_id']),
                       checks.is_links_in_text(event_object['text']),
                       checks.is_vk_links_in_text(event_object['text']))
