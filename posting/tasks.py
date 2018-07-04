@@ -403,3 +403,36 @@ def delete_old_ads():
             number_of_records, extended = ads.delete()
             log.debug('delete {} ads out of db'.format(number_of_records))
         log.info('finish deleting old ads')
+
+
+@task
+def update_statistics():
+    log.debug('update_statistics called')
+
+    all_groups = Group.objects.all()
+    all_group_ids = all_groups.values_list('domain_or_id', flat=True)
+    log.debug('got {} groups in update_statistics'.format(len(all_group_ids)))
+
+    token = ServiceToken.filter().first()
+    log.debug('using {} token for update_statistics'.format(token))
+
+    api = create_vk_api_using_service_token(token)
+
+    if not api:
+        log.error('cannot update statistics')
+
+    try:
+        response = api.groups.getById(group_ids=all_group_ids, fields=['members_count'])
+
+        for piece in response:
+
+            screen_name = piece.get('screen_name', None)
+            members_count = piece.get('members_count', None)
+
+            try:
+                group = all_groups.get(domain_or_id=piece.get('id', None))
+            except DoesNotExist:
+                group = all_groups
+
+    except:
+        log.debug('got unexpected error in update_statistics', exc_info=True)

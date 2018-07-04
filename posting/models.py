@@ -40,6 +40,7 @@ class ServiceToken(models.Model):
 class Group(models.Model):
     domain_or_id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
+    statistic_url = models.URLField(max_length=256, verbose_name='Ссылка на статистику', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     group_id = models.IntegerField(null=True)
     is_posting_active = models.BooleanField(default=True, verbose_name='Постинг активен?')
@@ -53,11 +54,21 @@ class Group(models.Model):
     callback_api_token = models.CharField(max_length=128, verbose_name='Ответ для callback api', blank=True, default='')
     donors = models.ManyToManyField('scraping.Donor', blank=True)
 
+    number_of_subscribers = models.IntegerField(null=True)
+    subscribers_growth = models.IntegerField(null=True)
+    number_of_post_yesterday = models.IntegerField(null=True)
+    number_of_ad_posts_yesterday = models.IntegerField(null=True)
+    statistics_last_update_date = models.DateTimeField(null=True)
+
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
             self.url = 'https://vk.com/club{}'.format(self.domain_or_id)
+            self.statistic_url = 'https://vk.com/stats?gid={group_id_int}'.format(group_id_int=self.domain_or_id)
         else:
             self.url = 'https://vk.com/{}'.format(self.domain_or_id)
+            if self.group_id:
+                self.statistic_url = 'https://vk.com/stats?gid={group_id_int}'.format(group_id_int=self.group_id)
+
         super(Group, self).save(*args, **kwargs)
 
     def __str__(self):
