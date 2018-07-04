@@ -153,15 +153,13 @@ def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
 
 def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     log.debug('calculate_max_len_in_chars called')
-    max_width_in_chars = 0
-    while max_width_in_chars != len(text):
-        if font_object.getsize(text[:max_width_in_chars])[0] < width_in_pixels:
-            max_width_in_chars += 1
-        else:
-            break
 
-    if not is_text_fit_to_width(text, max_width_in_chars, width_in_pixels, font_object):
-        max_width_in_chars = len(max(wrap(text, max_width_in_chars), key=lambda line: font_object.getsize(line)[0]))
+    max_width_in_chars = len(text)
+    temp_text = wrap(text, max_width_in_chars)
+
+    while max_width_in_chars and not is_text_fit_to_width(temp_text, max_width_in_chars, width_in_pixels, font_object):
+        max_width_in_chars -= 1
+        temp_text = wrap(text, max_width_in_chars)
 
     log.debug('max_width_in_chars = {}'.format(max_width_in_chars))
     return max_width_in_chars
@@ -183,11 +181,11 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
 
     font = ImageFont.truetype(font_name, size)
 
-    if not is_text_fit_to_width(text, len(text), image_width, font):
+    if not is_text_fit_to_width(text, len(text), image_width-10, font):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
-    offset = (text.count('\n') + 1) * size + 10
+    offset = (text.count('\n') + 1) * (size + 10)
     log.debug('offset = {}, size = {}'.format(offset, size))
 
     filepath = expand_image_with_white_color(filepath, offset)
