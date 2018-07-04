@@ -185,7 +185,7 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
-    offset = (text.count('\n') + 1) * (size + 10)
+    offset = (text.count('\n') + 1) * (size + 15)
     log.debug('offset = {}, size = {}'.format(offset, size))
 
     filepath = expand_image_with_white_color(filepath, offset)
