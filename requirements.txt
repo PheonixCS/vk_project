@@ -6,6 +6,7 @@ celery==4.1.0
 certifi==2018.4.16
 chardet==3.0.4
 Django==2.0.5
+django-hstore==1.4.2
 enum34==1.1.6
 gunicorn==19.8.1
 idna==2.6

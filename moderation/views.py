@@ -1,10 +1,14 @@
+import copy
+import datetime
 import json
 
 from django.http import HttpResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from moderation import core
+from moderation.models import WebhookTransaction
 
 
 @csrf_exempt
@@ -12,10 +16,22 @@ from moderation import core
 def webhook(request):
     received_json_data = json.loads(request.body.decode("utf-8"))
 
+    meta = copy.copy(request.META)
+    for k, v in meta.items():
+        if not isinstance(v, str):
+            del meta[k]
+
+    WebhookTransaction.objects.create(
+        date_generated=datetime.datetime.fromtimestamp(
+            received_json_data['timestamp']/1000.0,
+            tz=timezone.get_current_timezone()
+        ),
+        type=received_json_data['type'],
+        body=received_json_data,
+        request_meta=meta
+    )
+
     if received_json_data['type'] == 'confirmation' and core.does_group_exist(received_json_data['group_id']):
         return HttpResponse(core.get_callback_api_key(received_json_data['group_id']))
 
-    if received_json_data['type'] in ('wall_reply_new', 'wall_reply_edit', 'wall_reply_restore'):
-        core.handle_comment_event(received_json_data['object'], received_json_data['group_id'])
-
-    return HttpResponse('ok')
+    return HttpResponse(status=200)
