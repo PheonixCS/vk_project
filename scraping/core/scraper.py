@@ -1,158 +1,24 @@
 import datetime
 import logging
-import re
 
-import vk_requests
 from django.utils import timezone
-from vk_requests.exceptions import VkAPIError
 
-import scraping.filters as f
 from posting.models import ServiceToken, Group
+from scraping.core.filters import (
+    filter_with_custom_filters,
+    filter_out_ads,
+    filter_out_copies,
+    filter_out_records_with_unsuitable_attachments
+)
+from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
+from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
+from scraping.core.vk_helper import get_wall, get_wall_by_post_id, create_vk_api_using_service_token
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
 from settings.models import Setting
 
 log = logging.getLogger('scraping.scraper')
 
 VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
-
-
-def distribute_donors_between_accounts(donors, accounts):
-    accounts_with_donors = [{
-        'token': token,
-        'donors': []
-    } for token in accounts]
-
-    for donor in donors:
-        account_with_min_donors = min(accounts_with_donors, key=lambda x: len(x['donors']))
-        for account in accounts_with_donors:
-            if account['token'] == account_with_min_donors['token']:
-                account['donors'].append(donor)
-
-    return accounts_with_donors
-
-
-def create_vk_api_using_service_token(token):
-    log.debug('create api called')
-
-    try:
-        api = vk_requests.create_api(service_token=token, api_version=VK_API_VERSION)
-    except VkAPIError as error_msg:
-        log.warning('token {} got api error: {}'.format(token, error_msg))
-        return None
-
-    return api
-
-
-def get_wall(api, group_id, count=20):
-    log.debug('get_wall api called for group {}'.format(group_id))
-
-    try:
-        if group_id.isdigit():
-            log.debug('group id is digit')
-            wall = api.wall.get(owner_id='-{}'.format(group_id),
-                                filter='owner',
-                                api_version=VK_API_VERSION,
-                                count=count)
-        else:
-            log.debug('group id os not digit')
-            wall = api.wall.get(domain=group_id,
-                                filter='owner',
-                                api_version=VK_API_VERSION,
-                                count=count)
-    except VkAPIError as error_msg:
-        log.warning('group {} got api error: {}'.format(group_id, error_msg))
-        return None
-
-    return wall
-
-
-def get_wall_by_post_id(api, group_id, posts_ids):
-    log.debug('get_wall_by_post_id api called for group {}'.format(group_id))
-
-    posts = ['-{}_{}'.format(group_id, post) for post in posts_ids]
-    try:
-        all_non_rated = api.wall.getById(posts=posts)
-    except VkAPIError as error_msg:
-        log.warning('group {} got api error while : {}'.format(group_id, error_msg))
-        return None
-
-    return all_non_rated
-
-
-def filter_out_ads(records):
-    log.info('filter_out_ads called')
-    filters = (
-        f.marked_as_ads_filter,
-        f.copy_history_filter,
-        f.phone_numbers_filter,
-        f.urls_filter,
-        f.email_filter,
-        f.article_filter,
-        f.vk_link_filter
-    )
-    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
-    return filtered_records
-
-
-def filter_with_custom_filters(custom_filters, records):
-    filtered_records = []
-    for custom_filter in custom_filters:
-        filters = tuple()
-        if custom_filter.min_quantity_of_line_breaks:
-            filters += (f.min_quantity_of_line_breaks_filter,)
-
-        if custom_filter.min_text_length:
-            filters += (f.min_text_length_filter,)
-
-        if custom_filter.min_quantity_of_videos:
-            filters += (f.min_quantity_of_videos_filter,)
-
-        if custom_filter.min_quantity_of_films:
-            filters += (f.min_quantity_of_films_filter,)
-
-        if custom_filter.min_quantity_of_images:
-            filters += (f.min_quantity_of_images_filter,)
-
-        if custom_filter.min_quantity_of_gifs:
-            filters += (f.min_quantity_of_gifs_filter,)
-
-        if custom_filter.min_quantity_of_audios:
-            filters += (f.min_quantity_of_audios_filter,)
-
-        filtered_records.extend([record for record in records if all(
-            filter(record, custom_filter) for filter in filters) and record not in filtered_records])
-
-    return filtered_records
-
-
-def find_url_of_biggest_image(image_dict):
-    photos_keys = [key for key in image_dict if key.startswith('photo_')]
-    key_of_max_size_photo = max(photos_keys, key=lambda x: int(x.split('_')[1]))
-    return image_dict[key_of_max_size_photo]
-
-
-def fetch_zodiac_sign(text):
-    zodiac_signs = ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
-                    'Весы', 'Скорпион', 'Стрелец', 'Козерог', 'Водолей', 'Рыбы']
-    for zodiac_sign in zodiac_signs:
-        if zodiac_sign.lower() in text.lower():
-            return zodiac_sign.lower()
-    return None
-
-
-def find_horoscopes(records):
-    horoscopes_records = []
-    for record in records:
-        text = record.get('text')
-        if text:
-            first_line = text.splitlines()[0]
-        else:
-            continue
-
-        if fetch_zodiac_sign(first_line) and bool(re.search(r'\d', first_line)):
-            horoscopes_records.append(record)
-
-    return horoscopes_records
 
 
 def save_record_to_db(donor, record):
@@ -321,7 +187,6 @@ def main():
             log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
 
             # now get records that we don't have in our db
-            # FIXME add donor to query
             new_records = [record for record in all_records
                            if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
             log.debug('got {} new records in donor {}'.format(len(new_records), donor.id))
@@ -338,9 +203,9 @@ def main():
                         new_records = filter_with_custom_filters(custom_filters, new_records)
                         log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
 
-                    new_records = f.filter_out_copies(new_records)
+                    new_records = filter_out_copies(new_records)
 
-                    new_records = f.filter_out_records_with_unsuitable_attachments(new_records)
+                    new_records = filter_out_records_with_unsuitable_attachments(new_records)
 
                     log.debug('got {} records after all filters in donor {}'.format(len(new_records), donor.id))
                 except:
@@ -348,6 +213,7 @@ def main():
                     continue
 
             # Horoscopes
+            # TODO add it to livesettings
             horoscopes_donor_id = '83815413'
             if horoscopes_donor_id in donor.id:
                 log.debug('start scraping horoscope donor')

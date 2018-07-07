@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 
 from celery import task
 from django.utils import timezone
-from scraping.scraper import main
-from scraping.models import Record
 
+from scraping.core.scraper import main
+from scraping.models import Record
 
 log = logging.getLogger('scraping.scheduled')
 

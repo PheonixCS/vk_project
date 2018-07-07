@@ -8,7 +8,7 @@ from urlextract import URLExtract
 from scraping.models import Record
 from settings.models import Setting
 
-log = logging.getLogger('scraping.filters')
+log = logging.getLogger('scraping.core.filters')
 
 MIN_STRING_MATCH_RATIO = Setting.get_value(key='MIN_STRING_MATCH_RATIO')
 
@@ -31,7 +31,6 @@ def filter_out_copies(records):
         else:
             log.debug('record {} was filtered'.format(record['id']))
 
-    # TODO проверка изображений на дубликаты
     return filtered_records
 
 
@@ -166,3 +165,49 @@ def min_quantity_of_audios_filter(item, custom_filter):
         log.debug('delete {} because of custom filter: min_quantity_of_audios'.format(item['id']))
         return False
     return True
+
+
+def filter_out_ads(records):
+    log.info('filter_out_ads called')
+    filters = (
+        marked_as_ads_filter,
+        copy_history_filter,
+        phone_numbers_filter,
+        urls_filter,
+        email_filter,
+        article_filter,
+        vk_link_filter
+    )
+    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
+    return filtered_records
+
+
+def filter_with_custom_filters(custom_filters, records):
+    filtered_records = []
+    for custom_filter in custom_filters:
+        filters = tuple()
+        if custom_filter.min_quantity_of_line_breaks:
+            filters += (min_quantity_of_line_breaks_filter,)
+
+        if custom_filter.min_text_length:
+            filters += (min_text_length_filter,)
+
+        if custom_filter.min_quantity_of_videos:
+            filters += (min_quantity_of_videos_filter,)
+
+        if custom_filter.min_quantity_of_films:
+            filters += (min_quantity_of_films_filter,)
+
+        if custom_filter.min_quantity_of_images:
+            filters += (min_quantity_of_images_filter,)
+
+        if custom_filter.min_quantity_of_gifs:
+            filters += (min_quantity_of_gifs_filter,)
+
+        if custom_filter.min_quantity_of_audios:
+            filters += (min_quantity_of_audios_filter,)
+
+        filtered_records.extend([record for record in records if all(
+            filter(record, custom_filter) for filter in filters) and record not in filtered_records])
+
+    return filtered_records
