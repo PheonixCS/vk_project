@@ -180,7 +180,7 @@ def process_comment(comment):
         delete_comment(api, comment['group_id'], comment['object']['id'])
         log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
 
-        if is_reason_for_ban_exists(comment):
+        if is_reason_for_ban_exists(comment['object']):
             ban_user(api, comment['group_id'], comment['object']['from_id'])
             log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
 
