@@ -36,14 +36,13 @@ class WebhookTransaction(models.Model):
         (ERROR, 'Error'),
     )
 
-    date_generated = models.DateTimeField()
-    date_received = models.DateTimeField(default=timezone.now)
+    date_received = models.DateTimeField(auto_now_add=True)
     body = JSONField(default={})
     request_meta = JSONField(default={})
     status = models.CharField(max_length=250, choices=STATUSES, default=UNPROCESSED)
 
     def __str__(self):
-        return '{}'.format(self.date_generated)
+        return '{}'.format(self.date_received)
 
 
 class Comment(models.Model):

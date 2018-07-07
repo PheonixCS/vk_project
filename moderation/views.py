@@ -20,6 +20,7 @@ log = logging.getLogger('moderation.views')
 @require_POST
 def webhook(request):
     received_json_data = json.loads(request.body.decode("utf-8"))
+    log.debug(received_json_data)
 
     try:
         # meta = copy.copy(request.META)
@@ -31,10 +32,6 @@ def webhook(request):
             return HttpResponse(core.get_callback_api_key(received_json_data['group_id']))
 
         WebhookTransaction.objects.create(
-            date_generated=datetime.datetime.fromtimestamp(
-                received_json_data['date'],
-                tz=timezone.utc
-            ),
             body=received_json_data
         )
     except:
