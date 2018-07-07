@@ -114,8 +114,8 @@ def is_reason_for_ban_exists(event_object):
             date__gt=time_threshold_timestamp
         )
 
-        comments_with_same_attachment = [comment.attachments.filter(
-            body__id=attachment[attachment['type']]['id']) for comment in comments_from_user]
+        comments_with_same_attachment = [c.comment_id for c in comments_from_user if
+                                         c.attachments.filter(body__id=attachment[attachment['type']]['id']).exists()]
         log.debug('comments with same attachments {}'.format(comments_with_same_attachment))
 
         if len(comments_with_same_attachment) >= 2:
