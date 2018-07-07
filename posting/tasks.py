@@ -449,10 +449,10 @@ def update_statistics():
                 starts = Q(post_in_group_date__gte=yesterday_start)
                 ends = Q(post_in_group_date__lte=today_start)
 
-                group.number_of_posts_yesterday = Record.objects.filter(group_id=group.id).\
+                group.number_of_posts_yesterday = Record.objects.filter(group_id=group.domain_or_id).\
                     filter(starts & ends).count()
 
-                group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.id).\
+                group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
                     filter(starts & ends).count()
 
                 group.statistics_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -469,5 +469,6 @@ def update_statistics():
 
     except:
         log.debug('got unexpected error in update_statistics', exc_info=True)
+        return
 
     log.debug('update_statistics finished successfully')
