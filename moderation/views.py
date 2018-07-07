@@ -24,7 +24,7 @@ def webhook(request):
     WebhookTransaction.objects.create(
         date_generated=datetime.datetime.fromtimestamp(
             received_json_data['timestamp'],
-            tz=timezone.get_current_timezone()
+            tz=timezone.utc
         ),
         body=received_json_data
     )
