@@ -18,7 +18,14 @@ class DonorAdmin(admin.ModelAdmin):
 class GroupAdmin(admin.ModelAdmin):
     exclude = ('url', 'group_id', 'donors')
     readonly_fields = ('vk_url_field',)
-    list_display = ('domain_or_id', 'vk_url_field',)
+    list_display = (
+        'domain_or_id',
+        'vk_url_field',
+        'members_count',
+        'members_growth',
+        'number_of_posts_yesterday',
+        'number_of_ad_posts_yesterday'
+    )
 
     inlines = [
         MembershipInline,
