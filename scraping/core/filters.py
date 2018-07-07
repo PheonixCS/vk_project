@@ -151,7 +151,8 @@ def min_quantity_of_images_filter(item, custom_filter):
 
 def min_quantity_of_gifs_filter(item, custom_filter):
     number_of_gifs = len([attachment for attachment in item.get('attachments', []) if
-                          attachment['type'] == 'doc' and attachment['doc']['ext'] == 'gif'])
+                          attachment['type'] == 'doc' and attachment['doc']['ext'] == 'gif'
+                          and attachment['doc']['owner_id'] > 0])
     if number_of_gifs < custom_filter.min_quantity_of_gifs:
         log.debug('delete {} because of custom filter: min_quantity_of_gifs'.format(item['id']))
         return False
