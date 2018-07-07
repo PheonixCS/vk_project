@@ -8,7 +8,8 @@ from scraping.core.filters import (
     filter_with_custom_filters,
     filter_out_ads,
     filter_out_copies,
-    filter_out_records_with_unsuitable_attachments
+    filter_out_records_with_unsuitable_attachments,
+    filter_out_records_with_small_images,
 )
 from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
 from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
@@ -194,6 +195,8 @@ def main():
                 try:
                     new_records = filter_out_ads(new_records)
                     log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
+
+                    new_records = filter_out_records_with_small_images(new_records)
 
                     custom_filters = donor.filters.all()
                     if custom_filters:
