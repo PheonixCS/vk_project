@@ -1,7 +1,6 @@
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 
 
 class ModerationRule(models.Model):
@@ -38,7 +37,6 @@ class WebhookTransaction(models.Model):
 
     date_received = models.DateTimeField(auto_now_add=True)
     body = JSONField(default={})
-    request_meta = JSONField(default={})
     status = models.CharField(max_length=250, choices=STATUSES, default=UNPROCESSED)
 
     def __str__(self):
@@ -46,7 +44,7 @@ class WebhookTransaction(models.Model):
 
 
 class Comment(models.Model):
-    date_processed = models.DateTimeField(default=timezone.now)
+    date_processed = models.DateTimeField(auto_now_add=True)
     webhook_transaction = models.OneToOneField(WebhookTransaction, on_delete=models.CASCADE)
 
     post_id = models.IntegerField(null=True, verbose_name='идентификатор записи')

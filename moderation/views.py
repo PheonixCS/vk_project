@@ -22,19 +22,9 @@ def webhook(request):
     received_json_data = json.loads(request.body.decode("utf-8"))
     log.debug(received_json_data)
 
-    try:
-        # meta = copy.copy(request.META)
-        # for k, v in meta.items():
-        #     if not isinstance(v, str):
-        #         del meta[k]
+    if received_json_data['type'] == 'confirmation' and core.does_group_exist(received_json_data['group_id']):
+        return HttpResponse(core.get_callback_api_key(received_json_data['group_id']))
 
-        if received_json_data['type'] == 'confirmation' and core.does_group_exist(received_json_data['group_id']):
-            return HttpResponse(core.get_callback_api_key(received_json_data['group_id']))
-
-        WebhookTransaction.objects.create(
-            body=received_json_data
-        )
-    except:
-        log.error('sanya down', exc_info=True)
+    WebhookTransaction.objects.create(body=received_json_data)
 
     return HttpResponse(status=200)

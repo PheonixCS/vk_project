@@ -127,16 +127,16 @@ def save_comment_to_db(transaction):
     log.info('save_comment_to_db called')
     obj = Comment.objects.create(
         webhook_transaction=transaction,
-        post_id=transaction.body['post_id'],
-        post_owner_id=transaction.body['post_owner_id'],
-        comment_id=transaction.body['comment_id'],
-        from_id=transaction.body['from_id'],
-        date=transaction.body['date'],
-        text=transaction.body['text'],
-        reply_to_user=transaction.body.get('reply_to_user'),
-        reply_to_comment=transaction.body.get('reply_to_comment')
+        post_id=transaction.body['object']['post_id'],
+        post_owner_id=transaction.body['object']['post_owner_id'],
+        comment_id=transaction.body['object']['comment_id'],
+        from_id=transaction.body['object']['from_id'],
+        date=transaction.body['object']['date'],
+        text=transaction.body['object']['text'],
+        reply_to_user=transaction.body['object'].get('reply_to_user'),
+        reply_to_comment=transaction.body['object'].get('reply_to_comment')
     )
-    for attachment in transaction.body.get('attachments', []):
+    for attachment in transaction.body['object'].get('attachments', []):
         Attachment.objects.create(
             attached_to=obj,
             type=attachment['type'],
@@ -145,16 +145,16 @@ def save_comment_to_db(transaction):
 
 
 def process_comment(comment):
-    log.info('start handling comment {} in {} by {}'.format(comment['id'],
+    log.info('start handling comment {} in {} by {}'.format(comment['object']['id'],
                                                             comment['group_id'],
-                                                            comment['from_id']))
+                                                            comment['object']['from_id']))
 
     group = Group.objects.select_related('user').filter(group_id=comment['group_id']).first()
 
     moderation_rule = ModerationRule.objects.first()
     white_list = prepare_id_white_list(moderation_rule.id_white_list)
 
-    if not is_moderation_needed(comment['from_id'], comment['group_id'], white_list):
+    if not is_moderation_needed(comment['object']['from_id'], comment['group_id'], white_list):
         return False
 
     api = create_vk_session_using_login_password(group.user.login, group.user.password,
@@ -164,27 +164,27 @@ def process_comment(comment):
         return None
 
     words_stop_list = set(moderation_rule.words_stop_list.split())
-    words_in_text = re.sub("[^\w]", " ", comment['text']).split()
+    words_in_text = re.sub("[^\w]", " ", comment['object']['text']).split()
 
-    all_checks = (checks.is_post_ad(api, comment['post_id'], comment['group_id']),
+    all_checks = (checks.is_post_ad(api, comment['object']['post_id'], comment['group_id']),
                   checks.is_stop_words_in_text(words_stop_list, words_in_text),
                   checks.is_scam_words_in_text(words_in_text),
-                  checks.is_video_in_attachments(comment.get('attachments')),
-                  checks.is_link_in_attachments(comment.get('attachments')),
-                  checks.is_group(comment['from_id']),
-                  checks.is_links_in_text(comment['text']),
-                  checks.is_vk_links_in_text(comment['text']),
-                  checks.is_audio_and_photo_in_attachments(comment.get('attachments')))
+                  checks.is_video_in_attachments(comment['object'].get('attachments')),
+                  checks.is_link_in_attachments(comment['object'].get('attachments')),
+                  checks.is_group(comment['object']['from_id']),
+                  checks.is_links_in_text(comment['object']['text']),
+                  checks.is_vk_links_in_text(comment['object']['text']),
+                  checks.is_audio_and_photo_in_attachments(comment['object'].get('attachments')))
 
     if any(all_checks):
-        delete_comment(api, comment['group_id'], comment['id'])
-        log.info('delete comment {} in {}'.format(comment['id'], comment['group_id']))
+        delete_comment(api, comment['group_id'], comment['object']['id'])
+        log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
 
         if is_reason_for_ban_exists(comment):
-            ban_user(api, comment['group_id'], comment['from_id'])
-            log.info('ban user {} in {}'.format(comment['from_id'], comment['group_id']))
+            ban_user(api, comment['group_id'], comment['object']['from_id'])
+            log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
 
         return True
 
-    log.info('comment {} in {} was moderated, everything ok'.format(comment['id'],
+    log.info('comment {} in {} was moderated, everything ok'.format(comment['object']['id'],
                                                                     comment['group_id']))
