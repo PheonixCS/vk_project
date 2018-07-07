@@ -54,10 +54,10 @@ class Group(models.Model):
     callback_api_token = models.CharField(max_length=128, verbose_name='Ответ для callback api', blank=True, default='')
     donors = models.ManyToManyField('scraping.Donor', blank=True)
 
-    members_count = models.IntegerField(null=True)
-    members_growth = models.IntegerField(null=True)
-    number_of_posts_yesterday = models.IntegerField(null=True)
-    number_of_ad_posts_yesterday = models.IntegerField(null=True)
+    members_count = models.IntegerField(null=True, verbose_name='Участники')
+    members_growth = models.IntegerField(null=True, verbose_name='Прирост')
+    number_of_posts_yesterday = models.IntegerField(null=True, verbose_name='Посты за вчера')
+    number_of_ad_posts_yesterday = models.IntegerField(null=True, verbose_name='Реклама за вчера')
     statistics_last_update_date = models.DateTimeField(null=True)
 
     def save(self, *args, **kwargs):

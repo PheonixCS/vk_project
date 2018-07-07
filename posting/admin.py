@@ -24,7 +24,8 @@ class GroupAdmin(admin.ModelAdmin):
         'members_count',
         'members_growth',
         'number_of_posts_yesterday',
-        'number_of_ad_posts_yesterday'
+        'number_of_ad_posts_yesterday',
+        'statistic_url'
     )
 
     inlines = [
