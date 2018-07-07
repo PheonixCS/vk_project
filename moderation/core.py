@@ -86,11 +86,11 @@ def is_moderation_needed(from_id, group_id, white_list):
 def is_reason_for_ban_and_get_comments_to_delete(event_object):
     if checks.is_group(event_object['from_id']):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
-        return True, event_object['id']
+        return True, list(event_object['id'])
 
     if checks.is_audio_and_photo_in_attachments(event_object.get('attachments', [])):
         log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
-        return True, event_object['id']
+        return True, list(event_object['id'])
 
     # FIXME timedelta
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=10)
@@ -105,7 +105,9 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
         )
         if len(comments_with_same_text) >= 2:
             log.info('from_id {} reason for ban: >3 comments with same text'.format(event_object['from_id']))
-            return True, [c.comment_id for c in comments_with_same_text].append(event_object['id'])
+            comments_to_delete = [c.comment_id for c in comments_with_same_text]
+            comments_to_delete.append(event_object['id'])
+            return True, comments_to_delete
 
     for attachment in event_object.get('attachments', []):
         comments_from_user = Comment.objects.filter(
@@ -120,7 +122,8 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
 
         if len(comments_with_same_attachment) >= 2:
             log.info('from_id {} reason for ban: >3 comments with same attachment'.format(event_object['from_id']))
-            return True, comments_with_same_attachment.append(event_object['id'])
+            comments_to_delete = comments_with_same_attachment.append(event_object['id'])
+            return True, comments_to_delete
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
     return False, []
