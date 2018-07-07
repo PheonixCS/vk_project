@@ -40,7 +40,7 @@ def ban_user(api, group_id, user_id):
     ban_end_date_timestamp = time.mktime(ban_end_date.timetuple())
 
     try:
-        api.group.ban(group_id=group_id,
+        api.groups.ban(group_id=group_id,
                       owner_id=user_id,
                       end_date=ban_end_date_timestamp,
                       api_version=VK_API_VERSION)
