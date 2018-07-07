@@ -83,7 +83,7 @@ def is_moderation_needed(from_id, group_id, white_list):
     return True
 
 
-def is_reason_for_ban_and_comments_to_delete(event_object):
+def is_reason_for_ban_and_get_comments_to_delete(event_object):
     if checks.is_group(event_object['from_id']):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
         return True, event_object['id']
@@ -123,7 +123,7 @@ def is_reason_for_ban_and_comments_to_delete(event_object):
             return True, comments_with_same_attachment.append(event_object['id'])
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
-    return False, None
+    return False, []
 
 
 def save_comment_to_db(transaction):
@@ -179,7 +179,7 @@ def process_comment(comment):
                   checks.is_vk_links_in_text(comment['object']['text']),
                   checks.is_audio_and_photo_in_attachments(comment['object'].get('attachments', [])))
 
-    reason_for_ban, comments_to_delete = is_reason_for_ban_and_comments_to_delete(comment['object'])
+    reason_for_ban, comments_to_delete = is_reason_for_ban_and_get_comments_to_delete(comment['object'])
     if reason_for_ban:
         ban_user(api, comment['group_id'], comment['object']['from_id'])
         log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
