@@ -52,11 +52,11 @@ def is_link_in_attachments(attachments):
 
 def is_group(commentator_id):
     if int(commentator_id) < 0:
-        log.debug('from_id if group')
+        log.debug('from_id is group')
         return True
 
 
-# TODO emojilink: ;vk.com
+# FIXME emojilink: ;vk.com
 def is_links_in_text(text):
     extractor = URLExtract()
     if extractor.has_urls(text):
@@ -67,4 +67,21 @@ def is_links_in_text(text):
 def is_vk_links_in_text(text):
     if re.findall(r'\[.*?\|.*?\]', text):
         log.debug('found vk link in text')
+        return True
+
+
+def is_audio_and_photo_in_attachments(attachments):
+    if is_audio_in_attachments(attachments) and is_photo_in_attachments(attachments):
+        return True
+
+
+def is_audio_in_attachments(attachments):
+    if [attachment for attachment in attachments if attachment['type'] == 'audio']:
+        log.debug('found audio in attachments')
+        return True
+
+
+def is_photo_in_attachments(attachments):
+    if [attachment for attachment in attachments if attachment['type'] == 'photo']:
+        log.debug('found photo in attachments')
         return True

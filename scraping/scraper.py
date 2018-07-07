@@ -182,7 +182,8 @@ def save_record_to_db(donor, record):
                     )
 
             if any('doc' in d for d in record['attachments']):
-                gifs = [item for item in record['attachments'] if item['type'] == 'doc' and item['doc']['ext'] == 'gif']
+                gifs = [item for item in record['attachments'] if item['type'] == 'doc' and item['doc']['ext'] == 'gif'
+                        and item['doc']['owner_id'] > 0]
                 for gif in gifs:
                     Gif.objects.create(
                         record=obj,
