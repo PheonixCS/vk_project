@@ -39,7 +39,7 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'posting.tasks.delete_old_ads',
         'schedule': crontab(minute=30)  # every hour at 30 minute
     },
-    'update_statistics'{
+    'update_statistics': {
         'task': 'posting.tasks.update_statistics',
         'schedule': crontab(minute=10) # FIXME just for testing, remove in prod
     }
