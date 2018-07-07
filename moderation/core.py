@@ -88,7 +88,7 @@ def is_reason_for_ban_exists(event_object):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
         return True
 
-    if checks.is_audio_and_photo_in_attachments(event_object.get('attachments')):
+    if checks.is_audio_and_photo_in_attachments(event_object.get('attachments', [])):
         log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
         return True
 

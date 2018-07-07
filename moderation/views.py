@@ -27,4 +27,4 @@ def webhook(request):
 
     WebhookTransaction.objects.create(body=received_json_data)
 
-    return HttpResponse(status=200)
+    return HttpResponse('ok')
