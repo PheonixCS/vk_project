@@ -122,7 +122,8 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
 
         if len(comments_with_same_attachment) >= 2:
             log.info('from_id {} reason for ban: >3 comments with same attachment'.format(event_object['from_id']))
-            comments_to_delete = comments_with_same_attachment.append(event_object['id'])
+            comments_to_delete = comments_with_same_attachment
+            comments_to_delete.append(event_object['id'])
             return True, comments_to_delete
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
