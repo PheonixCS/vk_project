@@ -67,5 +67,5 @@ class Comment(models.Model):
 
 class Attachment(models.Model):
     attached_to = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')
-    type = models.CharField(max_length='64', default='')
+    type = models.CharField(max_length=64, default='')
     body = JSONField(default={})
