@@ -54,8 +54,14 @@ class GroupAdmin(admin.ModelAdmin):
         else:
             return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.url}</a>')
 
+    def vk_statistics_url_field(self, obj):
+        return format_html(f'<a href="{obj.statistic_url}" target="_blank"'
+                           f' rel="noopener noreferrer">{obj.statistic_url}</a>')
+
     vk_url_field.allow_tags = True
+    vk_statistics_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
+    vk_statistics_url_field.short_description = 'Стастистика'
 
 
 class UserAdmin(admin.ModelAdmin):
