@@ -60,36 +60,39 @@ def is_moderation_needed(from_id, group_id, white_list):
 
 
 def handle_comment_event(event_object, group_id):
-    log.info('start handling comment {} in {} by {}'.format(event_object['id'], group_id, event_object['from_id']))
+    try:
+        log.info('start handling comment {} in {} by {}'.format(event_object['id'], group_id, event_object['from_id']))
 
-    group = Group.objects.select_related('user').filter(group_id=group_id).first()
+        group = Group.objects.select_related('user').filter(group_id=group_id).first()
 
-    moderation_rule = ModerationRule.objects.first()
-    white_list = prepare_id_white_list(moderation_rule.id_white_list)
+        moderation_rule = ModerationRule.objects.first()
+        white_list = prepare_id_white_list(moderation_rule.id_white_list)
 
-    if not is_moderation_needed(event_object['from_id'], group_id, white_list):
-        return False
+        if not is_moderation_needed(event_object['from_id'], group_id, white_list):
+            return False
 
-    api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
-    if not api:
-        log.warning('group {} no api created!'.format(group_id))
-        return None
+        api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
+        if not api:
+            log.warning('group {} no api created!'.format(group_id))
+            return None
 
-    words_stop_list = set(moderation_rule.words_stop_list.split())
-    words_in_text = re.sub("[^\w]", " ", event_object['text']).split()
+        words_stop_list = set(moderation_rule.words_stop_list.split())
+        words_in_text = re.sub("[^\w]", " ", event_object['text']).split()
 
-    all_checks = (checks.is_post_ad(api, event_object['post_id'], group_id),
-                  checks.is_stop_words_in_text(words_stop_list, words_in_text),
-                  checks.is_scam_words_in_text(words_in_text),
-                  checks.is_video_in_attachments(event_object.get('attachments')),
-                  checks.is_link_in_attachments(event_object.get('attachments')),
-                  checks.is_group(event_object['from_id']),
-                  checks.is_links_in_text(event_object['text']),
-                  checks.is_vk_links_in_text(event_object['text']))
+        all_checks = (checks.is_post_ad(api, event_object['post_id'], group_id),
+                      checks.is_stop_words_in_text(words_stop_list, words_in_text),
+                      checks.is_scam_words_in_text(words_in_text),
+                      checks.is_video_in_attachments(event_object.get('attachments', [])),
+                      checks.is_link_in_attachments(event_object.get('attachments', [])),
+                      checks.is_group(event_object['from_id']),
+                      checks.is_links_in_text(event_object['text']),
+                      checks.is_vk_links_in_text(event_object['text']))
 
-    if any(all_checks):
-        delete_comment(api, group_id, event_object['id'])
-        log.info('delete comment {} in {}'.format(event_object['id'], group_id))
-        return True
+        if any(all_checks):
+            delete_comment(api, group_id, event_object['id'])
+            log.info('delete comment {} in {}'.format(event_object['id'], group_id))
+            return True
 
-    log.info('comment {} in {} was moderated, everything ok'.format(event_object['id'], group_id))
+        log.info('comment {} in {} was moderated, everything ok'.format(event_object['id'], group_id))
+    except:
+        log.error('error while rating', exc_info=True)
