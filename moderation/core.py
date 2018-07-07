@@ -169,12 +169,12 @@ def process_comment(comment):
     all_checks = (checks.is_post_ad(api, comment['object']['post_id'], comment['group_id']),
                   checks.is_stop_words_in_text(words_stop_list, words_in_text),
                   checks.is_scam_words_in_text(words_in_text),
-                  checks.is_video_in_attachments(comment['object'].get('attachments')),
-                  checks.is_link_in_attachments(comment['object'].get('attachments')),
+                  checks.is_video_in_attachments(comment['object'].get('attachments', [])),
+                  checks.is_link_in_attachments(comment['object'].get('attachments', [])),
                   checks.is_group(comment['object']['from_id']),
                   checks.is_links_in_text(comment['object']['text']),
                   checks.is_vk_links_in_text(comment['object']['text']),
-                  checks.is_audio_and_photo_in_attachments(comment['object'].get('attachments')))
+                  checks.is_audio_and_photo_in_attachments(comment['object'].get('attachments', [])))
 
     if any(all_checks):
         delete_comment(api, comment['group_id'], comment['object']['id'])
