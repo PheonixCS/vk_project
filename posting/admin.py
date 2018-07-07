@@ -29,6 +29,7 @@ class GroupAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         'vk_url_field',
+        'vk_statistics_url_field',
         'members_count',
         'members_growth',
         'number_of_posts_yesterday',
