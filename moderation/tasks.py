@@ -28,7 +28,8 @@ def process_transactions():
                 transaction.status = WebhookTransaction.ERROR
                 transaction.save(update_fields=['status'])
 
-                log.error('caught unexpected exception in process comment {}'.format(transaction.body['id']), exc_info=True)
+                log.error('caught unexpected exception in process comment {}'.format(transaction.body['object']['id']),
+                          exc_info=True)
     except:
         log.error('', exc_info=True)
 

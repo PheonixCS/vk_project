@@ -129,7 +129,7 @@ def save_comment_to_db(transaction):
         webhook_transaction=transaction,
         post_id=transaction.body['object']['post_id'],
         post_owner_id=transaction.body['object']['post_owner_id'],
-        comment_id=transaction.body['object']['comment_id'],
+        comment_id=transaction.body['object']['id'],
         from_id=transaction.body['object']['from_id'],
         date=transaction.body['object']['date'],
         text=transaction.body['object']['text'],
