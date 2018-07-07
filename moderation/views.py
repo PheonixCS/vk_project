@@ -20,6 +20,7 @@ log = logging.getLogger('moderation.views')
 def webhook(request):
     log.debug('opop')
     received_json_data = json.loads(request.body.decode("utf-8"))
+    log.debug(received_json_data)
 
     # meta = copy.copy(request.META)
     # for k, v in meta.items():
