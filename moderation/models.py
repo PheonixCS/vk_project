@@ -1,8 +1,7 @@
-from django.db import models
+from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils import timezone
-
-from django_hstore import hstore
 
 
 class ModerationRule(models.Model):
@@ -39,19 +38,14 @@ class WebhookTransaction(models.Model):
 
     date_generated = models.DateTimeField()
     date_received = models.DateTimeField(default=timezone.now)
-    type = models.CharField(max_length=128, default='')
-    # FIXME JSONField?
-    body = hstore.SerializedDictionaryField()
-    request_meta = hstore.SerializedDictionaryField()
+    body = JSONField(default={})
+    request_meta = JSONField(default={})
     status = models.CharField(max_length=250, choices=STATUSES, default=UNPROCESSED)
-
-    objects = hstore.HStoreManager()
 
     def __str__(self):
         return '{}'.format(self.date_generated)
 
 
-# TODO Comment model
 class Comment(models.Model):
     date_processed = models.DateTimeField(default=timezone.now)
     webhook_transaction = models.OneToOneField(WebhookTransaction, on_delete=models.CASCADE)
@@ -66,8 +60,12 @@ class Comment(models.Model):
                                                                 'в ответ которому оставлен текущий комментарий')
     reply_to_comment = models.IntegerField(null=True, verbose_name='идентификатор комментария, '
                                                                    'в ответ на который оставлен текущий')
-    # TODO attachments model
-    # attachments =
 
     def __str__(self):
         return '{}'.format(self.comment_id)
+
+
+class Attachment(models.Model):
+    attached_to = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')
+    type = models.CharField(max_length='64', default='')
+    body = JSONField(default={})

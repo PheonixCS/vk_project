@@ -26,7 +26,6 @@ def webhook(request):
             received_json_data['timestamp']/1000.0,
             tz=timezone.get_current_timezone()
         ),
-        type=received_json_data['type'],
         body=received_json_data,
         request_meta=meta
     )
