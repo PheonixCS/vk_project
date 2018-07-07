@@ -21,10 +21,10 @@ log = logging.getLogger('moderation.views')
 def webhook(request):
     received_json_data = json.loads(request.body.decode("utf-8"))
 
-    # meta = copy.copy(request.META)
-    # for k, v in meta.items():
-    #     if not isinstance(v, str):
-    #         del meta[k]
+    meta = copy.copy(request.META)
+    for k, v in meta.items():
+        if not isinstance(v, str):
+            del meta[k]
 
     if received_json_data['type'] == 'confirmation' and core.does_group_exist(received_json_data['group_id']):
         return HttpResponse(core.get_callback_api_key(received_json_data['group_id']))
@@ -34,7 +34,8 @@ def webhook(request):
             received_json_data['date'],
             tz=timezone.utc
         ),
-        body=received_json_data
+        body=received_json_data,
+        request_meta=meta
     )
 
     return HttpResponse(status=200)
