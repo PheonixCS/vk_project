@@ -151,8 +151,8 @@ def process_comment(comment):
 
     group = Group.objects.select_related('user').filter(group_id=comment['group_id']).first()
 
-    moderation_rule = ModerationRule.objects.first()
-    white_list = prepare_id_white_list(moderation_rule.id_white_list)
+        moderation_rule = ModerationRule.objects.first()
+        white_list = prepare_id_white_list(moderation_rule.id_white_list)
 
     if not is_moderation_needed(comment['from_id'], comment['group_id'], white_list):
         return False

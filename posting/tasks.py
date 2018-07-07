@@ -122,6 +122,7 @@ def examine_groups():
 
             records = [record for donor in donors for record in
                        donor.records.filter(rate__isnull=False,
+                                            is_involved_now=False,
                                             post_in_group_date__isnull=True,
                                             failed_date__isnull=True,
                                             post_in_donor_date__gt=allowed_time_threshold)]
@@ -130,6 +131,8 @@ def examine_groups():
                 continue
 
             record_with_max_rate = max(records, key=lambda x: x.rate)
+            record_with_max_rate.is_involved_now = True
+            record_with_max_rate.save(update_fields=['is_involved_now'])
             log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
 
             try:
@@ -140,6 +143,7 @@ def examine_groups():
                                   record_with_max_rate.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
+                record_with_max_rate.is_involved_now = False
 
 
 @task
@@ -170,7 +174,8 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         image_text_filling_active = group.is_text_filling_enabled
 
         if horoscope_record.image_url:
-            if image_text_filling_active:
+            # TODO len text to livesetting
+            if image_text_filling_active and len(record_text) <= 70:
                 record_text = delete_emoji_from_text(record_text)
                 attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone,
                                            record_text)
@@ -212,10 +217,14 @@ def post_record(login, password, app_id, group_id, record_id):
 
     if not session:
         log.error('session not created in group {}'.format(group_id))
+        record.is_involved_now = False
+        record.save(update_fields=['is_involved_now'])
         return
 
     if not api:
         log.error('no api was created in group {}'.format(group_id))
+        record.is_involved_now = False
+        record.save(update_fields=['is_involved_now'])
         return
 
     try:
@@ -233,7 +242,8 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images[::-1]:
-            if len(images) == 1 and image_text_filling_active:
+            # TODO len text to livesettings
+            if len(images) == 1 and image_text_filling_active and len(record_text) <= 70:
                 record_text = delete_emoji_from_text(record_text)
                 attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone, record_text))
                 record_text = ''
@@ -247,7 +257,8 @@ def post_record(login, password, app_id, group_id, record_id):
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
         elif gifs:
             record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-            record.save()
+            record.is_involved_now = False
+            record.save(update_fields=['failed_time', 'is_involved_now'])
             return
 
         videos = record.videos.all()
@@ -257,7 +268,8 @@ def post_record(login, password, app_id, group_id, record_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
                 record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                record.save(update_fields=['failed_date'])
+                record.is_involved_now = False
+                record.save(update_fields=['failed_date', 'is_involved_now'])
                 return
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
@@ -268,17 +280,20 @@ def post_record(login, password, app_id, group_id, record_id):
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
         record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        record.save(update_fields=['failed_date'])
+        record.is_involved_now = False
+        record.save(update_fields=['failed_time', 'is_involved_now'])
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
         record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        record.save(update_fields=['failed_date'])
+        record.is_involved_now = False
+        record.save(update_fields=['failed_time', 'is_involved_now'])
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
-    record.save(update_fields=['group', 'post_in_group_date'])
+    record.is_involved_now = False
+    record.save(update_fields=['group', 'post_in_group_date', 'is_involved_now'])
     log.debug('post in group {} finished'.format(group_id))
 
 

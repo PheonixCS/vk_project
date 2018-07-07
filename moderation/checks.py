@@ -52,7 +52,7 @@ def is_link_in_attachments(attachments):
 
 def is_group(commentator_id):
     if int(commentator_id) < 0:
-        log.debug('from_id if group')
+        log.debug('from_id is group')
         return True
 
 
