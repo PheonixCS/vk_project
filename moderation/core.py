@@ -83,6 +83,7 @@ def is_moderation_needed(from_id, group_id, white_list):
     return True
 
 
+# FIXME PLS IM THE MOST SHITTY FUNCTION HERE
 def is_reason_for_ban_and_get_comments_to_delete(event_object):
     if checks.is_group(event_object['from_id']):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
