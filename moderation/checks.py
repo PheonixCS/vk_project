@@ -1,10 +1,11 @@
-import re
 import logging
+import re
 
 from alphabet_detector import AlphabetDetector
 from urlextract import URLExtract
 from vk_api import ApiError
 
+from posting.poster import delete_emoji_from_text
 from settings.models import Setting
 
 log = logging.getLogger('moderation.checks')
@@ -56,10 +57,10 @@ def is_group(commentator_id):
         return True
 
 
-# FIXME emojilink: ;vk.com
 def is_links_in_text(text):
+    text_without_emoji = delete_emoji_from_text(text)
     extractor = URLExtract()
-    if extractor.has_urls(text):
+    if extractor.has_urls(text_without_emoji):
         log.debug('found url in text')
         return True
 
