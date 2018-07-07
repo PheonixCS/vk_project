@@ -41,7 +41,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'update_statistics': {
         'task': 'posting.tasks.update_statistics',
-        'schedule': crontab(minute=10) # FIXME just for testing, remove in prod
+        'schedule': crontab(minute=10)  # FIXME just for testing, remove in prod
     }
 }
 
