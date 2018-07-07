@@ -260,7 +260,7 @@ def post_record(login, password, app_id, group_id, record_id):
         elif gifs:
             record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             record.is_involved_now = False
-            record.save(update_fields=['failed_time', 'is_involved_now'])
+            record.save(update_fields=['failed_date', 'is_involved_now'])
             return
 
         videos = record.videos.all()
@@ -283,13 +283,13 @@ def post_record(login, password, app_id, group_id, record_id):
         log.info('group {} got api error: {}'.format(group_id, error_msg))
         record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         record.is_involved_now = False
-        record.save(update_fields=['failed_time', 'is_involved_now'])
+        record.save(update_fields=['failed_date', 'is_involved_now'])
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
         record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         record.is_involved_now = False
-        record.save(update_fields=['failed_time', 'is_involved_now'])
+        record.save(update_fields=['failed_date', 'is_involved_now'])
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
