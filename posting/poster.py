@@ -12,7 +12,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from posting.transforms import RGBTransform
-from scraping.scraper import get_wall
+from scraping.core.vk_helper import get_wall
 from settings.models import Setting
 
 log = logging.getLogger('posting.poster')
