@@ -95,15 +95,16 @@ def is_reason_for_ban_exists(event_object):
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(days=1)
     time_threshold_timestamp = time.mktime(time_threshold.timetuple())
 
-    comments_with_same_text = Comment.objects.filter(
-        post_owner_id=event_object['post_owner_id'],
-        from_id=event_object['from_id'],
-        text=event_object['text'],
-        date__gt=time_threshold_timestamp
-    )
-    if len(comments_with_same_text) >= 2:
-        log.info('from_id {} reason for ban: >3 comments with same text'.format(event_object['from_id']))
-        return True
+    if event_object['text']:
+        comments_with_same_text = Comment.objects.filter(
+            post_owner_id=event_object['post_owner_id'],
+            from_id=event_object['from_id'],
+            text=event_object['text'],
+            date__gt=time_threshold_timestamp
+        )
+        if len(comments_with_same_text) >= 2:
+            log.info('from_id {} reason for ban: >3 comments with same text'.format(event_object['from_id']))
+            return True
 
     for attachment in event_object.get('attachments', []):
         comments_from_user = Comment.objects.filter(

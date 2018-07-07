@@ -52,7 +52,7 @@ class Comment(models.Model):
     comment_id = models.IntegerField(null=True, verbose_name='идентификатор комментария')
     from_id = models.IntegerField(null=True, verbose_name='идентификатор автора комментария')
     date = models.IntegerField(null=True, verbose_name='дата создания комментария в формате Unixtime')
-    text = models.CharField(max_length=4096, default='', verbose_name='текст комментария')
+    text = models.CharField(max_length=4096, default=None, verbose_name='текст комментария')
     reply_to_user = models.IntegerField(null=True, verbose_name='идентификатор пользователя или сообщества, '
                                                                 'в ответ которому оставлен текущий комментарий')
     reply_to_comment = models.IntegerField(null=True, verbose_name='идентификатор комментария, '
