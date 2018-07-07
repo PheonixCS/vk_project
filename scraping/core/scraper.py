@@ -14,11 +14,8 @@ from scraping.core.helpers import distribute_donors_between_accounts, find_url_o
 from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
 from scraping.core.vk_helper import get_wall, get_wall_by_post_id, create_vk_api_using_service_token
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
-from settings.models import Setting
 
 log = logging.getLogger('scraping.scraper')
-
-VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 
 def save_record_to_db(donor, record):

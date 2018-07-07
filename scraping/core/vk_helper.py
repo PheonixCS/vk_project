@@ -4,7 +4,10 @@ import logging
 
 import vk_requests
 from vk_requests.exceptions import VkAPIError
+from settings.models import Setting
 
+# TODO add it to livesettings
+VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 log = logging.getLogger('scraping.core.vk_api_helpers')
 
