@@ -16,18 +16,17 @@ from moderation.models import WebhookTransaction
 def webhook(request):
     received_json_data = json.loads(request.body.decode("utf-8"))
 
-    meta = copy.copy(request.META)
-    for k, v in meta.items():
-        if not isinstance(v, str):
-            del meta[k]
+    # meta = copy.copy(request.META)
+    # for k, v in meta.items():
+    #     if not isinstance(v, str):
+    #         del meta[k]
 
     WebhookTransaction.objects.create(
         date_generated=datetime.datetime.fromtimestamp(
-            received_json_data['timestamp']/1000.0,
+            received_json_data['timestamp'],
             tz=timezone.get_current_timezone()
         ),
-        body=received_json_data,
-        request_meta=meta
+        body=received_json_data
     )
 
     if received_json_data['type'] == 'confirmation' and core.does_group_exist(received_json_data['group_id']):
