@@ -92,7 +92,8 @@ def is_reason_for_ban_exists(event_object):
         log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
         return True
 
-    time_threshold = datetime.now(tz=timezone.utc) - timedelta(days=1)
+    # FIXME timedelta
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=10)
     time_threshold_timestamp = time.mktime(time_threshold.timetuple())
 
     if event_object['text']:
