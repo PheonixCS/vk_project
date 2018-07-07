@@ -25,9 +25,15 @@ class GroupAdmin(admin.ModelAdmin):
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
         'statistic_url',
+        'statistics_last_update_date'
     )
     readonly_fields = (
-        'vk_url_field',)
+        'vk_url_field',
+        'members_count',
+        'members_growth',
+        'number_of_posts_yesterday',
+        'number_of_ad_posts_yesterday',
+    )
     list_display = (
         'domain_or_id',
         'vk_url_field',
