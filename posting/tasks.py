@@ -419,7 +419,7 @@ def update_statistics():
     all_group_ids = all_groups.values_list('domain_or_id', flat=True)
     log.debug('got {} groups in update_statistics'.format(len(all_group_ids)))
 
-    token = ServiceToken.filter().first()
+    token = ServiceToken.objects.filter().first()
     log.debug('using {} token for update_statistics'.format(token))
 
     api = create_vk_api_using_service_token(token)
