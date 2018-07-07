@@ -83,14 +83,14 @@ def is_moderation_needed(from_id, group_id, white_list):
     return True
 
 
-def is_reason_for_ban_exists(event_object):
+def is_reason_for_ban_and_comments_to_delete(event_object):
     if checks.is_group(event_object['from_id']):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
-        return True
+        return True, event_object['id']
 
     if checks.is_audio_and_photo_in_attachments(event_object.get('attachments', [])):
         log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
-        return True
+        return True, event_object['id']
 
     # FIXME timedelta
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=10)
@@ -105,7 +105,7 @@ def is_reason_for_ban_exists(event_object):
         )
         if len(comments_with_same_text) >= 2:
             log.info('from_id {} reason for ban: >3 comments with same text'.format(event_object['from_id']))
-            return True
+            return True, [c.comment_id for c in comments_with_same_text].append(event_object['id'])
 
     for attachment in event_object.get('attachments', []):
         comments_from_user = Comment.objects.filter(
@@ -120,10 +120,10 @@ def is_reason_for_ban_exists(event_object):
 
         if len(comments_with_same_attachment) >= 2:
             log.info('from_id {} reason for ban: >3 comments with same attachment'.format(event_object['from_id']))
-            return True
+            return True, comments_with_same_attachment.append(event_object['id'])
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
-    return False
+    return False, None
 
 
 def save_comment_to_db(transaction):
@@ -179,20 +179,20 @@ def process_comment(comment):
                   checks.is_vk_links_in_text(comment['object']['text']),
                   checks.is_audio_and_photo_in_attachments(comment['object'].get('attachments', [])))
 
-    if any(all_checks):
-        delete_comment(api, comment['group_id'], comment['object']['id'])
-        log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
+    reason_for_ban, comments_to_delete = is_reason_for_ban_and_comments_to_delete(comment['object'])
+    if reason_for_ban:
+        ban_user(api, comment['group_id'], comment['object']['from_id'])
+        log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
 
-        if is_reason_for_ban_exists(comment['object']):
-            ban_user(api, comment['group_id'], comment['object']['from_id'])
-            log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
+        for comment_to_delete_id in comments_to_delete:
+            delete_comment(api, comment['group_id'], comment_to_delete_id)
+            log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
 
         return True
 
-    if is_reason_for_ban_exists(comment['object']):
-        ban_user(api, comment['group_id'], comment['object']['from_id'])
+    if any(all_checks):
         delete_comment(api, comment['group_id'], comment['object']['id'])
-        log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
+        log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
         return True
 
     log.info('comment {} in {} was moderated, everything ok'.format(comment['object']['id'],
