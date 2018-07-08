@@ -87,11 +87,11 @@ def is_moderation_needed(from_id, group_id, white_list):
 def is_reason_for_ban_and_get_comments_to_delete(event_object):
     if checks.is_group(event_object['from_id']):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
-        return True, list(event_object['id'])
+        return True, [event_object['id']]
 
     if checks.is_audio_and_photo_in_attachments(event_object.get('attachments', [])):
         log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
-        return True, list(event_object['id'])
+        return True, [event_object['id']]
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(days=1)
     time_threshold_timestamp = time.mktime(time_threshold.timetuple())
