@@ -6,13 +6,15 @@ from random import choice
 import vk_api
 from celery import task
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
                             check_video_availability, delete_emoji_from_text)
+from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record
-from scraping.scraper import get_wall, create_vk_api_using_service_token
 
 log = logging.getLogger('posting.scheduled')
 
@@ -258,7 +260,7 @@ def post_record(login, password, app_id, group_id, record_id):
         elif gifs:
             record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             record.is_involved_now = False
-            record.save(update_fields=['failed_time', 'is_involved_now'])
+            record.save(update_fields=['failed_date', 'is_involved_now'])
             return
 
         videos = record.videos.all()
@@ -281,13 +283,13 @@ def post_record(login, password, app_id, group_id, record_id):
         log.info('group {} got api error: {}'.format(group_id, error_msg))
         record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         record.is_involved_now = False
-        record.save(update_fields=['failed_time', 'is_involved_now'])
+        record.save(update_fields=['failed_date', 'is_involved_now'])
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
         record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         record.is_involved_now = False
-        record.save(update_fields=['failed_time', 'is_involved_now'])
+        record.save(update_fields=['failed_date', 'is_involved_now'])
         return
 
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
@@ -403,3 +405,70 @@ def delete_old_ads():
             number_of_records, extended = ads.delete()
             log.debug('delete {} ads out of db'.format(number_of_records))
         log.info('finish deleting old ads')
+
+
+@task
+def update_statistics():
+    log.debug('update_statistics called')
+
+    now_time = datetime.now(tz=timezone.utc)
+    today_start = now_time.replace(hour=0, minute=0, second=0)
+    yesterday_start = today_start - timedelta(hours=24)
+
+    all_groups = Group.objects.all()
+    all_group_ids = all_groups.values_list('domain_or_id', flat=True)
+    log.debug('got {} groups in update_statistics'.format(len(all_group_ids)))
+
+    token = ServiceToken.objects.filter().first().app_service_token
+    log.debug('using {} token for update_statistics'.format(token))
+
+    api = create_vk_api_using_service_token(token)
+
+    if not api:
+        log.error('cannot update statistics')
+
+    try:
+        response = api.groups.getById(group_ids=all_group_ids, fields=['members_count'])
+
+        for piece in response:
+
+            screen_name = piece.get('screen_name', None)
+            members_count_now = piece.get('members_count', None)
+            group_id = piece.get('id', None)
+
+            try:
+                group = all_groups.get(domain_or_id=group_id)
+            except ObjectDoesNotExist:
+                group = all_groups.get(domain_or_id=screen_name)
+
+            if group:
+                members_count_last = group.members_count or 0
+                group.members_growth = members_count_now - members_count_last
+                group.members_count = members_count_now
+
+                starts = Q(post_in_group_date__gte=yesterday_start)
+                ends = Q(post_in_group_date__lte=today_start)
+
+                group.number_of_posts_yesterday = Record.objects.filter(group_id=group.domain_or_id).\
+                    filter(starts & ends).count()
+
+                group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
+                    filter(starts & ends).count()
+
+                group.statistics_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
+
+                group.save(update_fields=['members_growth',
+                                          'members_count',
+                                          'number_of_posts_yesterday',
+                                          'number_of_ad_posts_yesterday',
+                                          'statistics_last_update_date'])
+
+                log.debug('finish updating statistic for group {} {}'.format(group_id, screen_name))
+            else:
+                log.warning('problem with group {} {}'.format(group_id, screen_name))
+
+    except:
+        log.debug('got unexpected error in update_statistics', exc_info=True)
+        return
+
+    log.debug('update_statistics finished successfully')
