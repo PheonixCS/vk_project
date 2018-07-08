@@ -1,5 +1,5 @@
 #
-
+import re
 
 def fetch_zodiac_sign(text):
     zodiac_signs = ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
