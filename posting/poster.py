@@ -202,29 +202,31 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
     log.debug('fil_image_with_text finished')
 
 
-def upload_photo(session, photo_url, group_id, RGB_tone, text=None):
+def prepare_image_for_posting(image_local_filepath, **kwargs):
+    # crop_image(image_local_filepath)
+
+    for key, value in kwargs.items():
+        if key is 'rgb_tone':
+            red_tone, green_tone, blue_tone, factor = list(map(int, value.split()))
+            color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
+
+        if key is 'text_to_fill':
+            fil_image_with_text(image_local_filepath, value)
+
+
+def upload_photo(session, image_local_filepath, group_id):
     log.debug('upload_photo called')
-    image_local_filename = download_file(photo_url)
-
-    # crop_image(image_local_filename)
-
-    if RGB_tone:
-        red_tone, green_tone, blue_tone, factor = list(map(int, RGB_tone.split()))
-        color_image_in_tone(image_local_filename, red_tone, green_tone, blue_tone, factor)
-
-    if text:
-        fil_image_with_text(image_local_filename, text)
 
     try:
         upload = vk_api.VkUpload(session)
-        photo = upload.photo_wall(photos=image_local_filename,
+        photo = upload.photo_wall(photos=image_local_filepath,
                                   group_id=int(group_id))
     except:
         log.error('exception while uploading photo', exc_info=True)
         return
 
-    if os.path.isfile(image_local_filename):
-        os.remove(image_local_filename)
+    if os.path.isfile(image_local_filepath):
+        os.remove(image_local_filepath)
 
     return 'photo{}_{}'.format(photo[0]['owner_id'], photo[0]['id'])
 

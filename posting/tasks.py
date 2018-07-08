@@ -1,4 +1,3 @@
-#
 import logging
 from datetime import datetime, timedelta
 from random import choice
@@ -12,7 +11,7 @@ from django.db.models import Q
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
-                            check_video_availability, delete_emoji_from_text)
+                            check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record
 
@@ -146,6 +145,7 @@ def examine_groups():
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
                 record_with_max_rate.is_involved_now = False
+                record_with_max_rate.save(update_fields=['is_involved_now'])
 
 
 @task
@@ -168,22 +168,16 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
     try:
-        attachments = ''
+        attachments = []
 
         record_text = horoscope_record.text
         record_text = delete_hashtags_from_text(record_text)
 
-        image_text_filling_active = group.is_text_filling_enabled
-
         if horoscope_record.image_url:
-            # TODO len text to livesetting
-            if image_text_filling_active and len(record_text) <= 70:
-                record_text = delete_emoji_from_text(record_text)
-                attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone,
-                                           record_text)
-                record_text = ''
-            else:
-                attachments = upload_photo(session, horoscope_record.image_url, group_id, group.RGB_image_tone)
+            image_local_filename = download_file(horoscope_record.image_url)
+            actions_to_unique_image = {'rgb_tone': group.RGB_image_tone}
+            prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
+            attachments = upload_photo(session, image_local_filename, group_id)
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
@@ -230,7 +224,7 @@ def post_record(login, password, app_id, group_id, record_id):
         return
 
     try:
-        attachments = list()
+        attachments = []
         image_text_filling_active = group.is_text_filling_enabled
 
         record_text = record.text
@@ -244,13 +238,18 @@ def post_record(login, password, app_id, group_id, record_id):
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
         for image in images[::-1]:
-            # TODO len text to livesettings
-            if len(images) == 1 and image_text_filling_active and len(record_text) <= 70:
-                record_text = delete_emoji_from_text(record_text)
-                attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone, record_text))
+            image_local_filename = download_file(image.url)
+
+            actions_to_unique_image = {'rgb_tone': group.RGB_image_tone}
+            # TODO max_text_to_fill_length to livesettings
+            max_text_to_fill_length = 70
+            if len(images) == 1 and image_text_filling_active and len(record_text) <= max_text_to_fill_length:
+                actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
                 record_text = ''
-            else:
-                attachments.append(upload_photo(session, image.url, group_id, group.RGB_image_tone))
+
+            prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
+
+            attachments.append(upload_photo(session, image_local_filename, group_id))
 
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
