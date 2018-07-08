@@ -45,10 +45,10 @@ def filter_out_records_with_unsuitable_attachments(records):
         else:
             for attachment in attachments:
                 if attachment['type'] not in suitable_attachments:
-                    log.debug('filter record due to unsuitable attachments'.format(record.get('id', None)))
+                    log.debug('filter record {} due to unsuitable attachments'.format(record.get('id', None)))
                     break
                 if attachment['type'] == 'doc' and attachment['doc']['ext'] != 'gif':
-                    log.debug('filter record due to unsuitable attachments'.format(record.get('id', None)))
+                    log.debug('filter record {} due to unsuitable attachments'.format(record.get('id', None)))
                     break
             else:
                 filtered_records.append(record)
@@ -67,7 +67,7 @@ def filter_out_records_with_small_images(records, min_quantity_of_pixels=700):
             for attachment in attachments:
                 if attachment['type'] == 'photo' and (attachment['photo']['width'] < min_quantity_of_pixels or
                                                       attachment['photo']['height'] < min_quantity_of_pixels):
-                    log.debug('filter record due to min width or height value'.format(record.get('id', None)))
+                    log.debug('filter record {} due to min width or height value'.format(record.get('id', None)))
                     break
             else:
                 filtered_records.append(record)
