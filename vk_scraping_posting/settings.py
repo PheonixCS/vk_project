@@ -41,7 +41,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'update_statistics': {
         'task': 'posting.tasks.update_statistics',
-        'schedule': crontab(minute='*/10')  # FIXME just for testing, remove in prod
+        'schedule': crontab(minute=5, hour=1)  # at 0:05 am UTC (3:05 am by MSK)
     },
     'process_moderation_transaction': {
         'task': 'moderation.tasks.process_transactions',
