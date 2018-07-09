@@ -46,7 +46,7 @@ class GroupAdmin(admin.ModelAdmin):
                        'user', 'callback_api_token')
         }),
         ('Параметры уникализации', {
-            'fields': ('is_text_filling_enabled', 'RGB_image_tone')
+            'fields': ('is_text_filling_enabled', 'is_changing_image_to_square_enabled', 'RGB_image_tone')
         }),
         ('Статистика', {
             'classes': ('collapse',),
