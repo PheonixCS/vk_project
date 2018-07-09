@@ -20,10 +20,6 @@ class GroupAdmin(admin.ModelAdmin):
         'url',
         'group_id',
         'donors',
-        'members_count'
-        'members_growth',
-        'number_of_posts_yesterday',
-        'number_of_ad_posts_yesterday',
         'statistic_url',
         'statistics_last_update_date'
     )
@@ -43,6 +39,20 @@ class GroupAdmin(admin.ModelAdmin):
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
         'vk_statistics_url_field',
+    )
+    fieldsets = (
+        (None, {
+            'fields': ('domain_or_id', 'name', 'is_posting_active', 'is_horoscopes', 'is_pin_enabled', 'posting_time',
+                       'user', 'callback_api_token')
+        }),
+        ('Уникализация изображений', {
+            'fields': ('is_text_filling_enabled', 'RGB_image_tone')
+        }),
+        ('Статистика', {
+            'classes': ('collapse',),
+            'fields': ('vk_statistics_url_field', 'members_count', 'members_growth', 'number_of_posts_yesterday',
+                       'number_of_ad_posts_yesterday')
+        })
     )
 
     inlines = [
