@@ -45,7 +45,7 @@ class GroupAdmin(admin.ModelAdmin):
             'fields': ('domain_or_id', 'name', 'is_posting_active', 'is_horoscopes', 'is_pin_enabled', 'posting_time',
                        'user', 'callback_api_token')
         }),
-        ('Уникализация изображений', {
+        ('Параметры уникализации', {
             'fields': ('is_text_filling_enabled', 'RGB_image_tone')
         }),
         ('Статистика', {
