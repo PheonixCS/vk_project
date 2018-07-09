@@ -52,6 +52,9 @@ class Group(models.Model):
     donors = models.ManyToManyField('scraping.Donor', blank=True)
 
     is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на картинку?')
+    is_changing_image_to_square_enabled = models.BooleanField(default=False,
+                                                              verbose_name='Приводить изображения к '
+                                                                           'более квадратному виду?')
     RGB_image_tone = models.CharField(max_length=15, blank=True, default='',
                                       verbose_name='Применять RBG тон к изображениям (R G B factor)')
 
