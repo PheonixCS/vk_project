@@ -18,7 +18,6 @@ from settings.models import Setting
 log = logging.getLogger('posting.poster')
 
 VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
-PIXELS_TO_CUT_FROM_BOTTOM = Setting.get_value(key='PIXELS_TO_CUT_FROM_BOTTOM')
 
 
 def create_vk_session_using_login_password(login, password, app_id):
@@ -93,12 +92,12 @@ def upload_gif(session, gif_url):
     return 'doc{}_{}'.format(gif[0]['owner_id'], gif[0]['id'])
 
 
-def crop_image(filepath):
+def crop_image(filepath, box):
+    # box = (x coordinate to start croping, y coordinate to start croping, width to crop, height to crop)
     log.debug('crop_image called')
     img = Image.open(os.path.join(settings.BASE_DIR, filepath))
-    width, height = img.size
     try:
-        image = img.crop((0, 0, width, height - PIXELS_TO_CUT_FROM_BOTTOM))
+        image = img.crop(box)
         if filepath.endswith('.jpg'):
             image.save(filepath, 'JPEG', quality=95, progressive=True)
         else:
@@ -109,6 +108,23 @@ def crop_image(filepath):
         return False
     log.debug('image {} cropped'.format(filepath))
     return True
+
+
+def crop_percentage_from_image_edges(filepath, percentage_to_crop):
+    log.debug('crop_percentage_from_image_edges for {} called'.format(filepath))
+    img = Image.open(os.path.join(settings.BASE_DIR, filepath))
+    width, height = img.size
+    log.debug('image {} width: {}, height: {}'.format(filepath, width, height))
+    if width > height:
+        pixels_to_crop = width * percentage_to_crop
+        log.debug('pixels to crop from left and right: {}'.format(pixels_to_crop))
+        crop_image(filepath, (pixels_to_crop, 0, width - pixels_to_crop, 0))
+    elif height > width:
+        pixels_to_crop = height * percentage_to_crop
+        log.debug('pixels to crop from top and bottom: {}'.format(pixels_to_crop))
+        crop_image(filepath, (0, pixels_to_crop, width, height - pixels_to_crop))
+    else:
+        log.debug('image {} is square'.format(filepath))
 
 
 def color_image_in_tone(filepath, red_tone, green_tone, blue_tone, factor):
@@ -181,7 +197,7 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
 
     font = ImageFont.truetype(font_name, size)
 
-    if not is_text_fit_to_width(text, len(text), image_width-10, font):
+    if not is_text_fit_to_width(text, len(text), image_width - 10, font):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
@@ -209,9 +225,15 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         if key is 'rgb_tone':
             red_tone, green_tone, blue_tone, factor = list(map(int, value.split()))
             color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
+            continue
 
         if key is 'text_to_fill':
             fil_image_with_text(image_local_filepath, value)
+            continue
+
+        if key is 'crop_to_square':
+            crop_percentage_from_image_edges(image_local_filepath, value)
+            continue
 
 
 def upload_photo(session, image_local_filepath, group_id):

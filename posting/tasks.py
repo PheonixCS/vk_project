@@ -225,7 +225,6 @@ def post_record(login, password, app_id, group_id, record_id):
 
     try:
         attachments = []
-        image_text_filling_active = group.is_text_filling_enabled
 
         record_text = record.text
         record_text = delete_hashtags_from_text(record_text)
@@ -243,9 +242,13 @@ def post_record(login, password, app_id, group_id, record_id):
             actions_to_unique_image = {'rgb_tone': group.RGB_image_tone}
             # TODO max_text_to_fill_length to livesettings
             max_text_to_fill_length = 70
-            if len(images) == 1 and image_text_filling_active and len(record_text) <= max_text_to_fill_length:
+            if len(images) == 1 and group.is_text_filling_enabled and len(record_text) <= max_text_to_fill_length:
                 actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
                 record_text = ''
+            # TODO percentage_to_crop_from_edges to livesettings
+            percentage_to_crop_from_edges = 0.1
+            if group.is_changing_image_to_square_enabled:
+                actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
 
