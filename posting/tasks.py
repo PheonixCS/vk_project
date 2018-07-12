@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from random import choice
+from random import choice, shuffle
 
 import vk_api
 from celery import task
@@ -231,11 +231,21 @@ def post_record(login, password, app_id, group_id, record_id):
 
         audios = record.audios.all()
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
+
+        if group.is_audios_shuffle_enabled and len(audios) > 1:
+            shuffle(audios)
+            log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
+
         for audio in audios:
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         images = record.images.all()
         log.debug('got {} images for group {}'.format(len(images), group_id))
+
+        if group.is_photos_shuffle_enabled and len(images) > 1:
+            shuffle(images)
+            log.debug('group {} {} images shuffled'.format(group_id, len(images)))
+
         for image in images[::-1]:
             image_local_filename = download_file(image.url)
 
