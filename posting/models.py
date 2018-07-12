@@ -57,6 +57,8 @@ class Group(models.Model):
                                                                            'более квадратному виду?')
     RGB_image_tone = models.CharField(max_length=15, blank=True, default='',
                                       verbose_name='Применять RBG тон к изображениям (R G B factor)')
+    is_photos_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать фото?')
+    is_audios_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать аудиозаписи?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
