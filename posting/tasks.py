@@ -246,7 +246,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
                 record_text = ''
             # TODO percentage_to_crop_from_edges to livesettings
-            percentage_to_crop_from_edges = 0.1
+            percentage_to_crop_from_edges = 0.05
             if group.is_changing_image_to_square_enabled:
                 actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 

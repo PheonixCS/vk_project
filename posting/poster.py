@@ -222,6 +222,10 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
     # crop_image(image_local_filepath)
 
     for key, value in kwargs.items():
+        if key is 'crop_to_square':
+            crop_percentage_from_image_edges(image_local_filepath, value)
+            continue
+
         if key is 'rgb_tone':
             red_tone, green_tone, blue_tone, factor = list(map(int, value.split()))
             color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
@@ -229,10 +233,6 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
 
         if key is 'text_to_fill':
             fil_image_with_text(image_local_filepath, value)
-            continue
-
-        if key is 'crop_to_square':
-            crop_percentage_from_image_edges(image_local_filepath, value)
             continue
 
 
