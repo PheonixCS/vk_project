@@ -46,13 +46,19 @@ class Group(models.Model):
     is_posting_active = models.BooleanField(default=True, verbose_name='Постинг активен?')
     is_horoscopes = models.BooleanField(default=False, verbose_name='Постинг гороскопов задействован?')
     is_pin_enabled = models.BooleanField(default=True, verbose_name='Закреплять лучшие посты?')
-    is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на картинку?')
-    RGB_image_tone = models.CharField(max_length=15, blank=True, default='',
-                                      verbose_name='Применять RBG тон к изображениям (R G B factor)')
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='groups', blank=True, null=True)
     callback_api_token = models.CharField(max_length=128, verbose_name='Ответ для callback api', blank=True, default='')
     donors = models.ManyToManyField('scraping.Donor', blank=True)
+
+    is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на картинку?')
+    is_changing_image_to_square_enabled = models.BooleanField(default=False,
+                                                              verbose_name='Приводить изображения к '
+                                                                           'более квадратному виду?')
+    RGB_image_tone = models.CharField(max_length=15, blank=True, default='',
+                                      verbose_name='Применять RBG тон к изображениям (R G B factor)')
+    is_photos_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать фото?')
+    is_audios_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать аудиозаписи?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
