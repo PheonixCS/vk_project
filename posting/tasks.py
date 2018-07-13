@@ -175,8 +175,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         if horoscope_record.image_url:
             image_local_filename = download_file(horoscope_record.image_url)
-            actions_to_unique_image = {'rgb_tone': group.RGB_image_tone}
-            prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
             attachments = upload_photo(session, image_local_filename, group_id)
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
@@ -249,7 +247,9 @@ def post_record(login, password, app_id, group_id, record_id):
         for image in images[::-1]:
             image_local_filename = download_file(image.url)
 
-            actions_to_unique_image = {'rgb_tone': group.RGB_image_tone}
+            actions_to_unique_image = {}
+            if group.RGB_image_tone:
+                actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
             # TODO max_text_to_fill_length to livesettings
             max_text_to_fill_length = 70
             if len(images) == 1 and group.is_text_filling_enabled and len(record_text) <= max_text_to_fill_length:
