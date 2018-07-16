@@ -218,6 +218,30 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
     log.debug('fil_image_with_text finished')
 
 
+def is_all_images_of_same_size(files):
+    image_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
+    return image_sizes[1:] == image_sizes[:-1]
+
+
+def merge_six_images_into_one(files, filepath=os.path.join(settings.BASE_DIR, 'merged_image.jpg')):
+    img = Image.open(os.path.join(settings.BASE_DIR, files[0]))
+    width, height = img.size()
+
+    result = Image.new("RGB", (width * 3, height * 2))
+
+    for index, file in enumerate(files):
+        img = Image.open(os.path.join(settings.BASE_DIR, file))
+        img.thumbnail((width, height), Image.ANTIALIAS)
+        x = index // 2 * width
+        y = index % 2 * height
+        result.paste(img, (x, y, x + width, y + height))
+        os.remove(file)
+
+    result.save(filepath)
+
+    return filepath
+
+
 def prepare_image_for_posting(image_local_filepath, **kwargs):
     keys = kwargs.keys()
 

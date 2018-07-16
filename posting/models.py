@@ -59,6 +59,7 @@ class Group(models.Model):
                                       verbose_name='Применять RBG тон к изображениям (R G B factor)')
     is_photos_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать фото?')
     is_audios_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать аудиозаписи?')
+    is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
