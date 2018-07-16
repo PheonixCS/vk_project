@@ -47,7 +47,7 @@ class GroupAdmin(admin.ModelAdmin):
         }),
         ('Параметры уникализации', {
             'fields': ('is_text_filling_enabled', 'is_changing_image_to_square_enabled', 'RGB_image_tone',
-                       'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled')
+                       'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled', 'is_merge_images_enabled')
         }),
         ('Статистика', {
             'classes': ('collapse',),
