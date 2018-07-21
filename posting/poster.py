@@ -250,6 +250,7 @@ def merge_six_images_into_one(files):
 
 
 def is_text_on_image(filepath):
+    log.debug('is_text_on_image {} called'.format(filepath))
     large = cv2.imread(os.path.join(settings.BASE_DIR, filepath))
     rgb = cv2.pyrDown(large)
     small = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
@@ -273,8 +274,11 @@ def is_text_on_image(filepath):
 
         # TODO add to livesettings
         if r > 0.45 and w > 10 and h > 10:
+            log.debug('found text on image {}'.format(filepath))
             return True
 
+    log.debug('no text found on image {}'.format(filepath))
+    return False
 
 def mirror_image(filepath):
     log.debug('mirror image {} called'.format(filepath))
