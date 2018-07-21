@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from math import ceil
 from textwrap import wrap
 
+import cv2
+import numpy as np
 import requests
 import vk_api
 from PIL import Image, ImageFont, ImageDraw
@@ -247,8 +249,55 @@ def merge_six_images_into_one(files):
     return files[0]
 
 
+def is_text_on_image(filepath):
+    large = cv2.imread(os.path.join(settings.BASE_DIR, filepath))
+    rgb = cv2.pyrDown(large)
+    small = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    grad = cv2.morphologyEx(small, cv2.MORPH_GRADIENT, kernel)
+
+    _, bw = cv2.threshold(grad, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 1))
+    connected = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel)
+    im2, contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    mask = np.zeros(bw.shape, dtype=np.uint8)
+
+    for idx in range(len(contours)):
+        x, y, w, h = cv2.boundingRect(contours[idx])
+        mask[y:y + h, x:x + w] = 0
+        cv2.drawContours(mask, contours, idx, (255, 255, 255), -1)
+        r = float(cv2.countNonZero(mask[y:y + h, x:x + w])) / (w * h)
+
+        # TODO add to livesettings
+        if r > 0.45 and w > 10 and h > 10:
+            return True
+
+
+def mirror_image(filepath):
+    log.debug('mirror image {} called'.format(filepath))
+    img = Image.open(os.path.join(settings.BASE_DIR, filepath))
+    try:
+        mirrored_image = img.transpose(Image.FLIP_LEFT_RIGHT).save()
+        if filepath.endswith('.jpg'):
+            mirrored_image.save(filepath, 'JPEG', quality=95, progressive=True)
+        else:
+            mirrored_image.save(filepath)
+    except ValueError:
+        log.debug('image not mirrored!')
+        os.remove(filepath)
+        return False
+    log.debug('image {} mirrored'.format(filepath))
+    return True
+
+
 def prepare_image_for_posting(image_local_filepath, **kwargs):
     keys = kwargs.keys()
+
+    if 'mirror' in keys:
+        mirror_image(image_local_filepath)
 
     if 'crop_to_square' in keys:
         crop_percentage_from_image_edges(image_local_filepath, kwargs.get('crop_to_square'))
