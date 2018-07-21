@@ -41,9 +41,9 @@ def ban_user(api, group_id, user_id):
 
     try:
         api.groups.ban(group_id=group_id,
-                      owner_id=user_id,
-                      end_date=ban_end_date_timestamp,
-                      api_version=VK_API_VERSION)
+                       owner_id=user_id,
+                       end_date=ban_end_date_timestamp,
+                       api_version=VK_API_VERSION)
     except ApiError as error_msg:
         log.info('group {} got api error in ban method: {}'.format(group_id, error_msg))
 
@@ -116,8 +116,16 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
             date__gt=time_threshold_timestamp
         )
 
-        comments_with_same_attachment = [c.comment_id for c in comments_from_user if
-                                         c.attachments.filter(body__id=attachment[attachment['type']]['id']).exists()]
+        # FIXME attachment with link type dont have id
+        if attachment[attachment['type']].get('id'):
+            comments_with_same_attachment = [c.comment_id for c in comments_from_user if
+                                             c.attachments.filter(
+                                                 body__id=attachment[attachment['type']]['id']).exists()]
+        elif attachment[attachment['type']].get('url'):
+            comments_with_same_attachment = [c.comment_id for c in comments_from_user if
+                                             c.attachments.filter(
+                                                 body__url=attachment[attachment['type']]['url']).exists()]
+
         log.debug('comments with same attachments {}'.format(comments_with_same_attachment))
 
         if len(comments_with_same_attachment) >= 2:
