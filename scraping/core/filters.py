@@ -127,6 +127,29 @@ def vk_link_filter(item):
     return True
 
 
+def raffle_filter(item):
+    if 'конкурс' in item['text'].lower() or 'розыгрыш' in item['text'].lower():
+        log.debug('delete {} as ad: raffle filter'.format(item['id']))
+        return False
+    return True
+
+
+def filter_out_ads(records):
+    log.info('filter_out_ads called')
+    filters = (
+        marked_as_ads_filter,
+        copy_history_filter,
+        phone_numbers_filter,
+        urls_filter,
+        email_filter,
+        article_filter,
+        vk_link_filter,
+        raffle_filter
+    )
+    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
+    return filtered_records
+
+
 # Custom filters
 def min_quantity_of_line_breaks_filter(item, custom_filter):
     if len(item.get('text', str()).splitlines()) < custom_filter.min_quantity_of_line_breaks:
@@ -187,21 +210,6 @@ def min_quantity_of_audios_filter(item, custom_filter):
         log.debug('delete {} because of custom filter: min_quantity_of_audios'.format(item['id']))
         return False
     return True
-
-
-def filter_out_ads(records):
-    log.info('filter_out_ads called')
-    filters = (
-        marked_as_ads_filter,
-        copy_history_filter,
-        phone_numbers_filter,
-        urls_filter,
-        email_filter,
-        article_filter,
-        vk_link_filter
-    )
-    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
-    return filtered_records
 
 
 def filter_with_custom_filters(custom_filters, records):
