@@ -12,7 +12,7 @@ from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
                             check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting,
-                            merge_six_images_into_one, is_all_images_of_same_size)
+                            merge_six_images_into_one, is_all_images_of_same_size, is_text_on_image)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record
 
@@ -255,13 +255,18 @@ def post_record(login, password, app_id, group_id, record_id):
         for image_local_filename in image_files:
             actions_to_unique_image = {}
 
+            if group.is_image_mirror_enabled and not is_text_on_image(image_local_filename):
+                actions_to_unique_image['mirror'] = True
+
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
+
             # TODO max_text_to_fill_length to livesettings
             max_text_to_fill_length = 70
             if len(images) == 1 and group.is_text_filling_enabled and len(record_text) <= max_text_to_fill_length:
                 actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
                 record_text = ''
+
             # TODO percentage_to_crop_from_edges to livesettings
             percentage_to_crop_from_edges = 0.05
             if group.is_changing_image_to_square_enabled:
