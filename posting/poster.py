@@ -118,7 +118,7 @@ def crop_percentage_from_image_edges(filepath, percentage_to_crop):
     if width > height:
         pixels_to_crop = width * percentage_to_crop
         log.debug('pixels to crop from left and right: {}'.format(pixels_to_crop))
-        crop_image(filepath, (pixels_to_crop, 0, width - pixels_to_crop, 0))
+        crop_image(filepath, (pixels_to_crop, 0, width - pixels_to_crop, height))
     elif height > width:
         pixels_to_crop = height * percentage_to_crop
         log.debug('pixels to crop from top and bottom: {}'.format(pixels_to_crop))
