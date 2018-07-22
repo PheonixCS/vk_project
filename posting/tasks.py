@@ -15,7 +15,7 @@ from posting.poster import (create_vk_session_using_login_password, fetch_group_
                             check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting,
                             merge_six_images_into_one, is_all_images_of_same_size, is_text_on_image)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
-from scraping.models import Record
+from scraping.models import Record, Horoscope
 
 log = logging.getLogger('posting.scheduled')
 
@@ -472,8 +472,9 @@ def update_statistics():
                 starts = Q(post_in_group_date__gte=yesterday_start)
                 ends = Q(post_in_group_date__lte=today_start)
 
-                group.number_of_posts_yesterday = Record.objects.filter(group_id=group.domain_or_id).\
-                    filter(starts & ends).count()
+                group.number_of_posts_yesterday = \
+                    Record.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
+                    Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
 
                 group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
                     filter(starts & ends).count()

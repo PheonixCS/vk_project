@@ -195,21 +195,31 @@ def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_n
     # size in pixels
     size = ceil(image_height * percent / 100)
 
-    font = ImageFont.truetype(font_name, size)
+    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
     if not is_text_fit_to_width(text, len(text), image_width - 10, font):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
     offset = (text.count('\n') + 1) * (size + 15)
-    log.debug('offset = {}, size = {}'.format(offset, size))
+
+    if text.count('\n') == 0:
+        # center text
+        text_width = font.getsize(text)[0]
+        text_height = font.getsize(text)[1]
+        x, y = (offset - text_height) // 2, (image_width - text_width) // 2
+    else:
+        x, y = 5, 1
+
+    log.debug('offset = {}, size = {}, x, y = [{},{}]'.format(offset, size, x, y))
 
     filepath = expand_image_with_white_color(filepath, offset)
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
 
-    draw.multiline_text((5, 1), text, black_color, font=font)
+    # TODO make multi line custom function
+    draw.multiline_text((x, y), text, black_color, font=font)
 
     if filepath.endswith('.jpg'):
         image.save(filepath, 'JPEG', quality=95, progressive=True)
@@ -248,6 +258,7 @@ def merge_six_images_into_one(files):
 
 
 def is_text_on_image(filepath):
+    log.debug('is_text_on_image {} called'.format(filepath))
     large = cv2.imread(os.path.join(settings.BASE_DIR, filepath))
     rgb = cv2.pyrDown(large)
     small = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
@@ -270,8 +281,11 @@ def is_text_on_image(filepath):
         r = float(cv2.countNonZero(mask[y:y + h, x:x + w])) / (w * h)
 
         if r > config.CV_RATIO and w > config.CV_WIDTH and h > config.CV_HEIGHT:
+            log.debug('found text on image {}'.format(filepath))
             return True
 
+    log.debug('no text found on image {}'.format(filepath))
+    return False
 
 def mirror_image(filepath):
     log.debug('mirror image {} called'.format(filepath))
