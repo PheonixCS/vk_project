@@ -75,8 +75,7 @@ INSTALLED_APPS = [
 
     'scraping',
     'posting',
-    'moderation',
-    'settings',
+    'moderation'
 
     'constance.backends.database',
     'constance'
