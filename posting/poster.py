@@ -204,14 +204,24 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
     offset = (text.count('\n') + 1) * (size + 15)
-    log.debug('offset = {}, size = {}'.format(offset, size))
+
+    if text.count('\n') == 0:
+        # center text
+        text_width = font.getsize(text)[0]
+        text_height = font.getsize(text)[1]
+        x, y = (offset - text_height) // 2, (image_width - text_width) // 2
+    else:
+        x, y = 5, 1
+
+    log.debug('offset = {}, size = {}, x, y = [{},{}]'.format(offset, size, x, y))
 
     filepath = expand_image_with_white_color(filepath, offset)
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
 
-    draw.multiline_text((5, 1), text, black_color, font=font)
+    # TODO make multi line custom function
+    draw.multiline_text((x, y), text, black_color, font=font)
 
     if filepath.endswith('.jpg'):
         image.save(filepath, 'JPEG', quality=95, progressive=True)
