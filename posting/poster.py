@@ -10,16 +10,14 @@ import numpy as np
 import requests
 import vk_api
 from PIL import Image, ImageFont, ImageDraw
+from constance import config
 from django.conf import settings
 from django.utils import timezone
 
 from posting.transforms import RGBTransform
 from scraping.core.vk_helper import get_wall
-from settings.models import Setting
 
 log = logging.getLogger('posting.poster')
-
-VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 
 def create_vk_session_using_login_password(login, password, app_id):
@@ -183,7 +181,7 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     return max_width_in_chars
 
 
-def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regular.otf'):
+def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
     log.debug('fil_image_with_text called')
     if not text:
         log.debug('got no text in fil_image_with_text')
@@ -271,8 +269,7 @@ def is_text_on_image(filepath):
         cv2.drawContours(mask, contours, idx, (255, 255, 255), -1)
         r = float(cv2.countNonZero(mask[y:y + h, x:x + w])) / (w * h)
 
-        # TODO add to livesettings
-        if r > 0.45 and w > 10 and h > 10:
+        if r > config.CV_RATIO and w > config.CV_WIDTH and h > config.CV_HEIGHT:
             return True
 
 

@@ -3,11 +3,8 @@
 import logging
 
 import vk_requests
+from constance import config
 from vk_requests.exceptions import VkAPIError
-from settings.models import Setting
-
-# TODO add it to livesettings
-VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 log = logging.getLogger('scraping.core.vk_api_helpers')
 
@@ -16,7 +13,7 @@ def create_vk_api_using_service_token(token):
     log.debug('create api called')
 
     try:
-        api = vk_requests.create_api(service_token=token, api_version=VK_API_VERSION)
+        api = vk_requests.create_api(service_token=token, api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
         log.warning('token {} got api error: {}'.format(token, error_msg))
         return None
@@ -32,13 +29,13 @@ def get_wall(api, group_id, count=20):
             log.debug('group id is digit')
             wall = api.wall.get(owner_id='-{}'.format(group_id),
                                 filter='owner',
-                                api_version=VK_API_VERSION,
+                                api_version=config.VK_API_VERSION,
                                 count=count)
         else:
             log.debug('group id os not digit')
             wall = api.wall.get(domain=group_id,
                                 filter='owner',
-                                api_version=VK_API_VERSION,
+                                api_version=config.VK_API_VERSION,
                                 count=count)
     except VkAPIError as error_msg:
         log.warning('group {} got api error: {}'.format(group_id, error_msg))

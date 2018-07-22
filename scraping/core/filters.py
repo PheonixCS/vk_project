@@ -2,15 +2,13 @@ import logging
 import re
 from difflib import SequenceMatcher
 
+from constance import config
 from phonenumbers import PhoneNumberMatcher
 from urlextract import URLExtract
 
 from scraping.models import Record
-from settings.models import Setting
 
 log = logging.getLogger('scraping.core.filters')
-
-MIN_STRING_MATCH_RATIO = Setting.get_value(key='MIN_STRING_MATCH_RATIO')
 
 
 # Standard filters
@@ -26,7 +24,7 @@ def filter_out_copies(records):
 
     for record in records:
         if any(record_in_db for record_in_db in records_in_db if
-               SequenceMatcher(None, record['text'], record_in_db.text).ratio() < MIN_STRING_MATCH_RATIO):
+               SequenceMatcher(None, record['text'], record_in_db.text).ratio() < config.MIN_STRING_MATCH_RATIO):
             filtered_records.append(record)
         else:
             log.debug('record {} was filtered'.format(record['id']))
@@ -56,8 +54,7 @@ def filter_out_records_with_unsuitable_attachments(records):
     return filtered_records
 
 
-# TODO add min_quantity_of_pixels to livesettings
-def filter_out_records_with_small_images(records, min_quantity_of_pixels=700):
+def filter_out_records_with_small_images(records, min_quantity_of_pixels=config.MIN_QUANTITY_OF_PIXELS):
     filtered_records = []
     for record in records:
         attachments = record.get('attachments')
