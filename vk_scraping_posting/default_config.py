@@ -2,7 +2,7 @@
 CONSTANCE_CONFIG = {
     'VK_API_VERSION': (5.74, 'VK API version'),
     'MIN_STRING_MATCH_RATIO': (0.85, 'Non documented'),
-    'HOROSCOPES_DONOR_ID': (83815413, 'Horoscopes specific donor id', str),
+    'HOROSCOPES_DONOR_ID': ('83815413', 'Horoscopes specific donor id', str),
 
     'CV_RATIO': (0.45, 'CV2 ratio for finding text on image'),
     'CV_WIDTH': (10, 'CV2 width for finding text on image'),
