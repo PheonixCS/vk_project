@@ -197,7 +197,7 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
     # size in pixels
     size = ceil(image_height * percent / 100)
 
-    font = ImageFont.truetype(font_name, size)
+    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
     if not is_text_fit_to_width(text, len(text), image_width - 10, font):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
