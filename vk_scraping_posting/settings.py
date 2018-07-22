@@ -61,6 +61,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81']
 
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 # Application definition
 
@@ -74,8 +75,10 @@ INSTALLED_APPS = [
 
     'scraping',
     'posting',
-    'moderation',
-    'settings',
+    'moderation'
+
+    'constance.backends.database',
+    'constance'
 ]
 
 MIDDLEWARE = [
@@ -162,6 +165,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+from .default_config import *
 
 LOGGING = {
     'version': 1,
