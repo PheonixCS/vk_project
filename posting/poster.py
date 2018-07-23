@@ -10,16 +10,14 @@ import numpy as np
 import requests
 import vk_api
 from PIL import Image, ImageFont, ImageDraw
+from constance import config
 from django.conf import settings
 from django.utils import timezone
 
 from posting.transforms import RGBTransform
 from scraping.core.vk_helper import get_wall
-from settings.models import Setting
 
 log = logging.getLogger('posting.poster')
-
-VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 
 def create_vk_session_using_login_password(login, password, app_id):
@@ -183,7 +181,7 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     return max_width_in_chars
 
 
-def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regular.otf'):
+def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
     log.debug('fil_image_with_text called')
     if not text:
         log.debug('got no text in fil_image_with_text')
@@ -197,21 +195,31 @@ def fil_image_with_text(filepath, text, percent=6, font_name='SFUIDisplay-Regula
     # size in pixels
     size = ceil(image_height * percent / 100)
 
-    font = ImageFont.truetype(font_name, size)
+    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
     if not is_text_fit_to_width(text, len(text), image_width - 10, font):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
     offset = (text.count('\n') + 1) * (size + 15)
-    log.debug('offset = {}, size = {}'.format(offset, size))
+
+    if text.count('\n') == 0:
+        # center text
+        text_width = font.getsize(text)[0]
+        text_height = font.getsize(text)[1]
+        x, y = (offset - text_height) // 2, (image_width - text_width) // 2
+    else:
+        x, y = 5, 1
+
+    log.debug('offset = {}, size = {}, x, y = [{},{}]'.format(offset, size, x, y))
 
     filepath = expand_image_with_white_color(filepath, offset)
 
     image = Image.open(filepath)
     draw = ImageDraw.Draw(image)
 
-    draw.multiline_text((5, 1), text, black_color, font=font)
+    # TODO make multi line custom function
+    draw.multiline_text((x, y), text, black_color, font=font)
 
     if filepath.endswith('.jpg'):
         image.save(filepath, 'JPEG', quality=95, progressive=True)
@@ -272,8 +280,7 @@ def is_text_on_image(filepath):
         cv2.drawContours(mask, contours, idx, (255, 255, 255), -1)
         r = float(cv2.countNonZero(mask[y:y + h, x:x + w])) / (w * h)
 
-        # TODO add to livesettings
-        if r > 0.45 and w > 10 and h > 10:
+        if r > config.CV_RATIO and w > config.CV_WIDTH and h > config.CV_HEIGHT:
             log.debug('found text on image {}'.format(filepath))
             return True
 

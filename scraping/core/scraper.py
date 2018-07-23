@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from constance import config
 from django.utils import timezone
 
 from posting.models import ServiceToken, Group
@@ -214,8 +215,7 @@ def main():
                     continue
 
             # Horoscopes
-            # TODO add it to livesettings
-            horoscopes_donor_id = '83815413'
+            horoscopes_donor_id = config.HOROSCOPES_DONOR_ID
             if horoscopes_donor_id in donor.id:
                 log.debug('start scraping horoscope donor')
                 horoscopes_records = find_horoscopes(new_records)
