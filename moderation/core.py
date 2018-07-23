@@ -18,6 +18,15 @@ log = logging.getLogger('moderation.core')
 VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 
+def get_groups_by_id(api, group_ids, fields):
+    try:
+        return api.groups.getById(group_ids=group_ids,
+                                  fields=fields,
+                                  api_version=VK_API_VERSION)
+    except ApiError as error_msg:
+        log.info('api error in groups.getById method: {}'.format(error_msg))
+
+
 def get_transactions_to_process():
     event_types = ['wall_reply_new', 'wall_reply_edit', 'wall_reply_restore']
     return WebhookTransaction.objects.filter(
