@@ -45,8 +45,12 @@ CELERY_BEAT_SCHEDULE = {
     },
     'process_moderation_transaction': {
         'task': 'moderation.tasks.process_transactions',
-        'schedule': crontab(minute='*')
-    }
+        'schedule': crontab(minute='*') # every minute
+    },
+    'ban_donors_admins': {
+        'task': 'moderation.tasks.ban_donors_admins',
+        'schedule': crontab(minute=0, hour=0) # at 0:00 am UTC (3:00 am by MSK)
+    },
 }
 
 
