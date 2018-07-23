@@ -207,7 +207,7 @@ def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_n
         # center text
         text_width = font.getsize(text)[0]
         text_height = font.getsize(text)[1]
-        x, y = (offset - text_height) // 2, (image_width - text_width) // 2
+        x, y = (image_width - text_width) // 2, (offset - text_height) // 2
     else:
         x, y = 5, 1
 
