@@ -227,7 +227,7 @@ def post_record(login, password, app_id, group_id, record_id):
         record_text = record.text
         record_text = delete_hashtags_from_text(record_text)
 
-        audios = record.audios.all()
+        audios = list(record.audios.all())
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
 
         if group.is_audios_shuffle_enabled and len(audios) > 1:
@@ -237,7 +237,7 @@ def post_record(login, password, app_id, group_id, record_id):
         for audio in audios:
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
-        images = record.images.all()
+        images = list(record.images.all())
         log.debug('got {} images for group {}'.format(len(images), group_id))
 
         if group.is_photos_shuffle_enabled and len(images) > 1:
