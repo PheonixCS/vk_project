@@ -2,15 +2,13 @@ import logging
 import re
 from difflib import SequenceMatcher
 
+from constance import config
 from phonenumbers import PhoneNumberMatcher
 from urlextract import URLExtract
 
 from scraping.models import Record
-from settings.models import Setting
 
 log = logging.getLogger('scraping.core.filters')
-
-MIN_STRING_MATCH_RATIO = Setting.get_value(key='MIN_STRING_MATCH_RATIO')
 
 
 # Standard filters
@@ -26,7 +24,7 @@ def filter_out_copies(records):
 
     for record in records:
         if any(record_in_db for record_in_db in records_in_db if
-               SequenceMatcher(None, record['text'], record_in_db.text).ratio() < MIN_STRING_MATCH_RATIO):
+               SequenceMatcher(None, record['text'], record_in_db.text).ratio() < config.MIN_STRING_MATCH_RATIO):
             filtered_records.append(record)
         else:
             log.debug('record {} was filtered'.format(record['id']))
@@ -56,8 +54,7 @@ def filter_out_records_with_unsuitable_attachments(records):
     return filtered_records
 
 
-# TODO add min_quantity_of_pixels to livesettings
-def filter_out_records_with_small_images(records, min_quantity_of_pixels=700):
+def filter_out_records_with_small_images(records, min_quantity_of_pixels=config.MIN_QUANTITY_OF_PIXELS):
     filtered_records = []
     for record in records:
         attachments = record.get('attachments')
@@ -127,6 +124,29 @@ def vk_link_filter(item):
     return True
 
 
+def raffle_filter(item):
+    if 'конкурс' in item['text'].lower() or 'розыгрыш' in item['text'].lower():
+        log.debug('delete {} as ad: raffle filter'.format(item['id']))
+        return False
+    return True
+
+
+def filter_out_ads(records):
+    log.info('filter_out_ads called')
+    filters = (
+        marked_as_ads_filter,
+        copy_history_filter,
+        phone_numbers_filter,
+        urls_filter,
+        email_filter,
+        article_filter,
+        vk_link_filter,
+        raffle_filter
+    )
+    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
+    return filtered_records
+
+
 # Custom filters
 def min_quantity_of_line_breaks_filter(item, custom_filter):
     if len(item.get('text', str()).splitlines()) < custom_filter.min_quantity_of_line_breaks:
@@ -187,21 +207,6 @@ def min_quantity_of_audios_filter(item, custom_filter):
         log.debug('delete {} because of custom filter: min_quantity_of_audios'.format(item['id']))
         return False
     return True
-
-
-def filter_out_ads(records):
-    log.info('filter_out_ads called')
-    filters = (
-        marked_as_ads_filter,
-        copy_history_filter,
-        phone_numbers_filter,
-        urls_filter,
-        email_filter,
-        article_filter,
-        vk_link_filter
-    )
-    filtered_records = [record for record in records if all(filter(record) for filter in filters)]
-    return filtered_records
 
 
 def filter_with_custom_filters(custom_filters, records):

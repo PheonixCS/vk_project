@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.admin.views.main import ChangeList
+from django.db.models import Sum
 from django.utils.html import format_html
 
 from .models import User, ServiceToken, Group
@@ -13,6 +15,22 @@ class DonorAdmin(admin.ModelAdmin):
     inlines = [
         MembershipInline,
     ]
+
+
+class GroupChangeList(ChangeList):
+    fields_to_total = ['members_count', 'members_growth', 'number_of_posts_yesterday', 'number_of_ad_posts_yesterday']
+
+    def get_total_values(self, queryset):
+        total = Group()
+        for field in self.fields_to_total:
+            setattr(total, field, queryset.aggregate(Sum(field)).get(f'{field}__sum'))
+        return total
+
+    def get_results(self, request):
+        super(GroupChangeList, self).get_results(request)
+        total = self.get_total_values(self.queryset)
+        len(self.result_list)
+        self.result_list._result_cache.append(total)
 
 
 class GroupAdmin(admin.ModelAdmin):
@@ -46,8 +64,9 @@ class GroupAdmin(admin.ModelAdmin):
                        'user', 'callback_api_token')
         }),
         ('Параметры уникализации', {
-            'fields': ('is_text_filling_enabled', 'is_changing_image_to_square_enabled', 'RGB_image_tone',
-                       'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled')
+            'fields': ('is_text_filling_enabled', 'is_image_mirror_enabled', 'is_changing_image_to_square_enabled',
+                       'RGB_image_tone', 'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled',
+                       'is_merge_images_enabled')
         }),
         ('Статистика', {
             'classes': ('collapse',),
@@ -67,12 +86,16 @@ class GroupAdmin(admin.ModelAdmin):
             return format_html(f'<a href="{obj.url}" target="_blank" rel="noopener noreferrer">{obj.url}</a>')
 
     def vk_statistics_url_field(self, obj):
-        return format_html(f'<a href="{obj.statistic_url}" target="_blank" rel="noopener noreferrer">{obj.statistic_url}</a>')
+        return format_html(
+            f'<a href="{obj.statistic_url}" target="_blank" rel="noopener noreferrer">{obj.statistic_url}</a>')
 
     vk_url_field.allow_tags = True
     vk_statistics_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
     vk_statistics_url_field.short_description = 'Статистика'
+
+    def get_changelist(self, request, **kwargs):
+        return GroupChangeList
 
 
 class UserAdmin(admin.ModelAdmin):

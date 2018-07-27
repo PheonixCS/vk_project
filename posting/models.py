@@ -51,7 +51,8 @@ class Group(models.Model):
     callback_api_token = models.CharField(max_length=128, verbose_name='Ответ для callback api', blank=True, default='')
     donors = models.ManyToManyField('scraping.Donor', blank=True)
 
-    is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на картинку?')
+    is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на изображение?')
+    is_image_mirror_enabled = models.BooleanField(default=False, verbose_name='Отзеркаливать изображения без текста?')
     is_changing_image_to_square_enabled = models.BooleanField(default=False,
                                                               verbose_name='Приводить изображения к '
                                                                            'более квадратному виду?')
@@ -59,6 +60,7 @@ class Group(models.Model):
                                       verbose_name='Применять RBG тон к изображениям (R G B factor)')
     is_photos_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать фото?')
     is_audios_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать аудиозаписи?')
+    is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')

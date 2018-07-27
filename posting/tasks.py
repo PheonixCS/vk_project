@@ -7,13 +7,15 @@ from celery import task
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
+from constance import config
 
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
-                            check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting)
+                            check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting,
+                            merge_six_images_into_one, is_all_images_of_same_size, is_text_on_image)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
-from scraping.models import Record
+from scraping.models import Record, Horoscope
 
 log = logging.getLogger('posting.scheduled')
 
@@ -244,20 +246,29 @@ def post_record(login, password, app_id, group_id, record_id):
             shuffle(images)
             log.debug('group {} {} images shuffled'.format(group_id, len(images)))
 
-        for image in images[::-1]:
-            image_local_filename = download_file(image.url)
+        image_files = [download_file(image.url) for image in images[::-1]]
 
+        number_of_images_to_merge = 6
+        if len(images) == number_of_images_to_merge and group.is_merge_images_enabled \
+                and is_all_images_of_same_size(image_files):
+            image_files = [merge_six_images_into_one(image_files)]
+
+        for image_local_filename in image_files:
             actions_to_unique_image = {}
+
+            if group.is_image_mirror_enabled and not is_text_on_image(image_local_filename):
+                actions_to_unique_image['mirror'] = True
+
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
-            # TODO max_text_to_fill_length to livesettings
-            max_text_to_fill_length = 70
+
+            max_text_to_fill_length = config.MAX_TEXT_TO_FILL_LENGTH
             if len(images) == 1 and group.is_text_filling_enabled and len(record_text) <= max_text_to_fill_length:
                 actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
                 record_text = ''
-            # TODO percentage_to_crop_from_edges to livesettings
-            percentage_to_crop_from_edges = 0.05
-            if group.is_changing_image_to_square_enabled:
+
+            percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
+            if group.is_changing_image_to_square_enabled and not is_text_on_image(image_local_filename):
                 actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
@@ -337,8 +348,8 @@ def pin_best_post():
         time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=24)
         log.debug('search for posts from {} to now'.format(time_threshold))
 
-        # TODO count in live settings
-        wall = [record for record in get_wall(search_api, group.domain_or_id, count=50)['items']
+        records_count = config.WALL_RECORD_COUNT_TO_PIN
+        wall = [record for record in get_wall(search_api, group.domain_or_id, count=records_count)['items']
                 if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
         if wall:
@@ -385,8 +396,8 @@ def delete_old_ads():
 
     for group in active_groups:
 
-        # TODO hours in live settings
-        time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=30)
+        hours = config.OLD_AD_RECORDS_HOURS
+        time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
 
         ads = AdRecord.objects.filter(group=group, post_in_group_date__lt=time_threshold)
         log.debug('got {} ads in last 30 hours in group {}'.format(len(ads), group.group_id))
@@ -461,8 +472,9 @@ def update_statistics():
                 starts = Q(post_in_group_date__gte=yesterday_start)
                 ends = Q(post_in_group_date__lte=today_start)
 
-                group.number_of_posts_yesterday = Record.objects.filter(group_id=group.domain_or_id).\
-                    filter(starts & ends).count()
+                group.number_of_posts_yesterday = \
+                    Record.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
+                    Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
 
                 group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
                     filter(starts & ends).count()

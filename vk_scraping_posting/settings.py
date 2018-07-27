@@ -45,8 +45,12 @@ CELERY_BEAT_SCHEDULE = {
     },
     'process_moderation_transaction': {
         'task': 'moderation.tasks.process_transactions',
-        'schedule': crontab(minute='*')
-    }
+        'schedule': crontab(minute='*') # every minute
+    },
+    'ban_donors_admins': {
+        'task': 'moderation.tasks.ban_donors_admins',
+        'schedule': crontab(minute=0, hour=0) # at 0:00 am UTC (3:00 am by MSK)
+    },
 }
 
 
@@ -61,6 +65,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81']
 
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 # Application definition
 
@@ -76,6 +81,9 @@ INSTALLED_APPS = [
     'posting',
     'moderation',
     'settings',
+
+    'constance.backends.database',
+    'constance'
 ]
 
 MIDDLEWARE = [
@@ -162,6 +170,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+from .default_config import *
 
 LOGGING = {
     'version': 1,
