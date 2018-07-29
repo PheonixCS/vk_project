@@ -57,6 +57,6 @@ def ban_donors_admins():
         for donor in donors:
             for contact in donor.get('contacts', []):
                 log.info(f'ban user {contact["user_id"]} in group {group.domain_or_id} : is admin in donor {donor.id}')
-                ban_user(api, group.group_id, contact['user_id'])
+                ban_user(api, group.group_id, contact['user_id'], comment=f'Администратор в источнике {donor.id}')
 
     log.info('ban_donors_admins task completed')

@@ -44,15 +44,22 @@ def delete_comment(api, owner_id, comment_id):
         log.info('group {} got api error in deleteComment method: {}'.format(owner_id, error_msg))
 
 
-def ban_user(api, group_id, user_id):
-    ban_end_date = datetime.now(tz=timezone.utc) + timedelta(days=7)
-    ban_end_date_timestamp = time.mktime(ban_end_date.timetuple())
-
+def ban_user(api, group_id, user_id, days_timedelta=None, comment=''):
     try:
-        api.groups.ban(group_id=group_id,
-                       owner_id=user_id,
-                       end_date=ban_end_date_timestamp,
-                       api_version=VK_API_VERSION)
+        if days_timedelta:
+            ban_end_date = datetime.now(tz=timezone.utc) + timedelta(days=days_timedelta)
+            ban_end_date_timestamp = time.mktime(ban_end_date.timetuple())
+
+            api.groups.ban(group_id=group_id,
+                           owner_id=user_id,
+                           end_date=ban_end_date_timestamp,
+                           comment=comment,
+                           api_version=VK_API_VERSION)
+        else:
+            api.groups.ban(group_id=group_id,
+                           owner_id=user_id,
+                           comment=comment,
+                           api_version=VK_API_VERSION)
     except ApiError as error_msg:
         log.info('group {} got api error in ban method: {}'.format(group_id, error_msg))
 
@@ -96,11 +103,11 @@ def is_moderation_needed(from_id, group_id, white_list):
 def is_reason_for_ban_and_get_comments_to_delete(event_object):
     if checks.is_group(event_object['from_id']):
         log.info('from_id {} reason for ban: is group'.format(event_object['from_id']))
-        return True, [event_object['id']]
+        return 'группа', [event_object['id']]
 
     if checks.is_audio_and_photo_in_attachments(event_object.get('attachments', [])):
         log.info('from_id {} reason for ban: audio + photo in attachments'.format(event_object['from_id']))
-        return True, [event_object['id']]
+        return 'фото + аудио во вложении', [event_object['id']]
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(days=1)
     time_threshold_timestamp = time.mktime(time_threshold.timetuple())
@@ -116,7 +123,7 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
             log.info('from_id {} reason for ban: >3 comments with same text'.format(event_object['from_id']))
             comments_to_delete = [c.comment_id for c in comments_with_same_text]
             comments_to_delete.append(event_object['id'])
-            return True, comments_to_delete
+            return '>3 комментариев с одинаковым текстом', comments_to_delete
 
     for attachment in event_object.get('attachments', []):
         comments_from_user = Comment.objects.filter(
@@ -125,7 +132,7 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
             date__gt=time_threshold_timestamp
         )
 
-        # FIXME attachment with link type dont have id
+        comments_with_same_attachment = []
         if attachment[attachment['type']].get('id'):
             comments_with_same_attachment = [c.comment_id for c in comments_from_user if
                                              c.attachments.filter(
@@ -141,10 +148,10 @@ def is_reason_for_ban_and_get_comments_to_delete(event_object):
             log.info('from_id {} reason for ban: >3 comments with same attachment'.format(event_object['from_id']))
             comments_to_delete = comments_with_same_attachment
             comments_to_delete.append(event_object['id'])
-            return True, comments_to_delete
+            return '>3 комментариев с одинаковым вложением', comments_to_delete
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
-    return False, []
+    return '', []
 
 
 def save_comment_to_db(transaction):
@@ -202,7 +209,7 @@ def process_comment(comment):
 
     reason_for_ban, comments_to_delete = is_reason_for_ban_and_get_comments_to_delete(comment['object'])
     if reason_for_ban:
-        ban_user(api, comment['group_id'], comment['object']['from_id'])
+        ban_user(api, comment['group_id'], comment['object']['from_id'], days_timedelta=7, comment=reason_for_ban)
         log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
 
         for comment_to_delete_id in comments_to_delete:
