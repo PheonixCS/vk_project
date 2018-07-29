@@ -235,8 +235,8 @@ LOGGING = {
         },
         '': {
             'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/test.log",
-            'class': 'logging.handlers.RotatingFileHandler',
             'when': 'D',
             'interval': 1,
             'backupCount': 7,
