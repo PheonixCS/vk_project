@@ -287,11 +287,12 @@ def is_text_on_image(filepath):
     log.debug('no text found on image {}'.format(filepath))
     return False
 
+
 def mirror_image(filepath):
     log.debug('mirror image {} called'.format(filepath))
     img = Image.open(os.path.join(settings.BASE_DIR, filepath))
     try:
-        mirrored_image = img.transpose(Image.FLIP_LEFT_RIGHT).save()
+        mirrored_image = img.transpose(Image.FLIP_LEFT_RIGHT).save(filepath)
         if filepath.endswith('.jpg'):
             mirrored_image.save(filepath, 'JPEG', quality=95, progressive=True)
         else:
