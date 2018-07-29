@@ -188,26 +188,59 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'default'
         },
-        'apps': {
-            'level': 'DEBUG',
-            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/test.log",
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'default',
-            'maxBytes': 1024 * 1024 * 100,  # 100 mb
-        },
         'celery': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/celery.log",
-            'formatter': 'default',
-            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'formatter': 'default'
         },
         'django': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/django.log",
-            'formatter': 'default',
-            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'formatter': 'default'
+        },
+        'moderation': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/moderation.log",
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'formatter': 'default'
+        },
+        'scraping': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/scraping.log",
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'formatter': 'default'
+        },
+        'posting': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/posting.log",
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'formatter': 'default'
+        },
+        '': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/test.log",
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 7,
+            'formatter': 'default'
         },
     },
     'loggers': {
@@ -216,15 +249,15 @@ LOGGING = {
             'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG')
         },
         'scraping': {
-            'handlers': ['apps'],
+            'handlers': ['scraping'],
             'level': os.getenv('SCRAPER_LOG_LEVEL', 'DEBUG')
         },
         'posting': {
-            'handlers': ['apps'],
+            'handlers': ['posting'],
             'level': os.getenv('POSTING_LOG_LEVEL', 'DEBUG')
         },
         'moderation': {
-            'handlers': ['apps'],
+            'handlers': ['moderation'],
             'level': os.getenv('MODERATION_LOG_LEVEL', 'DEBUG')
         },
         'сelery': {
