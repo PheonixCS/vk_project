@@ -1,11 +1,8 @@
-import copy
-import datetime
 import json
 
 import logging
 
 from django.http import HttpResponse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
