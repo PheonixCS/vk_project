@@ -44,6 +44,8 @@ class Filter(models.Model):
 class Record(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records')
     group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='records', null=True)
+    donor_url = models.URLField(max_length=128, blank=True, default='')
+    group_url = models.URLField(max_length=128, blank=True, default='')
     record_id = models.IntegerField(null=True)
     likes_count = models.IntegerField(null=True)
     reposts_count = models.IntegerField(null=True)
@@ -53,11 +55,24 @@ class Record(models.Model):
     post_in_donor_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
     post_in_group_date = models.DateTimeField(null=True)
+    post_in_group_id = models.IntegerField(null=True)
     failed_date = models.DateTimeField(null=True)
     is_involved_now = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if self.record_id:
+            self.donor_url = f'https://vk.com/wall-{self.donor_id}_{self.record_id}'
+        if self.post_in_group_id:
+            self.group_url = f'https://vk.com/wall-{self.group_id}_{self.post_in_group_id}'
+
+        super(Record, self).save(*args, **kwargs)
+
     def __str__(self):
-        return 'record {}'.format(self.record_id)
+        return '{}'.format(self.record_id)
+
+    class Meta:
+        verbose_name = 'Пост'
+        verbose_name_plural = 'Посты'
 
 
 class Image(models.Model):
