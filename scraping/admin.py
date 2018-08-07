@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Donor, Filter
+from .models import Donor, Filter, Record
 
 
 class FilterInLine(admin.StackedInline):
@@ -26,5 +26,32 @@ class DonorAdmin(admin.ModelAdmin):
     vk_url_field.short_description = 'Ссылка'
 
 
-admin.site.register(Donor, DonorAdmin)
+class RecordAdmin(admin.ModelAdmin):
+    list_display = [
+        '__str__',
+        'post_in_donor_url_field',
+        'post_in_group_url_field'
+    ]
+    search_fields = [
+        'group_url'
+    ]
 
+    def post_in_donor_url_field(self, obj):
+        return format_html(f'<a href="{obj.donor_url}" target="_blank" rel="noopener noreferrer">{obj.donor_url}</a>')
+
+    def post_in_group_url_field(self, obj):
+        return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
+
+    post_in_donor_url_field.allow_tags = True
+    post_in_donor_url_field.short_description = 'Пост в источнике'
+    post_in_group_url_field.allow_tags = True
+    post_in_group_url_field.short_description = 'Пост в сообществе'
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            self.readonly_fields = [field.name for field in obj.__class__._meta.fields]
+        return self.readonly_fields
+
+
+admin.site.register(Donor, DonorAdmin)
+admin.site.register(Record, RecordAdmin)
