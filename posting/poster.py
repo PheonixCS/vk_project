@@ -14,7 +14,7 @@ from constance import config
 from django.conf import settings
 from django.utils import timezone
 
-from posting.transforms import RGBTransform
+from posting.extras.transforms import RGBTransform
 from scraping.core.vk_helper import get_wall
 
 log = logging.getLogger('posting.poster')

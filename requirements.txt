@@ -1,5 +1,7 @@
 alphabet-detector==0.0.7
 amqp==2.2.2
+atomicwrites==1.1.5
+attrs==18.1.0
 beautifulsoup4==4.6.0
 billiard==3.5.0.3
 celery==4.1.0
@@ -12,12 +14,17 @@ enum34==1.1.6
 gunicorn==19.8.1
 idna==2.6
 kombu==4.1.0
+more-itertools==4.3.0
 numpy==1.14.5
 opencv-python-headless==3.4.1.15
 phonenumbers==8.9.5
 Pillow==5.1.0
+pluggy==0.7.1
 psycopg2==2.7.4
 psycopg2-binary==2.7.4
+py==1.5.4
+pytesseract==0.2.4
+pytest==3.7.1
 pytz==2018.4
 requests==2.18.4
 six==1.11.0
