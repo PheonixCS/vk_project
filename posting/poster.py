@@ -181,10 +181,10 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     return max_width_in_chars
 
 
-def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
-    log.debug('fil_image_with_text called')
+def fill_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
+    log.debug('fill_image_with_text called')
     if not text:
-        log.debug('got no text in fil_image_with_text')
+        log.debug('got no text in fill_image_with_text')
         return
 
     black_color = (0, 0, 0)
@@ -225,7 +225,7 @@ def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_n
         image.save(filepath, 'JPEG', quality=95, progressive=True)
     else:
         image.save(filepath)
-    log.debug('fil_image_with_text finished')
+    log.debug('fill_image_with_text finished')
 
 
 def is_all_images_of_same_size(files):
@@ -319,7 +319,7 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
 
     if 'text_to_fill' in keys:
-        fil_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
+        fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
 
 
 def upload_photo(session, image_local_filepath, group_id):
