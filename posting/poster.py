@@ -13,7 +13,7 @@ from constance import config
 from django.conf import settings
 from django.utils import timezone
 
-from posting.transforms import RGBTransform
+from posting.extras.transforms import RGBTransform
 from scraping.core.vk_helper import get_wall
 
 log = logging.getLogger('posting.poster')
@@ -180,10 +180,10 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     return max_width_in_chars
 
 
-def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
-    log.debug('fil_image_with_text called')
+def fill_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
+    log.debug('fill_image_with_text called')
     if not text:
-        log.debug('got no text in fil_image_with_text')
+        log.debug('got no text in fill_image_with_text')
         return
 
     black_color = (0, 0, 0)
@@ -224,33 +224,52 @@ def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_n
         image.save(filepath, 'JPEG', quality=95, progressive=True)
     else:
         image.save(filepath)
-    log.debug('fil_image_with_text finished')
+    log.debug('fill_image_with_text finished')
 
 
-def is_all_images_of_same_size(files):
-    image_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
-    return image_sizes[1:] == image_sizes[:-1]
+def divergence(one, two):
+    return abs(one-two)/max(one, two)
+
+
+def is_images_size_nearly_the_same(files, max_divergence):
+    # FIXME #refactor too much file openings
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
+
+    width = [size[0] for size in images_sizes]
+    height = [size[1] for size in images_sizes]
+
+    return (divergence(max(width), min(width)) and divergence(max(height), min(height))) <= max_divergence
+
+
+def get_smallest_image_size(images):
+    min_size = min(images, key=lambda img: img.width*img.height)
+    return min_size
 
 
 def merge_six_images_into_one(files):
     log.debug('merge_six_images_into_one called')
-    img = Image.open(os.path.join(settings.BASE_DIR, files[0]))
-    width, height = img.size
 
-    result = Image.new("RGB", (width * 3, height * 2))
+    offset = 2
+    filepath = 'temp_{}'.format(files[0])
 
-    for index, file in enumerate(files):
-        log.debug('start work with image {}'.format(file))
-        img = Image.open(os.path.join(settings.BASE_DIR, file))
+    # FIXME #refactor too much file openings
+    images = [Image.open(os.path.join(settings.BASE_DIR, image)) for image in files]
+    width, height = get_smallest_image_size(images)
 
-        x = index // 2 * width
-        y = index % 2 * height
-        result.paste(img, (x, y, x + width, y + height))
+    result = Image.new('RGB', (width * 3 + offset*2, height * 2 + offset))
 
-        log.debug('image {} deleted'.format(file))
+    for index, img in enumerate(images):
+
+        x = index // 2 * (width + offset)
+        y = index % 2 * (height + offset)
+
+        cropped = img.crop(0, 0, width, height)
+        result.paste(cropped, (x, y, x + width, y + height))
+
+        result.save(filepath, 'JPEG', quality=95, progressive=True)
+
+    for file in files:
         os.remove(file)
-
-    result.save(files[0])
 
     log.debug('merge_six_images_into_one finished')
     return files[0]
@@ -305,7 +324,7 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
 
     if 'text_to_fill' in keys:
-        fil_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
+        fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
 
 
 def upload_photo(session, image_local_filepath, group_id):

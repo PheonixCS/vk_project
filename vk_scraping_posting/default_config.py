@@ -10,6 +10,7 @@ CONSTANCE_CONFIG = {
     'PERCENTAGE_TO_CROP_FROM_EDGES': (0.05, 'Non documented'),
     'FONT_NAME': ('SFUIDisplay-Regular.otf', 'Font name for filling', str),
     'FONT_SIZE_PERCENT': (6, 'Font size percent of all image'),
+    'THE_SAME_SIZE_FACTOR': (0.03, 'allowable size divergence', float),
 
     'WALL_RECORD_COUNT_TO_PIN': (50, 'How many records analise to pin post'),
     'OLD_RECORDS_HOURS': (24, 'Time for records expiring'),
