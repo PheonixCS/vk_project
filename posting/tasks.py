@@ -317,7 +317,7 @@ def post_record(login, password, app_id, group_id, record_id):
         record.save(update_fields=['failed_date', 'is_involved_now'])
         return
 
-    record.post_in_group_id = post_response
+    record.post_in_group_id = post_response.get('post_id', 0)
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
     record.is_involved_now = False
