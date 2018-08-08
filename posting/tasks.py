@@ -13,7 +13,7 @@ from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
                             delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
                             check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting,
-                            merge_six_images_into_one, is_all_images_of_same_size, is_text_on_image)
+                            merge_six_images_into_one, is_images_size_nearly_the_same, is_text_on_image)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
 
@@ -248,9 +248,11 @@ def post_record(login, password, app_id, group_id, record_id):
 
         image_files = [download_file(image.url) for image in images[::-1]]
 
-        number_of_images_to_merge = 6
-        if len(images) == number_of_images_to_merge and group.is_merge_images_enabled \
-                and is_all_images_of_same_size(image_files):
+        if (
+            len(images) == 6
+            and group.is_merge_images_enabled
+            and is_images_size_nearly_the_same(image_files, config.THE_SAME_SIZE_FACTOR)
+        ):
             image_files = [merge_six_images_into_one(image_files)]
 
         for image_local_filename in image_files:
