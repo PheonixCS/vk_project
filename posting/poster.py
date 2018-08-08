@@ -238,7 +238,7 @@ def is_images_size_nearly_the_same(files, max_divergence):
     width = [size[0] for size in images_sizes]
     height = [size[1] for size in images_sizes]
 
-    return divergence(max(width), min(width)) <= max_divergence and divergence(max(height), min(width))
+    return (divergence(max(width), min(width)) and divergence(max(height), min(height))) <= max_divergence
 
 
 def get_smallest_image_size(images):
