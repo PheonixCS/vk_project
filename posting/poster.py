@@ -250,8 +250,8 @@ def is_images_size_nearly_the_same(files, max_divergence):
     return (divergence_width and divergence_height) <= max_divergence
 
 
-def get_smallest_image_size(images):
-    min_size = min(images, key=lambda img: img.width*img.height)
+def get_smallest_image_size(sizes):
+    min_size = min(sizes, key=lambda size: size.width*size.height)
     return min_size
 
 
@@ -262,15 +262,17 @@ def merge_six_images_into_one(files):
     filepath = 'temp_{}'.format(files[0])
 
     # FIXME #refactor too much file openings
-    images = [Image.open(os.path.join(settings.BASE_DIR, image)) for image in files]
-    width, height = get_smallest_image_size(images)
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
+    width, height = get_smallest_image_size(images_sizes)
 
     result = Image.new('RGB', (width * 3 + offset*2, height * 2 + offset))
 
-    for index, img in enumerate(images):
+    for index, img_path in enumerate(files):
 
         x = index // 2 * (width + offset)
         y = index % 2 * (height + offset)
+
+        img = Image.open(os.path.join(settings.BASE_DIR, img_path))
 
         cropped = img.crop(0, 0, width, height)
         result.paste(cropped, (x, y, x + width, y + height))
