@@ -243,6 +243,11 @@ def post_record(login, password, app_id, group_id, record_id):
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         images = list(record.images.all())
+
+        # just for test
+        if config.IS_DEV:
+            images = images[:6]
+
         log.debug('got {} images for group {}'.format(len(images), group_id))
 
         if group.is_photos_shuffle_enabled and len(images) > 1:
