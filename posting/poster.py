@@ -265,7 +265,7 @@ def merge_six_images_into_one(files):
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
     width, height = get_smallest_image_size(images_sizes)
 
-    result = Image.new('RGB', (width * 3 + offset*2, height * 2 + offset))
+    result = Image.new('RGB', (width * 3 + offset*2, height * 2 + offset), 'White')
 
     for index, img_path in enumerate(files):
 
