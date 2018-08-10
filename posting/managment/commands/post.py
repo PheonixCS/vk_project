@@ -6,7 +6,7 @@
 # class Command(BaseCommand):
 #     args = '<group_id group_id ...>'
 #     help = 'Post record in specified groups'
-# 
+#
 #     def handle(self, *args, **options):
 #         for poll_id in args:
 #             try:
