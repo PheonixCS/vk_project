@@ -274,7 +274,7 @@ def merge_six_images_into_one(files):
 
         img = Image.open(os.path.join(settings.BASE_DIR, img_path))
 
-        cropped = img.crop(0, 0, width, height)
+        cropped = img.crop((0, 0, width, height))
         result.paste(cropped, (x, y, x + width, y + height))
 
         result.save(filepath, 'JPEG', quality=95, progressive=True)
