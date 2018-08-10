@@ -229,6 +229,9 @@ def post_record(login, password, app_id, group_id, record_id):
         record_text = record.text
         record_text = delete_hashtags_from_text(record_text)
 
+        if group.is_text_delete_enabled:
+            record_text = ''
+
         audios = list(record.audios.all())
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
 
