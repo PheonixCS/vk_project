@@ -283,7 +283,7 @@ def merge_six_images_into_one(files):
         os.remove(file)
 
     log.debug('merge_six_images_into_one finished')
-    return files[0]
+    return filepath
 
 
 def is_text_on_image(filepath):
