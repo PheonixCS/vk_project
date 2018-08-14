@@ -160,6 +160,16 @@ def expand_image_with_white_color(filepath, pixels):
 
 
 def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
+    """
+
+    :param text: text as string
+    :param width_in_chars:
+    :param width_in_pixels:
+    :param font_object:
+    :return:
+
+    :type text: str
+    """
     for line in wrap(text, width_in_chars):
         if font_object.getsize(line)[0] > width_in_pixels:
             return False
@@ -172,7 +182,10 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     max_width_in_chars = len(text)
     temp_text = wrap(text, max_width_in_chars)
 
-    while max_width_in_chars and not is_text_fit_to_width(temp_text, max_width_in_chars, width_in_pixels, font_object):
+    while (
+        max_width_in_chars
+        and not is_text_fit_to_width(' '.join(temp_text), max_width_in_chars, width_in_pixels, font_object)
+    ):
         max_width_in_chars -= 1
         temp_text = wrap(text, max_width_in_chars)
 
