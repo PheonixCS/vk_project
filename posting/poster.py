@@ -258,7 +258,7 @@ def get_smallest_image_size(sizes):
 def merge_six_images_into_one(files):
     log.debug('merge_six_images_into_one called')
 
-    offset = 2
+    offset = config.SIX_IMAGES_OFFSET
     filepath = 'temp_{}'.format(files[0])
 
     # FIXME #refactor too much file openings
