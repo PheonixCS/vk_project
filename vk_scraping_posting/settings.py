@@ -43,6 +43,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'scraping.tasks.delete_old_horoscope_records',
         'schedule': crontab(minute=0, hour=0)  # at 0:00 am UTC (3:00 am by MSK)
     },
+    'delete_old_transactions': {
+        'task': 'moderation.tasks.delete_old_transactions',
+        'schedule': crontab(minute=0, hour=0)  # at 0:00 am UTC (3:00 am by MSK)
+    },
     'update_statistics': {
         'task': 'posting.tasks.update_statistics',
         'schedule': crontab(minute=5, hour=1)  # at 0:05 am UTC (3:05 am by MSK)

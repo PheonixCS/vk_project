@@ -16,6 +16,7 @@ CONSTANCE_CONFIG = {
     'OLD_RECORDS_HOURS': (24, 'Time for records expiring'),
     'OLD_AD_RECORDS_HOURS': (30, 'Time for advertising records expiring'),
     'OLD_HOROSCOPES_HOURS': (48, 'Time for horoscope records expiring'),
+    'OLD_MODERATION_TRANSACTIONS_HOURS': (48, 'Time for moderation transactions expiring'),
 
     'IS_DEV': (False, 'Is server role for development?', bool),
     'SIX_IMAGES_OFFSET': (6, 'Offset between two images in merging', int)
