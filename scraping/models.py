@@ -106,3 +106,4 @@ class Horoscope(models.Model):
     post_in_group_date = models.DateTimeField(null=True)
     image_url = models.CharField(max_length=256, null=True)
     post_in_donor_date = models.DateTimeField(null=True)
+    add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
