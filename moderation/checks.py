@@ -3,20 +3,18 @@ import re
 
 from alphabet_detector import AlphabetDetector
 from urlextract import URLExtract
+from constance import config
 from vk_api import ApiError
 
 from posting.poster import delete_emoji_from_text
-from settings.models import Setting
 
 log = logging.getLogger('moderation.checks')
-
-VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 
 def is_post_ad(api, post_id, group_id):
     try:
         post = api.wall.getById(posts='-{}_{}'.format(group_id, post_id),
-                                api_version=VK_API_VERSION)
+                                api_version=config.VK_API_VERSION)
     except ApiError as error_msg:
         log.error('Group {} post {} got api error in getById method: {}'.format(group_id, post_id, error_msg))
         return None

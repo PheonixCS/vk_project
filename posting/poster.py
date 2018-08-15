@@ -13,7 +13,7 @@ from constance import config
 from django.conf import settings
 from django.utils import timezone
 
-from posting.transforms import RGBTransform
+from posting.extras.transforms import RGBTransform
 from scraping.core.vk_helper import get_wall
 
 log = logging.getLogger('posting.poster')
@@ -160,6 +160,16 @@ def expand_image_with_white_color(filepath, pixels):
 
 
 def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
+    """
+
+    :param text: text as string
+    :param width_in_chars:
+    :param width_in_pixels:
+    :param font_object:
+    :return:
+
+    :type text: str
+    """
     for line in wrap(text, width_in_chars):
         if font_object.getsize(line)[0] > width_in_pixels:
             return False
@@ -172,7 +182,10 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     max_width_in_chars = len(text)
     temp_text = wrap(text, max_width_in_chars)
 
-    while max_width_in_chars and not is_text_fit_to_width(temp_text, max_width_in_chars, width_in_pixels, font_object):
+    while (
+        max_width_in_chars
+        and not is_text_fit_to_width(' '.join(temp_text), max_width_in_chars, width_in_pixels, font_object)
+    ):
         max_width_in_chars -= 1
         temp_text = wrap(text, max_width_in_chars)
 
@@ -180,10 +193,10 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     return max_width_in_chars
 
 
-def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
-    log.debug('fil_image_with_text called')
+def fill_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
+    log.debug('fill_image_with_text called')
     if not text:
-        log.debug('got no text in fil_image_with_text')
+        log.debug('got no text in fill_image_with_text')
         return
 
     black_color = (0, 0, 0)
@@ -224,36 +237,66 @@ def fil_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_n
         image.save(filepath, 'JPEG', quality=95, progressive=True)
     else:
         image.save(filepath)
-    log.debug('fil_image_with_text finished')
+    log.debug('fill_image_with_text finished')
 
 
-def is_all_images_of_same_size(files):
-    image_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
-    return image_sizes[1:] == image_sizes[:-1]
+def divergence(one, two):
+    return abs(one-two)/max(one, two)
+
+
+def is_images_size_nearly_the_same(files, max_divergence):
+    # FIXME #refactor too much file openings
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
+
+    width = [size[0] for size in images_sizes]
+    height = [size[1] for size in images_sizes]
+
+    divergence_width = divergence(max(width), min(width))
+    divergence_height = divergence(max(height), min(height))
+
+    log.debug('max divergence = {}, divergence width = {}, divergence height = {}'.format(
+        max_divergence,
+        divergence_width,
+        divergence_height
+    ))
+
+    return divergence_width <= max_divergence and divergence_height <= max_divergence
+
+
+def get_smallest_image_size(sizes):
+    min_size = min(sizes, key=lambda size: size[0]*size[1])
+    return min_size
 
 
 def merge_six_images_into_one(files):
     log.debug('merge_six_images_into_one called')
-    img = Image.open(os.path.join(settings.BASE_DIR, files[0]))
-    width, height = img.size
 
-    result = Image.new("RGB", (width * 3, height * 2))
+    offset = config.SIX_IMAGES_OFFSET
+    filepath = 'temp_{}'.format(files[0])
 
-    for index, file in enumerate(files):
-        log.debug('start work with image {}'.format(file))
-        img = Image.open(os.path.join(settings.BASE_DIR, file))
+    # FIXME #refactor too much file openings
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
+    width, height = get_smallest_image_size(images_sizes)
 
-        x = index // 2 * width
-        y = index % 2 * height
-        result.paste(img, (x, y, x + width, y + height))
+    result = Image.new('RGB', (width * 3 + offset*2, height * 2 + offset), 'White')
 
-        log.debug('image {} deleted'.format(file))
+    for index, img_path in enumerate(files):
+
+        x = index // 2 * (width + offset)
+        y = index % 2 * (height + offset)
+
+        img = Image.open(os.path.join(settings.BASE_DIR, img_path))
+
+        cropped = img.crop((0, 0, width, height))
+        result.paste(cropped, (x, y, x + width, y + height))
+
+        result.save(filepath, 'JPEG', quality=95, progressive=True)
+
+    for file in files:
         os.remove(file)
 
-    result.save(files[0])
-
     log.debug('merge_six_images_into_one finished')
-    return files[0]
+    return filepath
 
 
 def is_text_on_image(filepath):
@@ -305,7 +348,7 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
 
     if 'text_to_fill' in keys:
-        fil_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
+        fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
 
 
 def upload_photo(session, image_local_filepath, group_id):

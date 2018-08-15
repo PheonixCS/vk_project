@@ -11,18 +11,16 @@ import moderation.checks as checks
 from moderation.models import WebhookTransaction, ModerationRule, Comment, Attachment
 from posting.models import Group
 from posting.poster import create_vk_session_using_login_password
-from settings.models import Setting
+from constance import config
 
 log = logging.getLogger('moderation.core')
-
-VK_API_VERSION = Setting.get_value(key='VK_API_VERSION')
 
 
 def get_groups_by_id(api, group_ids, fields):
     try:
         return api.groups.getById(group_ids=group_ids,
                                   fields=fields,
-                                  api_version=VK_API_VERSION)
+                                  api_version=config.VK_API_VERSION)
     except ApiError as error_msg:
         log.info('api error in groups.getById method: {}'.format(error_msg))
 
@@ -39,7 +37,7 @@ def delete_comment(api, owner_id, comment_id):
     try:
         api.wall.deleteComment(owner_id='-{}'.format(owner_id),
                                comment_id=comment_id,
-                               api_version=VK_API_VERSION)
+                               api_version=config.VK_API_VERSION)
     except ApiError as error_msg:
         log.info('group {} got api error in deleteComment method: {}'.format(owner_id, error_msg))
 
@@ -54,12 +52,12 @@ def ban_user(api, group_id, user_id, days_timedelta=None, comment=''):
                            owner_id=user_id,
                            end_date=ban_end_date_timestamp,
                            comment=comment,
-                           api_version=VK_API_VERSION)
+                           api_version=config.VK_API_VERSION)
         else:
             api.groups.ban(group_id=group_id,
                            owner_id=user_id,
                            comment=comment,
-                           api_version=VK_API_VERSION)
+                           api_version=config.VK_API_VERSION)
     except ApiError as error_msg:
         log.info('group {} got api error in ban method: {}'.format(group_id, error_msg))
 
