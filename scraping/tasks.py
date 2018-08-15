@@ -7,7 +7,7 @@ from constance import config
 from django.utils import timezone
 
 from scraping.core.scraper import main
-from scraping.models import Record
+from scraping.models import Record, Horoscope
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -30,3 +30,14 @@ def delete_oldest():
 
     number_of_records, extended = Record.objects.filter(add_to_db_date__lt=time_threshold).delete()
     log.debug('deleted {} records'.format(number_of_records))
+
+
+@task
+def delete_old_horoscope_records():
+    hours = config.OLD_HOROSCOPES_HOURS
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
+    log.debug('start deleting horoscope records older than {}'.format(time_threshold))
+
+    number_of_records, extended = Horoscope.objects.filter(add_to_db_date__lt=time_threshold).delete()
+    log.debug('deleted {} records'.format(number_of_records))
+
