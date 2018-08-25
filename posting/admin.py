@@ -39,7 +39,6 @@ class GroupChangeList(ChangeList):
     def get_results(self, request):
         super(GroupChangeList, self).get_results(request)
         total = self.get_total_values(self.queryset)
-        len(self.result_list)
         self.result_list._result_cache.append(total)
 
 
