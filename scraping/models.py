@@ -42,8 +42,9 @@ class Filter(models.Model):
 
 
 class Record(models.Model):
-    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records')
-    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='records', null=True)
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records', verbose_name='Источник')
+    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='records', null=True,
+                              verbose_name='Сообщество')
     donor_url = models.URLField(max_length=128, blank=True, default='')
     group_url = models.URLField(max_length=128, blank=True, default='')
     record_id = models.IntegerField(null=True)
@@ -54,7 +55,7 @@ class Record(models.Model):
     rate = models.IntegerField(null=True)
     post_in_donor_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
-    post_in_group_date = models.DateTimeField(null=True)
+    post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
     post_in_group_id = models.IntegerField(null=True)
     failed_date = models.DateTimeField(null=True)
     is_involved_now = models.BooleanField(default=False)
