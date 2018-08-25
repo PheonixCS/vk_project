@@ -69,7 +69,7 @@ CELERY_BEAT_SCHEDULE = {
 SECRET_KEY = '3(p-@#k$mrd0_*lw=u%kh7%oh!vp9iv@anxxk)-bcbbvup4^^0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81']
 

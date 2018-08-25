@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
-from django.db.models import Sum
+from django.db.models import Sum, TextField
+from django.forms import Textarea
 from django.utils.html import format_html
 
-from .models import User, ServiceToken, Group
+from .models import User, ServiceToken, Group, AdditionalText
 
 
 class MembershipInline(admin.TabularInline):
@@ -15,6 +16,15 @@ class DonorAdmin(admin.ModelAdmin):
     inlines = [
         MembershipInline,
     ]
+
+
+class AdditionalTextInline(admin.TabularInline):
+    model = AdditionalText
+    extra = 1
+
+    formfield_overrides = {
+        TextField: {'widget': Textarea(attrs={'rows': 2, 'cols': 60})},
+    }
 
 
 class GroupChangeList(ChangeList):
@@ -76,7 +86,7 @@ class GroupAdmin(admin.ModelAdmin):
     )
 
     inlines = [
-        MembershipInline,
+        MembershipInline, AdditionalTextInline,
     ]
 
     def vk_url_field(self, obj):

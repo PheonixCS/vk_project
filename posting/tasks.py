@@ -307,6 +307,11 @@ def post_record(login, password, app_id, group_id, record_id):
                 record.save(update_fields=['failed_date', 'is_involved_now'])
                 return
 
+        additional_texts = group.additional_texts.all()
+        if additional_texts:
+            additional_text = choice(additional_texts)
+            record_text = '\n'.join([record_text, additional_text])
+
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
                                       message=record_text,
