@@ -245,7 +245,7 @@ def post_record(login, password, app_id, group_id, record_id):
         images = list(record.images.all())
 
         # just for test
-        if config.IS_DEV:
+        if group.is_merge_images_enabled:
             images = images[:6]
 
         log.debug('got {} images for group {}'.format(len(images), group_id))

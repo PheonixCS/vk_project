@@ -282,8 +282,8 @@ def merge_six_images_into_one(files):
 
     for index, img_path in enumerate(files):
 
-        x = index // 2 * (width + offset)
-        y = index % 2 * (height + offset)
+        x = index % 3 * (width + offset)
+        y = index // 3 * (height + offset)
 
         img = Image.open(os.path.join(settings.BASE_DIR, img_path))
 
