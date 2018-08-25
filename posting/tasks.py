@@ -10,10 +10,23 @@ from django.db.models import Q
 from constance import config
 
 from posting.models import Group, ServiceToken, AdRecord
-from posting.poster import (create_vk_session_using_login_password, fetch_group_id, upload_photo,
-                            delete_hashtags_from_text, get_ad_in_last_hour, check_docs_availability,
-                            check_video_availability, delete_emoji_from_text, download_file, prepare_image_for_posting,
-                            merge_six_images_into_one, is_images_size_nearly_the_same, is_text_on_image)
+from posting.poster import (
+    create_vk_session_using_login_password,
+    fetch_group_id,
+    upload_photo,
+    delete_hashtags_from_text,
+    get_ad_in_last_hour,
+    check_docs_availability,
+    check_video_availability,
+    delete_emoji_from_text,
+    download_file,
+    prepare_image_for_posting,
+    merge_six_images_into_one,
+    is_images_size_nearly_the_same,
+    is_text_on_image,
+    is_all_images_vertical,
+    delete_files
+)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
 
@@ -242,9 +255,9 @@ def post_record(login, password, app_id, group_id, record_id):
         for audio in audios:
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
+        # images part
         images = list(record.images.all())
 
-        # just for test
         if group.is_merge_images_enabled:
             images = images[:6]
 
@@ -257,11 +270,13 @@ def post_record(login, password, app_id, group_id, record_id):
         image_files = [download_file(image.url) for image in images[::-1]]
 
         if (
-            len(images) == 6
-            and group.is_merge_images_enabled
+            group.is_merge_images_enabled
             and is_images_size_nearly_the_same(image_files, config.THE_SAME_SIZE_FACTOR)
+            and is_all_images_vertical(image_files)
         ):
+            old_image_files = image_files
             image_files = [merge_six_images_into_one(image_files)]
+            delete_files(old_image_files)
 
         for image_local_filename in image_files:
             actions_to_unique_image = {}
@@ -285,6 +300,9 @@ def post_record(login, password, app_id, group_id, record_id):
 
             attachments.append(upload_photo(session, image_local_filename, group_id))
 
+        delete_files(image_files)
+
+        # gif part
         gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
         if gifs and check_docs_availability(api, ['{}_{}'.format(gif.owner_id, gif.gif_id) for gif in gifs]):
