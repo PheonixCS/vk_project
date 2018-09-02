@@ -294,7 +294,11 @@ def post_record(login, password, app_id, group_id, record_id):
                 record_text = ''
 
             percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
-            if group.is_changing_image_to_square_enabled and not is_text_on_image(image_local_filename):
+            if (
+                not group.is_merge_images_enabled
+                and group.is_changing_image_to_square_enabled
+                and not is_text_on_image(image_local_filename)
+            ):
                 actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
