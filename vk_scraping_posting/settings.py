@@ -130,7 +130,7 @@ WSGI_APPLICATION = 'vk_scraping_posting.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'vk_scr_pos_db',
+        'NAME': os.getenv('DB_NAME', 'vk_db'),
         'USER': os.environ['DB_LOGIN'],
         'PASSWORD': os.environ['DB_PASSWORD'],
         'HOST': os.environ['DB_HOST'],

@@ -271,6 +271,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
         if (
             group.is_merge_images_enabled
+            and len(images) == 6
             and is_images_size_nearly_the_same(image_files, config.THE_SAME_SIZE_FACTOR)
             and is_all_images_vertical(image_files)
         ):
