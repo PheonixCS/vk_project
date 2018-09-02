@@ -88,6 +88,15 @@ class Group(models.Model):
         verbose_name_plural = 'Сообщества'
 
 
+class AdditionalText(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='additional_texts')
+    text = models.TextField(max_length=1024, verbose_name='Дополнительный текст к записи')
+
+    class Meta:
+        verbose_name = 'Текст'
+        verbose_name_plural = 'Тексты'
+
+
 class AdRecord(models.Model):
     ad_record_id = models.IntegerField()
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ad_records')

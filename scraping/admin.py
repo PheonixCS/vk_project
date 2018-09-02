@@ -29,11 +29,20 @@ class DonorAdmin(admin.ModelAdmin):
 class RecordAdmin(admin.ModelAdmin):
     list_display = [
         '__str__',
+        'donor',
+        'group',
         'post_in_donor_url_field',
-        'post_in_group_url_field'
+        'post_in_group_url_field',
+        'post_in_group_date'
     ]
     search_fields = [
         'group_url'
+    ]
+    list_filter = [
+        'group'
+    ]
+    ordering = [
+        'post_in_group_date'
     ]
 
     def post_in_donor_url_field(self, obj):
@@ -51,6 +60,10 @@ class RecordAdmin(admin.ModelAdmin):
         if obj:
             self.readonly_fields = [field.name for field in obj.__class__._meta.fields]
         return self.readonly_fields
+
+    def get_queryset(self, request):
+        qs = super(RecordAdmin, self).get_queryset(request)
+        return qs.filter(post_in_group_date__isnull=False)
 
 
 admin.site.register(Donor, DonorAdmin)

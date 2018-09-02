@@ -1,13 +1,15 @@
 import logging
-from random import choice
+from datetime import datetime, timedelta
 
 from celery import task
+from constance import config
+from django.utils import timezone
 
-from posting.poster import create_vk_session_using_login_password
-from posting.models import Group, ServiceToken
 from moderation.core import (get_transactions_to_process, process_comment, save_comment_to_db, get_groups_by_id,
                              ban_user)
 from moderation.models import WebhookTransaction
+from posting.models import Group
+from posting.poster import create_vk_session_using_login_password
 
 log = logging.getLogger('moderation.tasks')
 
@@ -60,3 +62,13 @@ def ban_donors_admins():
                 ban_user(api, group.group_id, contact['user_id'], comment=f'Администратор в источнике {donor.id}')
 
     log.info('ban_donors_admins task completed')
+
+
+@task
+def delete_old_transactions():
+    hours = config.OLD_MODERATION_TRANSACTIONS_HOURS
+    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
+    log.debug(f'start deleting moderation transactions older than {time_threshold}')
+
+    number_of_records, extended = WebhookTransaction.objects.filter(date_received__lt=time_threshold).delete()
+    log.debug(f'deleted {number_of_records} transactions')

@@ -47,6 +47,17 @@ def download_file(url, extension=None):
     return local_filename
 
 
+def delete_files(file_paths):
+    log.debug('delete_files called with {} files'.format(len(file_paths)))
+    for file in file_paths:
+        try:
+            os.remove(file)
+        except FileNotFoundError as exc:
+            log.error('Fail to delete file {}'.format(exc))
+            continue
+    log.debug('delete_files finished')
+
+
 def upload_video(session, api, video_url, group_id):
     log.debug('upload_video called')
 
@@ -263,6 +274,15 @@ def is_images_size_nearly_the_same(files, max_divergence):
     return divergence_width <= max_divergence and divergence_height <= max_divergence
 
 
+def is_all_images_vertical(files):
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
+
+    width = [size[0] for size in images_sizes]
+    height = [size[1] for size in images_sizes]
+
+    return all(height > width for width, height in zip(width, height))
+
+
 def get_smallest_image_size(sizes):
     min_size = min(sizes, key=lambda size: size[0]*size[1])
     return min_size
@@ -282,8 +302,8 @@ def merge_six_images_into_one(files):
 
     for index, img_path in enumerate(files):
 
-        x = index // 2 * (width + offset)
-        y = index % 2 * (height + offset)
+        x = index % 3 * (width + offset)
+        y = index // 3 * (height + offset)
 
         img = Image.open(os.path.join(settings.BASE_DIR, img_path))
 
@@ -361,9 +381,6 @@ def upload_photo(session, image_local_filepath, group_id):
     except:
         log.error('exception while uploading photo', exc_info=True)
         return
-
-    if os.path.isfile(image_local_filepath):
-        os.remove(image_local_filepath)
 
     return 'photo{}_{}'.format(photo[0]['owner_id'], photo[0]['id'])
 
