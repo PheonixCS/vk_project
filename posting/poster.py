@@ -288,6 +288,27 @@ def get_smallest_image_size(sizes):
     return min_size
 
 
+def calculate_size(origin_width, origin_height, width=None, height=None):
+
+    if width:
+        return width, int(width/origin_width*origin_height)
+
+    if height:
+        return int(origin_width/origin_height*height), height
+
+    return origin_width, origin_height
+
+
+def resize_image_aspect_ratio(image_file_name, width=None, height=None):
+    image = Image.open(os.path.join(settings.BASE_DIR, image_file_name))
+
+    new_size = calculate_size(image.size[0], image.size[1], width, height)
+
+    image.thumbnail(new_size, Image.ANTIALIAS)
+
+    image.save(image_file_name, 'JPEG', quality=95, progressive=True)
+
+
 def merge_six_images_into_one(files):
     log.debug('merge_six_images_into_one called')
 
@@ -312,8 +333,7 @@ def merge_six_images_into_one(files):
 
         result.save(filepath, 'JPEG', quality=95, progressive=True)
 
-    for file in files:
-        os.remove(file)
+    resize_image_aspect_ratio(filepath, width=config.SIX_IMAGES_WIDTH)
 
     log.debug('merge_six_images_into_one finished')
     return filepath
