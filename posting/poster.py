@@ -333,7 +333,7 @@ def merge_six_images_into_one(files):
 
         result.save(filepath, 'JPEG', quality=95, progressive=True)
 
-    resize_image_aspect_ratio(filepath, width=2560)
+    resize_image_aspect_ratio(filepath, width=config.SIX_IMAGES_WIDTH)
 
     log.debug('merge_six_images_into_one finished')
     return filepath
