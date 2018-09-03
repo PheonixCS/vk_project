@@ -333,7 +333,10 @@ def post_record(login, password, app_id, group_id, record_id):
         additional_texts = group.additional_texts.all()
         if additional_texts:
             additional_text = choice(additional_texts)
-            record_text = '\n'.join([record_text, additional_text])
+            if record_text:
+                record_text = '\n'.join([record_text, additional_text.text])
+            else:
+                record_text = additional_text.text
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
