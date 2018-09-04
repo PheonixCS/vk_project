@@ -16,6 +16,7 @@ from posting.poster import (create_vk_session_using_login_password, fetch_group_
                             merge_six_images_into_one, is_images_size_nearly_the_same, is_text_on_image)
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
+from posting.text_utilities import replace_russian_with_english_letters
 
 log = logging.getLogger('posting.scheduled')
 
@@ -227,6 +228,10 @@ def post_record(login, password, app_id, group_id, record_id):
         attachments = []
 
         record_text = record.text
+
+        if group.is_replace_russian_with_english:
+            record_text = replace_russian_with_english_letters(record_text)
+
         record_text = delete_hashtags_from_text(record_text)
 
         if group.is_text_delete_enabled:
