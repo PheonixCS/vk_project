@@ -62,6 +62,8 @@ class Group(models.Model):
     is_photos_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать фото?')
     is_audios_shuffle_enabled = models.BooleanField(default=False, verbose_name='Перемешивать аудиозаписи?')
     is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
+    is_replace_russian_with_english = models.BooleanField(default=False,
+                                                          verbose_name='Заменять русские буквы английскими?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
