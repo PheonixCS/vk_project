@@ -69,6 +69,8 @@ class Group(models.Model):
     number_of_ad_posts_yesterday = models.IntegerField(null=True, verbose_name='Реклама за вчера')
     statistics_last_update_date = models.DateTimeField(null=True)
 
+    last_used_additional_text_id = models.IntegerField(null=True, default=0)
+
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
             self.url = 'https://vk.com/club{}'.format(self.domain_or_id)
