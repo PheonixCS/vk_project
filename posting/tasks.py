@@ -330,10 +330,21 @@ def post_record(login, password, app_id, group_id, record_id):
                 record.save(update_fields=['failed_date', 'is_involved_now'])
                 return
 
-        additional_texts = group.additional_texts.all()
+        additional_texts = group.additional_texts.all().order_by('id')
         if additional_texts:
-            additional_text = choice(additional_texts)
-            record_text = '\n'.join([record_text, additional_text])
+            additional_text = next((text for text in additional_texts if text.id > group.last_used_additional_text_id),
+                                   additional_texts[0])
+            log.debug(f'Found additional texts for group {group.domain_or_id}. '
+                      f'Last used text id: {group.last_used_additional_text_id}, '
+                      f'new text id: {additional_text.id}, new text: {additional_text.text}')
+
+            group.last_used_additional_text_id = additional_text.id
+            group.save(update_fields=['last_used_additional_text_id'])
+
+            if record_text:
+                record_text = '\n'.join([record_text, additional_text.text])
+            else:
+                record_text = additional_text.text
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
