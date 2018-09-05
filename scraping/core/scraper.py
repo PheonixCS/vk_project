@@ -14,7 +14,13 @@ from scraping.core.filters import (
 )
 from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
 from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
-from scraping.core.vk_helper import get_wall, get_wall_by_post_id, create_vk_api_using_service_token
+from scraping.core.vk_helper import (
+    get_wall,
+    get_wall_by_post_id,
+    create_vk_api_using_service_token,
+    fetch_liked_user_ids,
+    get_users_sex_by_ids
+)
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
 
 log = logging.getLogger('scraping.scraper')
@@ -104,7 +110,7 @@ def save_horoscope_record_to_db(group, record, zodiac_sign):
 def rate_records(donor_id, records):
     """
 
-    :param donor:
+    :param donor_id:
     :param records:
     :type donor_id: int
     :type records: list
@@ -253,6 +259,7 @@ def main():
             if non_rated_records:
                 try:
                     rate_records(donor.id, non_rated_records)
+                    extract_records_sex(api, donor.id, non_rated_records)
                 except:
                     log.error('error while rating', exc_info=True)
 
@@ -280,3 +287,25 @@ def main():
                     continue
 
                 rate_records(donor.id, all_non_rated)
+
+
+def extract_records_sex(api, donor_id, records):
+    log.debug('extract_records_sex called')
+    for record in records:
+        record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
+        user_ids = fetch_liked_user_ids(api, donor_id, record['id'])
+        sex_list = get_users_sex_by_ids(api, user_ids)
+
+        females_count = sex_list.count(1)
+        males_count = sex_list.count(2)
+
+        males_females_ratio = males_count/females_count
+
+        record_obj.females_count = females_count
+        record_obj.males_count = males_count
+        record_obj.unknown_count = sex_list.count(0)
+        record_obj.males_females_ratio = males_females_ratio
+
+        record_obj.save(update_fields=['females_count', 'males_count', 'unknown_count', 'males_females_ratio'])
+
+    log.debug('extract_records_sex finished')

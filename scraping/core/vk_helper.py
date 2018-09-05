@@ -58,8 +58,8 @@ def get_wall_by_post_id(api, group_id, posts_ids):
     return all_non_rated
 
 
-def get_post_likes_by_id(api, group_id, post_id):
-    log.debug('get_post_likes_by_id api called for group {}'.format(group_id))
+def fetch_liked_user_ids(api, group_id, post_id):
+    log.debug('fetch_liked_user_ids api called for group {}'.format(group_id))
 
     try:
         likes_list = api.likes.getList(
@@ -95,6 +95,6 @@ def get_users_sex_by_ids(api, user_ids):
         log.error('got api error while : {}'.format(error_msg))
         return None
 
-    sex_list = [profile.get('sex', 0) for profile in users_info_list]
+    sex_list = [int(profile.get('sex', 0)) for profile in users_info_list]
 
     return sex_list
