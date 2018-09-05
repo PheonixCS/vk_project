@@ -49,9 +49,45 @@ def get_wall_by_post_id(api, group_id, posts_ids):
 
     posts = ['-{}_{}'.format(group_id, post) for post in posts_ids]
     try:
-        all_non_rated = api.wall.getById(posts=posts)
+        all_non_rated = api.wall.getById(posts=posts,
+                                         api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
         log.warning('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
     return all_non_rated
+
+
+def get_post_likes_by_id(api, group_id, post_id):
+    log.debug('get_post_likes_by_id api called for group {}'.format(group_id))
+
+    try:
+        likes_list = api.likes.getList(
+            type='post',
+            owner_id='-{}'.format(group_id),
+            item_id=post_id,
+            filter='likes',
+            extndet=1,  # needed for user type, we need just profile
+            api_version=config.VK_API_VERSION
+            )
+
+    except VkAPIError as error_msg:
+        log.warning('group {} got api error while : {}'.format(group_id, error_msg))
+        return None
+
+    return likes_list
+
+
+def get_users_sex_by_ids(api, user_ids):
+    log.debug('get_users_sex_by_ids called')
+
+    try:
+        users_sex_list = api.users.get(
+            user_ids=user_ids,
+            fields='sex'
+        )
+    except VkAPIError as error_msg:
+        log.warning('got api error while : {}'.format(error_msg))
+        return None
+
+    return users_sex_list
