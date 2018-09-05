@@ -15,7 +15,7 @@ def create_vk_api_using_service_token(token):
     try:
         api = vk_requests.create_api(service_token=token, api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
-        log.warning('token {} got api error: {}'.format(token, error_msg))
+        log.error('token {} got api error: {}'.format(token, error_msg))
         return None
 
     return api
@@ -38,7 +38,7 @@ def get_wall(api, group_id, count=20):
                                 api_version=config.VK_API_VERSION,
                                 count=count)
     except VkAPIError as error_msg:
-        log.warning('group {} got api error: {}'.format(group_id, error_msg))
+        log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None
 
     return wall
@@ -52,7 +52,7 @@ def get_wall_by_post_id(api, group_id, posts_ids):
         all_non_rated = api.wall.getById(posts=posts,
                                          api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
-        log.warning('group {} got api error while : {}'.format(group_id, error_msg))
+        log.error('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
     return all_non_rated
@@ -72,7 +72,7 @@ def get_post_likes_by_id(api, group_id, post_id):
             )
 
     except VkAPIError as error_msg:
-        log.warning('group {} got api error while : {}'.format(group_id, error_msg))
+        log.error('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
     return likes_list
@@ -87,7 +87,7 @@ def get_users_sex_by_ids(api, user_ids):
             fields='sex'
         )
     except VkAPIError as error_msg:
-        log.warning('got api error while : {}'.format(error_msg))
+        log.error('got api error while : {}'.format(error_msg))
         return None
 
     return users_sex_list
