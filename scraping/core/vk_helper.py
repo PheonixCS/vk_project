@@ -75,14 +75,19 @@ def get_post_likes_by_id(api, group_id, post_id):
         log.error('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
-    return likes_list
+    log.debug('got {} likes list'.format(likes_list.get('count')))
+    # TODO think what is default in .get('id')
+    ids_list = [profile.get('id', 0) for profile in likes_list['items'] if profile.get('type', '') == 'profile']
+    log.debug('got {} likes after extracting'.format(len(ids_list)))
+
+    return ids_list
 
 
 def get_users_sex_by_ids(api, user_ids):
     log.debug('get_users_sex_by_ids called')
 
     try:
-        users_sex_list = api.users.get(
+        users_info_list = api.users.get(
             user_ids=user_ids,
             fields='sex'
         )
@@ -90,4 +95,6 @@ def get_users_sex_by_ids(api, user_ids):
         log.error('got api error while : {}'.format(error_msg))
         return None
 
-    return users_sex_list
+    sex_list = [profile.get('sex', 0) for profile in users_info_list]
+
+    return sex_list
