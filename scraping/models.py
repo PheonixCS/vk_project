@@ -59,6 +59,10 @@ class Record(models.Model):
     post_in_group_id = models.IntegerField(null=True)
     failed_date = models.DateTimeField(null=True)
     is_involved_now = models.BooleanField(default=False)
+    females_count = models.IntegerField(default=0, verbose_name='Лайков от женщин')
+    males_count = models.IntegerField(default=0, verbose_name='Лайков от мужчин')
+    males_females_ratio = models.FloatField(default=1.0, verbose_name='Соотношение мужчин к женщинам в лайках')
+    unknown_count = models.IntegerField(default=0, verbose_name='Лайков от неопределенного пола')
 
     def save(self, *args, **kwargs):
         if self.record_id:

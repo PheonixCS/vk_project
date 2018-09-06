@@ -72,7 +72,7 @@ class GroupAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('domain_or_id', 'name', 'is_posting_active', 'is_horoscopes', 'is_pin_enabled', 'posting_time',
-                       'user', 'callback_api_token')
+                       'user', 'callback_api_token', 'preferred_audience')
         }),
         ('Параметры уникализации', {
             'fields': ('is_text_delete_enabled', 'is_text_filling_enabled', 'is_image_mirror_enabled',

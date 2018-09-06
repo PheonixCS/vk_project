@@ -38,6 +38,16 @@ class ServiceToken(models.Model):
 
 
 class Group(models.Model):
+    ALL_AUDITORY = 0
+    FEMALE_AUDITORY = 1
+    MALE_AUDITORY = 2
+
+    AUDITORY_CHOICES = (
+        (ALL_AUDITORY, 'Все'),
+        (FEMALE_AUDITORY, 'Женщины'),
+        (MALE_AUDITORY, 'Мужчины')
+    )
+
     domain_or_id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
     statistic_url = models.URLField(max_length=256, verbose_name='Ссылка на статистику', blank=True, default='')
@@ -72,6 +82,9 @@ class Group(models.Model):
     statistics_last_update_date = models.DateTimeField(null=True)
 
     last_used_additional_text_id = models.IntegerField(null=True, default=0)
+
+    preferred_audience = models.IntegerField(choices=AUDITORY_CHOICES, default=ALL_AUDITORY,
+                                             verbose_name='Предпочтительная аудитория')
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():

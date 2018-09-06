@@ -147,7 +147,15 @@ def examine_groups():
             if not records:
                 continue
 
-            record_with_max_rate = max(records, key=lambda x: x.rate)
+            if group.preferred_audience == Group.FEMALE_AUDITORY:
+                log.debug('fetching females top record')
+                record_with_max_rate = max(records, key=lambda x: x.rate/x.males_females_ratio)
+            elif group.preferred_audience == Group.MALE_AUDITORY:
+                log.debug('fetching males top record')
+                record_with_max_rate = max(records, key=lambda x: x.rate*x.males_females_ratio)
+            else:
+                record_with_max_rate = max(records, key=lambda x: x.rate)
+
             record_with_max_rate.is_involved_now = True
             record_with_max_rate.save(update_fields=['is_involved_now'])
             log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
