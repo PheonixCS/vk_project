@@ -71,6 +71,9 @@ class Group(models.Model):
 
     last_used_additional_text_id = models.IntegerField(null=True, default=0)
 
+    # TODO make a choice field
+    preferred_audience = models.IntegerField(default=0, verbose_name='Предпочтительная аудитория')
+
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
             self.url = 'https://vk.com/club{}'.format(self.domain_or_id)
