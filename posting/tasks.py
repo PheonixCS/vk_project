@@ -146,10 +146,10 @@ def examine_groups():
             if not records:
                 continue
 
-            if group.preferred_audience == 1:  # female
+            if group.preferred_audience == Group.FEMALE_AUDITORY:
                 log.debug('fetching females top record')
                 record_with_max_rate = max(records, key=lambda x: x.rate/x.males_females_ratio)
-            elif group.preferred_audience == 2:  # male
+            elif group.preferred_audience == Group.MALE_AUDITORY:
                 log.debug('fetching males top record')
                 record_with_max_rate = max(records, key=lambda x: x.rate*x.males_females_ratio)
             else:
