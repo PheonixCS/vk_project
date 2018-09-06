@@ -64,7 +64,7 @@ def is_links_in_text(text):
 
 
 def is_vk_links_in_text(text):
-    if re.findall(r'\[.*?\|.*?\]', text):
+    if re.findall(r'\[club.*?\|.*?\]', text):
         log.debug('found vk link in text')
         return True
 
