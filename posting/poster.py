@@ -503,3 +503,13 @@ def check_video_availability(api, owner_id, video_id):
 
     except:
         log.error('got unexpected error in check_video_availability', exc_info=True)
+
+
+def get_group_week_statistics(api, group_id):
+
+    now = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')
+    week_ago = (datetime.now(tz=timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
+
+    print(now, week_ago)
+
+    return api.stats.get(group_id=group_id, date_from=week_ago, date_to=now)

@@ -59,6 +59,8 @@ class GroupAdmin(admin.ModelAdmin):
         'members_growth',
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
+        'male_weekly_average_count',
+        'female_weekly_average_count'
     )
     list_display = (
         'domain_or_id',
@@ -72,7 +74,7 @@ class GroupAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('domain_or_id', 'name', 'is_posting_active', 'is_horoscopes', 'is_pin_enabled', 'posting_time',
-                       'user', 'callback_api_token', 'preferred_audience')
+                       'user', 'callback_api_token')
         }),
         ('Параметры уникализации', {
             'fields': ('is_text_delete_enabled', 'is_text_filling_enabled', 'is_image_mirror_enabled',
@@ -82,7 +84,7 @@ class GroupAdmin(admin.ModelAdmin):
         ('Статистика', {
             'classes': ('collapse',),
             'fields': ('vk_statistics_url_field', 'members_count', 'members_growth', 'number_of_posts_yesterday',
-                       'number_of_ad_posts_yesterday')
+                       'number_of_ad_posts_yesterday', 'male_weekly_average_count', 'female_weekly_average_count')
         })
     )
 
