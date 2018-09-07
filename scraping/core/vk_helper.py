@@ -67,7 +67,7 @@ def fetch_liked_user_ids(api, group_id, post_id):
             owner_id='-{}'.format(group_id),
             item_id=post_id,
             filter='likes',
-            extndet=1,  # needed for user type, we need just profile
+            extended=1,  # needed for user type, we need just profile
             api_version=config.VK_API_VERSION
             )
 
