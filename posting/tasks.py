@@ -50,6 +50,7 @@ def examine_groups():
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
     allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
+    week_ago = datetime.now(tz=timezone.utc) timedelta(days=7)
     today_start = now_time.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
@@ -150,6 +151,11 @@ def examine_groups():
                 continue
 
             if config.POSTING_BASED_ON_SEX:
+
+                if group.sex_last_update_date < week_ago:
+                    sex_statistics_weekly.delay()
+                    break
+
                 group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
                 the_best_record = find_the_best_post(records, group_male_female_ratio)
             else:
