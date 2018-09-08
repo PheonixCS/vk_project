@@ -561,6 +561,8 @@ def update_statistics():
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
+    now_time = datetime.now(tz=timezone.utc)
+
     all_groups = Group.objects.all()
     log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
 
@@ -591,7 +593,8 @@ def sex_statistics_weekly():
 
         group.male_weekly_average_count = male_average_count
         group.female_weekly_average_count = female_average_count
+        group.sex_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count'])
+        group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
 
     log.debug('sex_statistics_weekly finished')

@@ -75,6 +75,7 @@ class Group(models.Model):
                                                     verbose_name='Среднее количество мужчин за неделю')
     female_weekly_average_count = models.IntegerField(default=0,
                                                       verbose_name='Среднее количество мужчин за неделю')
+    sex_last_update_date = models.DateTimeField(null=True)
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
