@@ -7,7 +7,7 @@ from posting import poster
 class Record:
     def __init__(self, rate, ratio):
         self.rate = rate
-        self.ratio = ratio
+        self.males_females_ratio = ratio
 
 
 class BestRecordTest(TestCase):
@@ -20,7 +20,7 @@ class BestRecordTest(TestCase):
         best_record = poster.find_the_best_post(records, 1.8)
 
         self.assertEqual(best_record.rate, 200)
-        self.assertEqual(best_record.ratio, 1.83213)
+        self.assertEqual(best_record.males_females_ratio, 1.83213)
 
     def test_no_match(self):
         records = [
@@ -31,7 +31,7 @@ class BestRecordTest(TestCase):
         best_record = poster.find_the_best_post(records, 1.7)
 
         self.assertEqual(best_record.rate, 200)
-        self.assertEqual(best_record.ratio, 1.83213)
+        self.assertEqual(best_record.males_females_ratio, 1.83213)
 
     def test_equal_ratio_best_rate(self):
         records = [
@@ -43,4 +43,4 @@ class BestRecordTest(TestCase):
         best_record = poster.find_the_best_post(records, 1.6)
 
         self.assertEqual(best_record.rate, 400)
-        self.assertEqual(best_record.ratio, 1.686)
+        self.assertEqual(best_record.males_females_ratio, 1.686)

@@ -518,4 +518,17 @@ def get_group_week_statistics(api, group_id):
 def find_the_best_post(records, best_ratio):
     log.debug('find_the_best_post called')
 
+    eps = 0.1
+
     records.sort(key=lambda x: x.rate)
+
+    for i in range(1, 11):
+        exact_ratio_records = [record for record in records if 0 <= record.males_females_ratio-best_ratio <= eps*i]
+
+        if exact_ratio_records:
+            best_record = max(exact_ratio_records, key=lambda x: x.rate)
+            break
+    else:
+        best_record = max(records, key=lambda x: x.rate)
+
+    return best_record
