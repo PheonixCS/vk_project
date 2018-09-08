@@ -50,7 +50,7 @@ def examine_groups():
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
     allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
-    week_ago = datetime.now(tz=timezone.utc) timedelta(days=7)
+    week_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
     today_start = now_time.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
