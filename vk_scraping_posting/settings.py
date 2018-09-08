@@ -59,6 +59,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'moderation.tasks.ban_donors_admins',
         'schedule': crontab(minute=0, hour=0)  # at 0:00 am UTC (3:00 am by MSK)
     },
+    'sex_statistics_weekly': {
+        'task': 'posting.tasks.sex_statistics_weekly',
+        'schedule': crontab(minute=0, hour=0, day_of_week=0)  # at 0:00 am UTC every sunday (3:00 am by MSK)
+    }
 }
 
 
