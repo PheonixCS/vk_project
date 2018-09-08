@@ -26,7 +26,8 @@ from posting.poster import (
     is_text_on_image,
     is_all_images_vertical,
     delete_files,
-    get_group_week_statistics
+    get_group_week_statistics,
+    find_the_best_post
 )
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
@@ -147,29 +148,26 @@ def examine_groups():
             if not records:
                 continue
 
-            if group.preferred_audience == Group.FEMALE_AUDITORY:
-                log.debug('fetching females top record')
-                record_with_max_rate = max(records, key=lambda x: x.rate/x.males_females_ratio)
-            elif group.preferred_audience == Group.MALE_AUDITORY:
-                log.debug('fetching males top record')
-                record_with_max_rate = max(records, key=lambda x: x.rate*x.males_females_ratio)
+            if config.POSTING_BASED_ON_SEX:
+                group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+                the_best_record = find_the_best_post(records, group_male_female_ratio)
             else:
-                record_with_max_rate = max(records, key=lambda x: x.rate)
+                the_best_record = max(records, key=lambda x: x.rate)
 
-            record_with_max_rate.is_involved_now = True
-            record_with_max_rate.save(update_fields=['is_involved_now'])
-            log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
+            the_best_record.is_involved_now = True
+            the_best_record.save(update_fields=['is_involved_now'])
+            log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
 
             try:
                 post_record.delay(group.user.login,
                                   group.user.password,
                                   group.user.app_id,
                                   group.group_id,
-                                  record_with_max_rate.id)
+                                  the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
-                record_with_max_rate.is_involved_now = False
-                record_with_max_rate.save(update_fields=['is_involved_now'])
+                the_best_record.is_involved_now = False
+                the_best_record.save(update_fields=['is_involved_now'])
 
 
 @task

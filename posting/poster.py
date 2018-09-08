@@ -513,3 +513,9 @@ def get_group_week_statistics(api, group_id):
     print(now, week_ago)
 
     return api.stats.get(group_id=group_id, date_from=week_ago, date_to=now)
+
+
+def find_the_best_post(records, best_ratio):
+    log.debug('find_the_best_post called')
+
+    records.sort(key=lambda x: x.rate)
