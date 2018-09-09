@@ -598,8 +598,15 @@ def sex_statistics_weekly():
                     elif sex.get('value', 'n') == 'm':
                         male_count_list.append(sex.get('visitors'))
 
-            male_average_count = sum(male_count_list)//len(male_count_list)
-            female_average_count = sum(female_count_list)//len(female_count_list)
+            if male_count_list:
+                male_average_count = sum(male_count_list)//len(male_count_list)
+            else:
+                male_average_count = 0
+                
+            if female_count_list:
+                female_average_count = sum(female_count_list)//len(female_count_list)
+            else:
+                female_average_count = 0
 
             group.male_weekly_average_count = male_average_count
             group.female_weekly_average_count = female_average_count
