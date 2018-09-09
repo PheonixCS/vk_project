@@ -15,7 +15,7 @@ def create_vk_api_using_service_token(token):
     try:
         api = vk_requests.create_api(service_token=token, api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
-        log.warning('token {} got api error: {}'.format(token, error_msg))
+        log.error('token {} got api error: {}'.format(token, error_msg))
         return None
 
     return api
@@ -38,7 +38,7 @@ def get_wall(api, group_id, count=20):
                                 api_version=config.VK_API_VERSION,
                                 count=count)
     except VkAPIError as error_msg:
-        log.warning('group {} got api error: {}'.format(group_id, error_msg))
+        log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None
 
     return wall
@@ -49,9 +49,52 @@ def get_wall_by_post_id(api, group_id, posts_ids):
 
     posts = ['-{}_{}'.format(group_id, post) for post in posts_ids]
     try:
-        all_non_rated = api.wall.getById(posts=posts)
+        all_non_rated = api.wall.getById(posts=posts,
+                                         api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
-        log.warning('group {} got api error while : {}'.format(group_id, error_msg))
+        log.error('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
     return all_non_rated
+
+
+def fetch_liked_user_ids(api, group_id, post_id):
+    log.debug('fetch_liked_user_ids api called for group {}'.format(group_id))
+
+    try:
+        likes_list = api.likes.getList(
+            type='post',
+            owner_id='-{}'.format(group_id),
+            item_id=post_id,
+            filter='likes',
+            extended=1,  # needed for user type, we need just profile
+            api_version=config.VK_API_VERSION
+            )
+
+    except VkAPIError as error_msg:
+        log.error('group {} got api error while : {}'.format(group_id, error_msg))
+        return None
+
+    log.debug('got {} likes list'.format(likes_list.get('count')))
+    # TODO think what is default in .get('id')
+    ids_list = [profile.get('id', 0) for profile in likes_list['items'] if profile.get('type', '') == 'profile']
+    log.debug('got {} likes after extracting'.format(len(ids_list)))
+
+    return ids_list
+
+
+def get_users_sex_by_ids(api, user_ids):
+    log.debug('get_users_sex_by_ids called')
+
+    try:
+        users_info_list = api.users.get(
+            user_ids=user_ids,
+            fields='sex'
+        )
+    except VkAPIError as error_msg:
+        log.error('got api error while : {}'.format(error_msg))
+        return None
+
+    sex_list = [int(profile.get('sex', 0)) for profile in users_info_list]
+
+    return sex_list

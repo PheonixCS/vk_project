@@ -25,10 +25,13 @@ from posting.poster import (
     is_images_size_nearly_the_same,
     is_text_on_image,
     is_all_images_vertical,
-    delete_files
+    delete_files,
+    get_group_week_statistics,
+    find_the_best_post
 )
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
+from posting.text_utilities import replace_russian_with_english_letters
 
 log = logging.getLogger('posting.scheduled')
 
@@ -47,6 +50,7 @@ def examine_groups():
 
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
     allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
+    week_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
     today_start = now_time.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
@@ -145,22 +149,37 @@ def examine_groups():
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
+            try:
+                if config.POSTING_BASED_ON_SEX:
 
-            record_with_max_rate = max(records, key=lambda x: x.rate)
-            record_with_max_rate.is_involved_now = True
-            record_with_max_rate.save(update_fields=['is_involved_now'])
-            log.debug('record {} got max rate for group {}'.format(record_with_max_rate, group.group_id))
+                    if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
+                        sex_statistics_weekly.delay()
+                        break
+
+                    if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
+                        group_male_female_ratio = 1
+                    else:
+                        group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+                    the_best_record = find_the_best_post(records, group_male_female_ratio)
+                else:
+                    the_best_record = max(records, key=lambda x: x.rate)
+            except:
+                log.debug('', exc_info=True)
+
+            the_best_record.is_involved_now = True
+            the_best_record.save(update_fields=['is_involved_now'])
+            log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
 
             try:
                 post_record.delay(group.user.login,
                                   group.user.password,
                                   group.user.app_id,
                                   group.group_id,
-                                  record_with_max_rate.id)
+                                  the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
-                record_with_max_rate.is_involved_now = False
-                record_with_max_rate.save(update_fields=['is_involved_now'])
+                the_best_record.is_involved_now = False
+                the_best_record.save(update_fields=['is_involved_now'])
 
 
 @task
@@ -240,6 +259,10 @@ def post_record(login, password, app_id, group_id, record_id):
         attachments = []
 
         record_text = record.text
+
+        if group.is_replace_russian_with_english:
+            record_text = replace_russian_with_english_letters(record_text)
+
         record_text = delete_hashtags_from_text(record_text)
 
         if group.is_text_delete_enabled:
@@ -546,3 +569,56 @@ def update_statistics():
         return
 
     log.debug('update_statistics finished successfully')
+
+
+@task
+def sex_statistics_weekly():
+    log.debug('sex_statistics_weekly started')
+
+    now_time = datetime.now(tz=timezone.utc)
+
+    all_groups = Group.objects.all()
+    log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
+
+    try:
+        for group in all_groups:
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+
+            api = session.get_api()
+            if not api:
+                continue
+
+            stats = get_group_week_statistics(api, group_id=group.group_id)
+
+            male_count_list = []
+            female_count_list = []
+
+            for day in stats:
+                sex_list = day.get('sex', [])
+                for sex in sex_list:
+                    if sex.get('value', 'n') == 'f':
+                        female_count_list.append(sex.get('visitors'))
+                    elif sex.get('value', 'n') == 'm':
+                        male_count_list.append(sex.get('visitors'))
+
+            if male_count_list:
+                male_average_count = sum(male_count_list)//len(male_count_list)
+            else:
+                male_average_count = 0
+                
+            if female_count_list:
+                female_average_count = sum(female_count_list)//len(female_count_list)
+            else:
+                female_average_count = 0
+
+            group.male_weekly_average_count = male_average_count
+            group.female_weekly_average_count = female_average_count
+            group.sex_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
+
+            group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
+    except:
+        log.debug('', exc_info=True)
+
+    log.debug('sex_statistics_weekly finished')
