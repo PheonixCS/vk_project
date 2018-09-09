@@ -591,11 +591,11 @@ def sex_statistics_weekly():
             female_count_list = []
 
             for day in stats:
-                sex_list = day.get('sex')
+                sex_list = day.get('sex', [])
                 for sex in sex_list:
-                    if sex.get('value') == 'f':
+                    if sex.get('value', 'n') == 'f':
                         female_count_list.append(sex.get('visitors'))
-                    elif sex.get('value') == 'm':
+                    elif sex.get('value', 'n') == 'm':
                         male_count_list.append(sex.get('visitors'))
 
             male_average_count = sum(male_count_list)//len(male_count_list)
