@@ -149,17 +149,19 @@ def examine_groups():
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
+            try:
+                if config.POSTING_BASED_ON_SEX:
 
-            if config.POSTING_BASED_ON_SEX:
+                    if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
+                        sex_statistics_weekly.delay()
+                        break
 
-                if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
-                    sex_statistics_weekly.delay()
-                    break
-
-                group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
-                the_best_record = find_the_best_post(records, group_male_female_ratio)
-            else:
-                the_best_record = max(records, key=lambda x: x.rate)
+                    group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+                    the_best_record = find_the_best_post(records, group_male_female_ratio)
+                else:
+                    the_best_record = max(records, key=lambda x: x.rate)
+            except:
+                log.debug('', exc_info=True)
 
             the_best_record.is_involved_now = True
             the_best_record.save(update_fields=['is_involved_now'])
