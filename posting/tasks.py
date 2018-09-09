@@ -152,7 +152,7 @@ def examine_groups():
 
             if config.POSTING_BASED_ON_SEX:
 
-                if group.sex_last_update_date < week_ago:
+                if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
                     sex_statistics_weekly.delay()
                     break
 
@@ -575,35 +575,38 @@ def sex_statistics_weekly():
     all_groups = Group.objects.all()
     log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
 
-    for group in all_groups:
-        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
-        if not session:
-            continue
+    try:
+        for group in all_groups:
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
 
-        api = session.get_api()
-        if not api:
-            continue
+            api = session.get_api()
+            if not api:
+                continue
 
-        stats = get_group_week_statistics(api, group_id=group.group_id)
+            stats = get_group_week_statistics(api, group_id=group.group_id)
 
-        male_count_list = []
-        female_count_list = []
+            male_count_list = []
+            female_count_list = []
 
-        for day in stats:
-            sex_list = day.get('sex')
-            for sex in sex_list:
-                if sex.get('value') == 'f':
-                    female_count_list.append(sex.get('visitors'))
-                elif sex.get('value') == 'm':
-                    male_count_list.append(sex.get('visitors'))
+            for day in stats:
+                sex_list = day.get('sex')
+                for sex in sex_list:
+                    if sex.get('value') == 'f':
+                        female_count_list.append(sex.get('visitors'))
+                    elif sex.get('value') == 'm':
+                        male_count_list.append(sex.get('visitors'))
 
-        male_average_count = sum(male_count_list)//len(male_count_list)
-        female_average_count = sum(female_count_list)//len(female_count_list)
+            male_average_count = sum(male_count_list)//len(male_count_list)
+            female_average_count = sum(female_count_list)//len(female_count_list)
 
-        group.male_weekly_average_count = male_average_count
-        group.female_weekly_average_count = female_average_count
-        group.sex_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
+            group.male_weekly_average_count = male_average_count
+            group.female_weekly_average_count = female_average_count
+            group.sex_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
+            group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
+    except:
+        log.debug('', exc_info=True)
 
     log.debug('sex_statistics_weekly finished')
