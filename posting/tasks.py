@@ -156,7 +156,10 @@ def examine_groups():
                         sex_statistics_weekly.delay()
                         break
 
-                    group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+                    if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
+                        group_male_female_ratio = 1
+                    else:
+                        group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
                     the_best_record = find_the_best_post(records, group_male_female_ratio)
                 else:
                     the_best_record = max(records, key=lambda x: x.rate)

@@ -44,3 +44,14 @@ class BestRecordTest(TestCase):
 
         self.assertEqual(best_record.rate, 400)
         self.assertEqual(best_record.males_females_ratio, 1.686)
+
+    def test_ratio_less_one(self):
+        records = [
+            Record(200, 0.33123),
+            Record(200, 0.83213),
+            Record(200, 0.61234)
+        ]
+        best_record = poster.find_the_best_post(records, 0.5)
+
+        self.assertEqual(best_record.rate, 200)
+        self.assertEqual(best_record.males_females_ratio, 0.33123)
