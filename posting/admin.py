@@ -84,7 +84,7 @@ class GroupAdmin(admin.ModelAdmin):
         ('Статистика', {
             'classes': ('collapse',),
             'fields': ('vk_statistics_url_field', 'members_count', 'members_growth', 'number_of_posts_yesterday',
-                       'number_of_ad_posts_yesterday', 'male_ratio_field', 'female_ratio_field')
+                       'number_of_ad_posts_yesterday', 'group_audience')
         })
     )
 
