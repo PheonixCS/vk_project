@@ -27,13 +27,21 @@ class DonorAdmin(admin.ModelAdmin):
 
 
 class RecordAdmin(admin.ModelAdmin):
+    exclude = [
+        'females_count',
+        'males_count',
+        'males_females_ratio',
+        'unknown_count'
+    ]
     list_display = [
         '__str__',
         'donor',
         'group',
         'post_in_donor_url_field',
         'post_in_group_url_field',
-        'post_in_group_date'
+        'post_in_group_date',
+        'male_ratio_field',
+        'female_ratio_field'
     ]
     search_fields = [
         'group_url'
@@ -42,7 +50,7 @@ class RecordAdmin(admin.ModelAdmin):
         'group'
     ]
     ordering = [
-        'post_in_group_date'
+        '-post_in_group_date'
     ]
 
     def post_in_donor_url_field(self, obj):
@@ -51,10 +59,20 @@ class RecordAdmin(admin.ModelAdmin):
     def post_in_group_url_field(self, obj):
         return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
 
+    def male_ratio_field(self, obj):
+        if obj.males_count and obj.females_count:
+            return obj.males_count / (obj.males_count + obj.females_count) * 100
+
+    def female_ratio_field(self, obj):
+        if obj.males_count and obj.females_count:
+            return obj.females_count / (obj.males_count + obj.females_count) * 100
+
     post_in_donor_url_field.allow_tags = True
     post_in_donor_url_field.short_description = 'Пост в источнике'
     post_in_group_url_field.allow_tags = True
     post_in_group_url_field.short_description = 'Пост в сообществе'
+    male_ratio_field.short_description = '% лайков от мужчин'
+    female_ratio_field.short_description = '% лайков от женщин'
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

@@ -59,8 +59,8 @@ class GroupAdmin(admin.ModelAdmin):
         'members_growth',
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
-        'male_weekly_average_count',
-        'female_weekly_average_count'
+        'male_ratio_field',
+        'female_ratio_field',
     )
     list_display = (
         'domain_or_id',
@@ -70,6 +70,8 @@ class GroupAdmin(admin.ModelAdmin):
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
         'vk_statistics_url_field',
+        'male_ratio_field',
+        'female_ratio_field',
     )
     fieldsets = (
         (None, {
@@ -84,7 +86,7 @@ class GroupAdmin(admin.ModelAdmin):
         ('Статистика', {
             'classes': ('collapse',),
             'fields': ('vk_statistics_url_field', 'members_count', 'members_growth', 'number_of_posts_yesterday',
-                       'number_of_ad_posts_yesterday', 'male_weekly_average_count', 'female_weekly_average_count')
+                       'number_of_ad_posts_yesterday', 'male_ratio_field', 'female_ratio_field')
         })
     )
 
@@ -102,10 +104,21 @@ class GroupAdmin(admin.ModelAdmin):
         return format_html(
             f'<a href="{obj.statistic_url}" target="_blank" rel="noopener noreferrer">{obj.statistic_url}</a>')
 
+    def male_ratio_field(self, obj):
+        if obj.male_weekly_average_count and obj.female_weekly_average_count:
+            return obj.male_weekly_average_count / (obj.male_weekly_average_count + obj.female_weekly_average_count) * 100
+
+    def female_ratio_field(self, obj):
+        if obj.male_weekly_average_count and obj.female_weekly_average_count:
+            return obj.female_weekly_average_count / (obj.male_weekly_average_count + obj.female_weekly_average_count) * 100
+
     vk_url_field.allow_tags = True
     vk_statistics_url_field.allow_tags = True
+
     vk_url_field.short_description = 'Ссылка'
     vk_statistics_url_field.short_description = 'Статистика'
+    male_ratio_field.short_description = '% мужчин'
+    female_ratio_field.short_description = '% женщин'
 
     def get_changelist(self, request, **kwargs):
         return GroupChangeList
