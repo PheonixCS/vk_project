@@ -27,13 +27,21 @@ class DonorAdmin(admin.ModelAdmin):
 
 
 class RecordAdmin(admin.ModelAdmin):
+    exclude = [
+        'females_count',
+        'males_count',
+        'males_females_ratio',
+        'unknown_count'
+    ]
     list_display = [
         '__str__',
         'donor',
         'group',
         'post_in_donor_url_field',
         'post_in_group_url_field',
-        'post_in_group_date'
+        'post_in_group_date',
+        'post_audience_ratio',
+        'group_audience_ratio'
     ]
     search_fields = [
         'group_url'
@@ -42,7 +50,7 @@ class RecordAdmin(admin.ModelAdmin):
         'group'
     ]
     ordering = [
-        'post_in_group_date'
+        '-post_in_group_date'
     ]
 
     def post_in_donor_url_field(self, obj):
@@ -51,10 +59,24 @@ class RecordAdmin(admin.ModelAdmin):
     def post_in_group_url_field(self, obj):
         return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
 
+    def post_audience_ratio(self, obj):
+        if obj.males_count and obj.females_count:
+            return '{}% М {}% Ж'.format(round(obj.males_count / (obj.males_count + obj.females_count) * 100),
+                                        round(obj.females_count / (obj.males_count + obj.females_count) * 100))
+
+    def group_audience_ratio(self, obj):
+        males = obj.group.male_weekly_average_count
+        females = obj.group.female_weekly_average_count
+        if males and females:
+            return '{}% М {}% Ж'.format(round(males / (males + females) * 100),
+                                        round(females / (males + females) * 100))
+
     post_in_donor_url_field.allow_tags = True
     post_in_donor_url_field.short_description = 'Пост в источнике'
     post_in_group_url_field.allow_tags = True
     post_in_group_url_field.short_description = 'Пост в сообществе'
+    post_audience_ratio.short_description = 'Лайкнувшие пост в источнике'
+    group_audience_ratio.short_description = 'Аудитория в сообществе'
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
