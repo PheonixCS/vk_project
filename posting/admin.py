@@ -70,8 +70,7 @@ class GroupAdmin(admin.ModelAdmin):
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
         'vk_statistics_url_field',
-        'male_ratio_field',
-        'female_ratio_field',
+        'group_audience_ratio',
     )
     fieldsets = (
         (None, {
@@ -104,23 +103,19 @@ class GroupAdmin(admin.ModelAdmin):
         return format_html(
             f'<a href="{obj.statistic_url}" target="_blank" rel="noopener noreferrer">{obj.statistic_url}</a>')
 
-    def male_ratio_field(self, obj):
-        if obj.male_weekly_average_count and obj.female_weekly_average_count:
-            return round(obj.male_weekly_average_count / (
-                    obj.male_weekly_average_count + obj.female_weekly_average_count) * 100)
-
-    def female_ratio_field(self, obj):
-        if obj.male_weekly_average_count and obj.female_weekly_average_count:
-            return round(obj.female_weekly_average_count / (
-                    obj.male_weekly_average_count + obj.female_weekly_average_count) * 100)
+    def group_audience_ratio(self, obj):
+        males = obj.male_weekly_average_count
+        females = obj.female_weekly_average_count
+        if males and females:
+            return '{}% М {}% Ж'.format(round(males / (males + females) * 100),
+                                        round(females / (males + females) * 100))
 
     vk_url_field.allow_tags = True
     vk_statistics_url_field.allow_tags = True
 
     vk_url_field.short_description = 'Ссылка'
     vk_statistics_url_field.short_description = 'Статистика'
-    male_ratio_field.short_description = '% мужчин'
-    female_ratio_field.short_description = '% женщин'
+    group_audience_ratio.short_description = 'Аудитория'
 
     def get_changelist(self, request, **kwargs):
         return GroupChangeList

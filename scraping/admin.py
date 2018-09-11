@@ -65,9 +65,9 @@ class RecordAdmin(admin.ModelAdmin):
                                         round(obj.females_count / (obj.males_count + obj.females_count) * 100))
 
     def group_audience_ratio(self, obj):
-        if obj.group.males_count and obj.group.females_count:
-            males = obj.group.male_weekly_average_count
-            females = obj.group.female_weekly_average_count
+        males = obj.group.male_weekly_average_count
+        females = obj.group.female_weekly_average_count
+        if males and females:
             return '{}% М {}% Ж'.format(round(males / (males + females) * 100),
                                         round(females / (males + females) * 100))
 
