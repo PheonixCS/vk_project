@@ -106,11 +106,13 @@ class GroupAdmin(admin.ModelAdmin):
 
     def male_ratio_field(self, obj):
         if obj.male_weekly_average_count and obj.female_weekly_average_count:
-            return obj.male_weekly_average_count / (obj.male_weekly_average_count + obj.female_weekly_average_count) * 100
+            return round(obj.male_weekly_average_count / (
+                    obj.male_weekly_average_count + obj.female_weekly_average_count) * 100)
 
     def female_ratio_field(self, obj):
         if obj.male_weekly_average_count and obj.female_weekly_average_count:
-            return obj.female_weekly_average_count / (obj.male_weekly_average_count + obj.female_weekly_average_count) * 100
+            return round(obj.female_weekly_average_count / (
+                    obj.male_weekly_average_count + obj.female_weekly_average_count) * 100)
 
     vk_url_field.allow_tags = True
     vk_statistics_url_field.allow_tags = True

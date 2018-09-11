@@ -61,11 +61,11 @@ class RecordAdmin(admin.ModelAdmin):
 
     def male_ratio_field(self, obj):
         if obj.males_count and obj.females_count:
-            return obj.males_count / (obj.males_count + obj.females_count) * 100
+            return round(obj.males_count / (obj.males_count + obj.females_count) * 100)
 
     def female_ratio_field(self, obj):
         if obj.males_count and obj.females_count:
-            return obj.females_count / (obj.males_count + obj.females_count) * 100
+            return round(obj.females_count / (obj.males_count + obj.females_count) * 100)
 
     post_in_donor_url_field.allow_tags = True
     post_in_donor_url_field.short_description = 'Пост в источнике'
