@@ -40,8 +40,8 @@ class RecordAdmin(admin.ModelAdmin):
         'post_in_donor_url_field',
         'post_in_group_url_field',
         'post_in_group_date',
-        'male_ratio_field',
-        'female_ratio_field'
+        'post_audience_ratio',
+        'group_audience_ratio'
     ]
     search_fields = [
         'group_url'
@@ -59,20 +59,24 @@ class RecordAdmin(admin.ModelAdmin):
     def post_in_group_url_field(self, obj):
         return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
 
-    def male_ratio_field(self, obj):
+    def post_audience_ratio(self, obj):
         if obj.males_count and obj.females_count:
-            return round(obj.males_count / (obj.males_count + obj.females_count) * 100)
+            return '{}% М {}% Ж'.format(round(obj.males_count / (obj.males_count + obj.females_count) * 100),
+                                        round(obj.females_count / (obj.males_count + obj.females_count) * 100))
 
-    def female_ratio_field(self, obj):
-        if obj.males_count and obj.females_count:
-            return round(obj.females_count / (obj.males_count + obj.females_count) * 100)
+    def group_audience_ratio(self, obj):
+        if obj.group.males_count and obj.group.females_count:
+            males = obj.group.male_weekly_average_count
+            females = obj.group.female_weekly_average_count
+            return '{}% М {}% Ж'.format(round(males / (males + females) * 100),
+                                        round(females / (males + females) * 100))
 
     post_in_donor_url_field.allow_tags = True
     post_in_donor_url_field.short_description = 'Пост в источнике'
     post_in_group_url_field.allow_tags = True
     post_in_group_url_field.short_description = 'Пост в сообществе'
-    male_ratio_field.short_description = '% лайков от мужчин'
-    female_ratio_field.short_description = '% лайков от женщин'
+    post_audience_ratio.short_description = 'Лайкнувшие пост в источнике'
+    group_audience_ratio.short_description = 'Аудитория в сообществе'
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
