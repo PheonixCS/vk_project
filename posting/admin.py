@@ -59,8 +59,7 @@ class GroupAdmin(admin.ModelAdmin):
         'members_growth',
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
-        'male_weekly_average_count',
-        'female_weekly_average_count'
+        'group_audience'
     )
     list_display = (
         'domain_or_id',
@@ -70,6 +69,7 @@ class GroupAdmin(admin.ModelAdmin):
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
         'vk_statistics_url_field',
+        'group_audience',
     )
     fieldsets = (
         (None, {
@@ -84,7 +84,7 @@ class GroupAdmin(admin.ModelAdmin):
         ('Статистика', {
             'classes': ('collapse',),
             'fields': ('vk_statistics_url_field', 'members_count', 'members_growth', 'number_of_posts_yesterday',
-                       'number_of_ad_posts_yesterday', 'male_weekly_average_count', 'female_weekly_average_count')
+                       'number_of_ad_posts_yesterday', 'group_audience')
         })
     )
 
@@ -102,10 +102,19 @@ class GroupAdmin(admin.ModelAdmin):
         return format_html(
             f'<a href="{obj.statistic_url}" target="_blank" rel="noopener noreferrer">{obj.statistic_url}</a>')
 
+    def group_audience(self, obj):
+        males = obj.male_weekly_average_count
+        females = obj.female_weekly_average_count
+        if males and females:
+            return '{}% М {}% Ж'.format(round(males / (males + females) * 100),
+                                        round(females / (males + females) * 100))
+
     vk_url_field.allow_tags = True
     vk_statistics_url_field.allow_tags = True
+
     vk_url_field.short_description = 'Ссылка'
     vk_statistics_url_field.short_description = 'Статистика'
+    group_audience.short_description = 'Аудитория'
 
     def get_changelist(self, request, **kwargs):
         return GroupChangeList
