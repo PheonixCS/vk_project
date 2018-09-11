@@ -59,7 +59,7 @@ class GroupAdmin(admin.ModelAdmin):
         'members_growth',
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
-        'group_audience_ratio'
+        'group_audience'
     )
     list_display = (
         'domain_or_id',
@@ -69,7 +69,7 @@ class GroupAdmin(admin.ModelAdmin):
         'number_of_posts_yesterday',
         'number_of_ad_posts_yesterday',
         'vk_statistics_url_field',
-        'group_audience_ratio',
+        'group_audience',
     )
     fieldsets = (
         (None, {
@@ -102,7 +102,7 @@ class GroupAdmin(admin.ModelAdmin):
         return format_html(
             f'<a href="{obj.statistic_url}" target="_blank" rel="noopener noreferrer">{obj.statistic_url}</a>')
 
-    def group_audience_ratio(self, obj):
+    def group_audience(self, obj):
         males = obj.male_weekly_average_count
         females = obj.female_weekly_average_count
         if males and females:
@@ -114,7 +114,7 @@ class GroupAdmin(admin.ModelAdmin):
 
     vk_url_field.short_description = 'Ссылка'
     vk_statistics_url_field.short_description = 'Статистика'
-    group_audience_ratio.short_description = 'Аудитория'
+    group_audience.short_description = 'Аудитория'
 
     def get_changelist(self, request, **kwargs):
         return GroupChangeList
