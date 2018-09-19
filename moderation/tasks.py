@@ -5,8 +5,9 @@ from celery import task
 from constance import config
 from django.utils import timezone
 
-from moderation.core import (get_transactions_to_process, process_comment, save_comment_to_db, get_groups_by_id,
-                             ban_user)
+from moderation.core.process_comment import (process_comment, save_comment_to_db)
+from moderation.core.helpers import get_transactions_to_process
+from moderation.core.vk_helpers import get_groups_by_id, ban_user
 from moderation.models import WebhookTransaction
 from posting.models import Group
 from posting.poster import create_vk_session_using_login_password
