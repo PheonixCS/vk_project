@@ -3,7 +3,7 @@ import re
 from django.db.models import Q
 
 from moderation.core.process_comment import log
-from moderation.models import WebhookTransaction
+from moderation.models import WebhookTransaction, Comment, Attachment
 from posting.models import Group
 
 
@@ -46,3 +46,24 @@ def is_moderation_needed(from_id, group_id, white_list):
         return False
 
     return True
+
+
+def save_comment_to_db(transaction):
+    log.info('save_comment_to_db called')
+    obj = Comment.objects.create(
+        webhook_transaction=transaction,
+        post_id=transaction.body['object']['post_id'],
+        post_owner_id=transaction.body['object']['post_owner_id'],
+        comment_id=transaction.body['object']['id'],
+        from_id=transaction.body['object']['from_id'],
+        date=transaction.body['object']['date'],
+        text=transaction.body['object']['text'],
+        reply_to_user=transaction.body['object'].get('reply_to_user'),
+        reply_to_comment=transaction.body['object'].get('reply_to_comment')
+    )
+    for attachment in transaction.body['object'].get('attachments', []):
+        Attachment.objects.create(
+            attached_to=obj,
+            type=attachment['type'],
+            body=attachment[attachment['type']]
+        )

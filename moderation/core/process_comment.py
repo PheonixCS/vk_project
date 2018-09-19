@@ -8,7 +8,7 @@ from django.utils import timezone
 import moderation.core.checks as checks
 from moderation.core.helpers import prepare_id_white_list, is_moderation_needed
 from moderation.core.vk_helpers import delete_comment, ban_user
-from moderation.models import ModerationRule, Comment, Attachment
+from moderation.models import ModerationRule, Comment
 from posting.models import Group
 from posting.poster import create_vk_session_using_login_password
 
@@ -67,27 +67,6 @@ def check_for_reason_for_ban_and_get_comments_to_delete(event_object):
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
     return '', []
-
-
-def save_comment_to_db(transaction):
-    log.info('save_comment_to_db called')
-    obj = Comment.objects.create(
-        webhook_transaction=transaction,
-        post_id=transaction.body['object']['post_id'],
-        post_owner_id=transaction.body['object']['post_owner_id'],
-        comment_id=transaction.body['object']['id'],
-        from_id=transaction.body['object']['from_id'],
-        date=transaction.body['object']['date'],
-        text=transaction.body['object']['text'],
-        reply_to_user=transaction.body['object'].get('reply_to_user'),
-        reply_to_comment=transaction.body['object'].get('reply_to_comment')
-    )
-    for attachment in transaction.body['object'].get('attachments', []):
-        Attachment.objects.create(
-            attached_to=obj,
-            type=attachment['type'],
-            body=attachment[attachment['type']]
-        )
 
 
 def process_comment(comment):
