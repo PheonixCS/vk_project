@@ -280,7 +280,7 @@ def is_all_images_vertical(files):
     width = [size[0] for size in images_sizes]
     height = [size[1] for size in images_sizes]
 
-    return all(height > width for width, height in zip(width, height))
+    return all(height >= width for width, height in zip(width, height))
 
 
 def get_smallest_image_size(sizes):
@@ -288,25 +288,42 @@ def get_smallest_image_size(sizes):
     return min_size
 
 
-def calculate_size(origin_width, origin_height, width=None, height=None):
+def calculate_size_from_one_side(origin_width, origin_height, width=None, height=None):
+    r_width, r_height = origin_width, origin_height
 
     if width:
-        return width, int(width/origin_width*origin_height)
+        r_width, r_height = width, int(width/origin_width*origin_height)
 
     if height:
-        return int(origin_width/origin_height*height), height
+        r_width, r_height = int(origin_width/origin_height*height), height
 
-    return origin_width, origin_height
+    log.debug('calculate_size_from_one_side finished with sizes orig - {}:{}, new - {}:{}'.format(
+        origin_width, origin_height, r_width, r_height
+    ))
+
+    return r_width, r_height
 
 
-def resize_image_aspect_ratio(image_file_name, width=None, height=None):
-    image = Image.open(os.path.join(settings.BASE_DIR, image_file_name))
+def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
+    log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
 
-    new_size = calculate_size(image.size[0], image.size[1], width, height)
+    orig_width = image_object.size[0]
+    orig_height = image_object.size[1]
 
-    image.thumbnail(new_size, Image.ANTIALIAS)
+    if orig_width/orig_height >= width/height:
+        new_size = calculate_size_from_one_side(orig_width, orig_height, height=height)
+    else:
+        new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
 
-    image.save(image_file_name, 'JPEG', quality=95, progressive=True)
+    image_object.thumbnail(new_size, Image.ANTIALIAS)
+
+
+def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
+    log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
+
+    new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
+
+    image_object.thumbnail(new_size, Image.ANTIALIAS)
 
 
 def merge_six_images_into_one(files):
@@ -317,23 +334,23 @@ def merge_six_images_into_one(files):
 
     # FIXME #refactor too much file openings
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
-    width, height = get_smallest_image_size(images_sizes)
+    min_width, min_height = get_smallest_image_size(images_sizes)
 
-    result = Image.new('RGB', (width * 3 + offset*2, height * 2 + offset), 'White')
+    result = Image.new('RGB', (min_width * 3 + offset*2, min_height * 2 + offset), 'White')
 
-    for index, img_path in enumerate(files):
+    for index, img_file_name in enumerate(files):
 
-        x = index % 3 * (width + offset)
-        y = index // 3 * (height + offset)
+        x = index % 3 * (min_width + offset)
+        y = index // 3 * (min_height + offset)
 
-        img = Image.open(os.path.join(settings.BASE_DIR, img_path))
+        img = Image.open(os.path.join(settings.BASE_DIR, img_file_name))
+        resize_image_aspect_ratio_by_two_sides(img, width=min_width, height=min_height)
 
-        cropped = img.crop((0, 0, width, height))
-        result.paste(cropped, (x, y, x + width, y + height))
+        cropped = img.crop((0, 0, min_width, min_height))
+        result.paste(cropped, (x, y, x + min_width, y + min_height))
 
-        result.save(filepath, 'JPEG', quality=95, progressive=True)
-
-    resize_image_aspect_ratio(filepath, width=config.SIX_IMAGES_WIDTH)
+    resize_image_aspect_ratio_by_one_side(result, width=config.SIX_IMAGES_WIDTH)
+    result.save(filepath, 'JPEG', quality=95, progressive=True)
 
     log.debug('merge_six_images_into_one finished')
     return filepath
