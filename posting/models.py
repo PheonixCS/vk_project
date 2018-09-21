@@ -65,6 +65,8 @@ class Group(models.Model):
     is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
     is_replace_russian_with_english = models.BooleanField(default=False,
                                                           verbose_name='Заменять русские буквы английскими?')
+    is_additional_text_enabled = models.BooleanField(default=False,
+                                                     verbose_name='Добавлять к записи дополнительный текст?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')

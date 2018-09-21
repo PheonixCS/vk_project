@@ -357,7 +357,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 return
 
         additional_texts = group.additional_texts.all().order_by('id')
-        if additional_texts:
+        if group.is_additional_text_enabled and additional_texts:
             additional_text = next((text for text in additional_texts if text.id > group.last_used_additional_text_id),
                                    additional_texts[0])
             log.debug(f'Found additional texts for group {group.domain_or_id}. '
