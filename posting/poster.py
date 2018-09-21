@@ -299,30 +299,22 @@ def calculate_size_from_one_side(origin_width, origin_height, width=None, height
     return origin_width, origin_height
 
 
-def resize_image_aspect_ratio_by_two_sides(image_file_name, width, height):
-    image = Image.open(os.path.join(settings.BASE_DIR, image_file_name))
-
-    orig_width = image.size[0]
-    orig_height = image.size[1]
+def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
+    orig_width = image_object.size[0]
+    orig_height = image_object.size[1]
 
     if orig_width/orig_height >= width/height:
         new_size = calculate_size_from_one_side(orig_width, orig_height, height=height)
     else:
         new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
 
-    image.thumbnail(new_size, Image.ANTIALIAS)
-
-    image.save(image_file_name, 'JPEG', quality=95, progressive=True)
+    image_object.thumbnail(new_size, Image.ANTIALIAS)
 
 
-def resize_image_aspect_ratio_by_one_side(image_file_name, width=None, height=None):
-    image = Image.open(os.path.join(settings.BASE_DIR, image_file_name))
+def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
+    new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
-    new_size = calculate_size_from_one_side(image.size[0], image.size[1], width, height)
-
-    image.thumbnail(new_size, Image.ANTIALIAS)
-
-    image.save(image_file_name, 'JPEG', quality=95, progressive=True)
+    image_object.thumbnail(new_size, Image.ANTIALIAS)
 
 
 def merge_six_images_into_one(files):
@@ -342,15 +334,14 @@ def merge_six_images_into_one(files):
         x = index % 3 * (min_width + offset)
         y = index // 3 * (min_height + offset)
 
-        resize_image_aspect_ratio_by_two_sides(img_file_name, width=min_width, height=min_height)
         img = Image.open(os.path.join(settings.BASE_DIR, img_file_name))
+        resize_image_aspect_ratio_by_two_sides(img, width=min_width, height=min_height)
 
         cropped = img.crop((0, 0, min_width, min_height))
         result.paste(cropped, (x, y, x + min_width, y + min_height))
 
-        result.save(filepath, 'JPEG', quality=95, progressive=True)
-
-    resize_image_aspect_ratio_by_one_side(filepath, width=config.SIX_IMAGES_WIDTH)
+    resize_image_aspect_ratio_by_one_side(result, width=config.SIX_IMAGES_WIDTH)
+    result.save(filepath, 'JPEG', quality=95, progressive=True)
 
     log.debug('merge_six_images_into_one finished')
     return filepath
