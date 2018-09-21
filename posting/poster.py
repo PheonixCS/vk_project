@@ -289,17 +289,24 @@ def get_smallest_image_size(sizes):
 
 
 def calculate_size_from_one_side(origin_width, origin_height, width=None, height=None):
+    r_width, r_height = origin_width, origin_height
 
     if width:
-        return width, int(width/origin_width*origin_height)
+        r_width, r_height = width, int(width/origin_width*origin_height)
 
     if height:
-        return int(origin_width/origin_height*height), height
+        r_width, r_height = int(origin_width/origin_height*height), height
 
-    return origin_width, origin_height
+    log.debug('calculate_size_from_one_side finished with sizes orig - {}:{}, new - {}:{}'.format(
+        origin_width, origin_height, r_width, r_height
+    ))
+
+    return r_width, r_height
 
 
 def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
+    log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
+
     orig_width = image_object.size[0]
     orig_height = image_object.size[1]
 
@@ -312,6 +319,8 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
 
 
 def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
+    log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
+
     new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
     image_object.thumbnail(new_size, Image.ANTIALIAS)
