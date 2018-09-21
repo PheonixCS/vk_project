@@ -6,7 +6,7 @@ from django.db.models import Q
 from moderation.models import WebhookTransaction, Comment, Attachment
 from posting.models import Group
 
-log = logging.getLogger('moderation.checks')
+log = logging.getLogger('moderation.core.helpers')
 
 
 def get_transactions_to_process():

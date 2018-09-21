@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime, timedelta
 
@@ -5,7 +6,7 @@ from constance import config
 from django.utils import timezone
 from vk_api import ApiError
 
-from moderation.core.process_comment import log
+log = logging.getLogger('moderation.core.vk_helpers')
 
 
 def get_groups_by_id(api, group_ids, fields):

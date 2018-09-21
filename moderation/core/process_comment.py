@@ -12,7 +12,7 @@ from moderation.models import ModerationRule, Comment
 from posting.models import Group
 from posting.poster import create_vk_session_using_login_password
 
-log = logging.getLogger('moderation.core')
+log = logging.getLogger('moderation.core.process_comment')
 
 
 def check_for_reason_for_ban_and_get_comments_to_delete(event_object):
