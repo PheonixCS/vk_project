@@ -160,7 +160,12 @@ def examine_groups():
                         group_male_female_ratio = 1
                     else:
                         group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
-                    the_best_record = find_the_best_post(records, group_male_female_ratio)
+
+                    the_best_record = find_the_best_post(
+                        records,
+                        group_male_female_ratio,
+                        config.RECORDS_SELECTION_PERCENT
+                    )
                 else:
                     the_best_record = max(records, key=lambda x: x.rate)
             except:
