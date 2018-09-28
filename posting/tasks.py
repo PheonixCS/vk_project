@@ -45,8 +45,6 @@ def examine_groups():
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-    print(123/0)
-
     now_time = datetime.now(tz=timezone.utc)
     now_minute = now_time.minute
 
