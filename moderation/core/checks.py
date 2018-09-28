@@ -8,7 +8,7 @@ from vk_api import ApiError
 
 from posting.poster import delete_emoji_from_text
 
-log = logging.getLogger('moderation.checks')
+log = logging.getLogger('moderation.core.checks')
 
 
 def is_post_ad(api, post_id, group_id):

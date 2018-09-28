@@ -160,7 +160,12 @@ def examine_groups():
                         group_male_female_ratio = 1
                     else:
                         group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
-                    the_best_record = find_the_best_post(records, group_male_female_ratio)
+
+                    the_best_record = find_the_best_post(
+                        records,
+                        group_male_female_ratio,
+                        config.RECORDS_SELECTION_PERCENT
+                    )
                 else:
                     the_best_record = max(records, key=lambda x: x.rate)
             except:
@@ -271,6 +276,9 @@ def post_record(login, password, app_id, group_id, record_id):
         audios = list(record.audios.all())
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
 
+        if group.is_delete_audio_enabled:
+            audios = []
+
         if group.is_audios_shuffle_enabled and len(audios) > 1:
             shuffle(audios)
             log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
@@ -354,7 +362,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 return
 
         additional_texts = group.additional_texts.all().order_by('id')
-        if additional_texts:
+        if group.is_additional_text_enabled and additional_texts:
             additional_text = next((text for text in additional_texts if text.id > group.last_used_additional_text_id),
                                    additional_texts[0])
             log.debug(f'Found additional texts for group {group.domain_or_id}. '

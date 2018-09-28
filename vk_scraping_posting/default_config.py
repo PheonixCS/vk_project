@@ -21,5 +21,6 @@ CONSTANCE_CONFIG = {
     'IS_DEV': (False, 'Is server role for development?', bool),
     'SIX_IMAGES_OFFSET': (6, 'Offset between two images in merging', int),
     'SIX_IMAGES_WIDTH': (2560, 'Default width of image after merging', int),
-    'POSTING_BASED_ON_SEX': (False, 'Use sex data to filter best post', bool)
+    'POSTING_BASED_ON_SEX': (False, 'Use sex data to filter best post', bool),
+    'RECORDS_SELECTION_PERCENT': (20, 'Percent of best records using in posting based on sex', int)
 }

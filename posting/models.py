@@ -52,6 +52,7 @@ class Group(models.Model):
     donors = models.ManyToManyField('scraping.Donor', blank=True)
 
     is_text_delete_enabled = models.BooleanField(default=False, verbose_name='Убирать текст из постов?')
+    is_delete_audio_enabled = models.BooleanField(default=False, verbose_name='Убирать аудио из постов?')
     is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на изображение?')
     is_image_mirror_enabled = models.BooleanField(default=False, verbose_name='Отзеркаливать изображения без текста?')
     is_changing_image_to_square_enabled = models.BooleanField(default=False,
@@ -64,6 +65,8 @@ class Group(models.Model):
     is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
     is_replace_russian_with_english = models.BooleanField(default=False,
                                                           verbose_name='Заменять русские буквы английскими?')
+    is_additional_text_enabled = models.BooleanField(default=False,
+                                                     verbose_name='Добавлять к записи дополнительный текст?')
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
