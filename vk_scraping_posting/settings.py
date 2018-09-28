@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import sentry_sdk
+import logging
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 from celery.schedules import crontab
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -94,7 +99,9 @@ INSTALLED_APPS = [
     'moderation',
 
     'constance.backends.database',
-    'constance'
+    'constance',
+
+    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
@@ -181,6 +188,17 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+sentry_logging = LoggingIntegration(
+    level=logging.INFO,  # Capture info and above as breadcrumbs
+    event_level=None     # Send no events from log messages
+)
+
+sentry_sdk.init(
+    dsn="https://374beeda2c78426ea8cd2cc84d176b1b@sentry.io/1290864",
+    integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
+)
+
 
 from .default_config import *
 
