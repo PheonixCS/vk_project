@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+
 from celery.schedules import crontab
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -94,7 +95,9 @@ INSTALLED_APPS = [
     'moderation',
 
     'constance.backends.database',
-    'constance'
+    'constance',
+
+    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
@@ -181,6 +184,11 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+RAVEN_CONFIG = {
+    'dsn': 'https://d8e0a168c35211e8a56e4201c0a8d032@sentry.io/vksp',
+}
+
 
 from .default_config import *
 
