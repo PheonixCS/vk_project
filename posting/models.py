@@ -103,7 +103,10 @@ class Group(models.Model):
 
 class AdditionalText(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='additional_texts')
-    text = models.TextField(max_length=1024, verbose_name='Дополнительный текст к записи')
+    text = models.TextField(max_length=1024, default='',
+                            verbose_name='Дополнительный текст, единственное число')
+    text_plural = models.TextField(max_length=1024, default='',
+                                   verbose_name='Дополнительный текст, множественное число')
 
     class Meta:
         verbose_name = 'Текст'
