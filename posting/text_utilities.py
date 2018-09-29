@@ -26,7 +26,8 @@ def replace_russian_with_english_letters(text):
         'и': 'u',
         '1': 'I',
         'м': 'm',
-        'к': 'k'
+        'к': 'k',
+        'Ы': 'bI'
     }
     result_text = ''
     replaced = False
