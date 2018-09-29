@@ -266,18 +266,27 @@ def post_record(login, password, app_id, group_id, record_id):
 
     try:
         attachments = []
+        actions_to_unique_image = {}
 
+        images = list(record.images.all())
+        audios = list(record.audios.all())
+        gifs = record.gifs.all()
+        videos = record.videos.all()
         record_text = record.text
 
-        if group.is_replace_russian_with_english:
-            record_text = replace_russian_with_english_letters(record_text)
-
         record_text = delete_hashtags_from_text(record_text)
+
+        text_to_image_condition = (len(images) == 1
+                                   and group.is_text_filling_enabled
+                                   and len(record_text) <= config.MAX_TEXT_TO_FILL_LENGTH)
 
         if group.is_text_delete_enabled:
             record_text = ''
 
-        audios = list(record.audios.all())
+        if text_to_image_condition:
+            actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
+            record_text = ''
+
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
 
         if group.is_delete_audio_enabled:
@@ -291,7 +300,9 @@ def post_record(login, password, app_id, group_id, record_id):
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         # images part
-        images = list(record.images.all())
+
+        if group.is_replace_russian_with_english and not text_to_image_condition:
+            record_text = replace_russian_with_english_letters(record_text)
 
         if group.is_merge_images_enabled:
             images = images[:6]
@@ -315,18 +326,12 @@ def post_record(login, password, app_id, group_id, record_id):
             delete_files(old_image_files)
 
         for image_local_filename in image_files:
-            actions_to_unique_image = {}
 
             if group.is_image_mirror_enabled and not is_text_on_image(image_local_filename):
                 actions_to_unique_image['mirror'] = True
 
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
-
-            max_text_to_fill_length = config.MAX_TEXT_TO_FILL_LENGTH
-            if len(images) == 1 and group.is_text_filling_enabled and len(record_text) <= max_text_to_fill_length:
-                actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
-                record_text = ''
 
             percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
             if (
@@ -343,7 +348,6 @@ def post_record(login, password, app_id, group_id, record_id):
         delete_files(image_files)
 
         # gif part
-        gifs = record.gifs.all()
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))
         if gifs and check_docs_availability(api, ['{}_{}'.format(gif.owner_id, gif.gif_id) for gif in gifs]):
             for gif in gifs:
@@ -354,7 +358,6 @@ def post_record(login, password, app_id, group_id, record_id):
             record.save(update_fields=['failed_date', 'is_involved_now'])
             return
 
-        videos = record.videos.all()
         log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
         for video in videos:
             if check_video_availability(api, video.owner_id, video.video_id):
