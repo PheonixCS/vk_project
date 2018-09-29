@@ -210,6 +210,10 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         attachments = []
 
         record_text = horoscope_record.text
+
+        if group.is_replace_russian_with_english:
+            record_text = replace_russian_with_english_letters(record_text)
+
         record_text = delete_hashtags_from_text(record_text)
 
         if horoscope_record.image_url:
@@ -367,15 +371,15 @@ def post_record(login, password, app_id, group_id, record_id):
                                    additional_texts[0])
             log.debug(f'Found additional texts for group {group.domain_or_id}. '
                       f'Last used text id: {group.last_used_additional_text_id}, '
-                      f'new text id: {additional_text.id}, new text: {additional_text.text}')
+                      f'new text id: {additional_text.id}, new text: {additional_text.text},'
+                      f'new text plural: {additional_text.text_plural}')
 
             group.last_used_additional_text_id = additional_text.id
             group.save(update_fields=['last_used_additional_text_id'])
 
-            if record_text:
-                record_text = '\n'.join([record_text, additional_text.text])
-            else:
-                record_text = additional_text.text
+            text_to_add = additional_text.text if len(images) <= 1 else additional_text.text_plural
+
+            record_text = '\n'.join([record_text, text_to_add]) if record_text else text_to_add
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,

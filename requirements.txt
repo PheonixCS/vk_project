@@ -27,6 +27,7 @@ pytesseract==0.2.4
 pytz==2018.4
 raven==6.9.0
 requests==2.18.4
+sentry-sdk==0.3.6
 six==1.11.0
 uritools==2.2.0
 urlextract==0.8.3
