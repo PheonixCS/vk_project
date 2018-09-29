@@ -21,7 +21,12 @@ def replace_russian_with_english_letters(text):
         'С': 'C',
         'В': 'B',
         'Р': 'P',
-        'М': 'M'
+        'М': 'M',
+        'б': '6',
+        'и': 'u',
+        '1': 'I',
+        'м': 'm',
+        'к': 'k'
     }
     result_text = ''
     replaced = False

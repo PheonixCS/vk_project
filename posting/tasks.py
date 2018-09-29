@@ -210,6 +210,10 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         attachments = []
 
         record_text = horoscope_record.text
+
+        if group.is_replace_russian_with_english:
+            record_text = replace_russian_with_english_letters(record_text)
+
         record_text = delete_hashtags_from_text(record_text)
 
         if horoscope_record.image_url:
