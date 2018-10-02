@@ -24,7 +24,7 @@ from posting.poster import (
     merge_six_images_into_one,
     is_images_size_nearly_the_same,
     is_text_on_image,
-    is_all_images_vertical,
+    is_all_images_not_horizontal,
     delete_files,
     get_group_week_statistics,
     find_the_best_post
@@ -318,8 +318,7 @@ def post_record(login, password, app_id, group_id, record_id):
         if (
             group.is_merge_images_enabled
             and len(images) == 6
-            and is_images_size_nearly_the_same(image_files, config.THE_SAME_SIZE_FACTOR)
-            and is_all_images_vertical(image_files)
+            and is_all_images_not_horizontal(image_files)
         ):
             old_image_files = image_files
             image_files = [merge_six_images_into_one(image_files)]
