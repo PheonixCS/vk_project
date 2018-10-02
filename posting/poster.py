@@ -274,7 +274,7 @@ def is_images_size_nearly_the_same(files, max_divergence):
     return divergence_width <= max_divergence and divergence_height <= max_divergence
 
 
-def is_all_images_vertical(files):
+def is_all_images_not_horizontal(files):
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
 
     width = [size[0] for size in images_sizes]
