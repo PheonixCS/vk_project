@@ -22,5 +22,6 @@ CONSTANCE_CONFIG = {
     'SIX_IMAGES_OFFSET': (6, 'Offset between two images in merging', int),
     'SIX_IMAGES_WIDTH': (2560, 'Default width of image after merging', int),
     'POSTING_BASED_ON_SEX': (False, 'Use sex data to filter best post', bool),
-    'RECORDS_SELECTION_PERCENT': (20, 'Percent of best records using in posting based on sex', int)
+    'RECORDS_SELECTION_PERCENT': (20, 'Percent of best records using in posting based on sex', int),
+    'HOROSCOPES_TO_IMAGE_ENABLED': (False, 'Is transport horoscopes to image enabled?', True)
 }
