@@ -50,7 +50,7 @@ def paste_text_to_center(img_obj, font_obj, text, text_type):
         height_offset_top = 0
         custom_height = 150
     else:
-        width_offset_left = 60
+        width_offset_left = 70
         height_offset_top = 150
         custom_height = 1080 - 150
 
@@ -61,7 +61,7 @@ def paste_text_to_center(img_obj, font_obj, text, text_type):
     if not is_text_fit_to_width(text, len(text), image_width - width_offset, font_obj):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width - width_offset, font_obj)
         wrapped_text = wrap(text, text_max_width_in_chars)
-        text_width = font_obj.getsize(wrapped_text[0])[0]
+        text_width = font_obj.getsize(max(wrapped_text, key=len))[0]
         text = '\n'.join(wrapped_text)
 
     draw = ImageDraw.Draw(img_obj)
@@ -69,4 +69,4 @@ def paste_text_to_center(img_obj, font_obj, text, text_type):
     x = (img_obj.width - text_width - width_offset) // 2 + width_offset_left
     y = (custom_height - text_height) // 2 + height_offset_top
 
-    draw.multiline_text((x, y), text, white_color, font=font_obj, align='center')
+    draw.multiline_text((x, y), text, white_color, font=font_obj, align='center', spacing=10)
