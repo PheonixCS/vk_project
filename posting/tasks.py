@@ -32,6 +32,7 @@ from posting.poster import (
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
 from posting.text_utilities import replace_russian_with_english_letters
+from posting.core.horoscopes_images import transfer_horoscope_to_image
 
 log = logging.getLogger('posting.scheduled')
 
@@ -211,12 +212,16 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         record_text = horoscope_record.text
 
+        if config.HOROSCOPES_TO_IMAGE_ENABLED:
+            horoscope_image_name = transfer_horoscope_to_image(record_text)
+            attachments = upload_photo(session, horoscope_image_name, group_id)
+
         if group.is_replace_russian_with_english:
             record_text = replace_russian_with_english_letters(record_text)
 
         record_text = delete_hashtags_from_text(record_text)
 
-        if horoscope_record.image_url:
+        if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
             image_local_filename = download_file(horoscope_record.image_url)
             attachments = upload_photo(session, image_local_filename, group_id)
 
