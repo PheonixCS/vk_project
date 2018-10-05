@@ -1,5 +1,6 @@
 #
 import os
+import logging
 
 from PIL import ImageFont, Image, ImageDraw
 from django.conf import settings
@@ -10,17 +11,18 @@ from posting.poster import (
     is_text_fit_to_width
 )
 
+log = logging.getLogger('posting.horoscopes')
+
 
 def transfer_horoscope_to_image(raw_text, font_name='bebas_neue_ru.ttf'):
-    file_name = 'test.jpg'
+    log.debug('transfer_horoscope_to_image started')
+    file_name = 'horoscopes{}.jpg'.format(hash(raw_text) % 1000)
 
     font_60 = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), 60)
     font_40 = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), 40)
 
     title_text = raw_text.split('\n')[0]
     body_text = '\n'.join(raw_text.split('\n')[1:])
-
-    print(body_text)
 
     img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'horoscopes_template.jpg'))
 
@@ -32,6 +34,7 @@ def transfer_horoscope_to_image(raw_text, font_name='bebas_neue_ru.ttf'):
     else:
         img.save(file_name)
 
+    log.debug('transfer_horoscope_to_image finished, file {}'.format(file_name))
     return file_name
 
 

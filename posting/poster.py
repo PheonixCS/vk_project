@@ -49,12 +49,19 @@ def download_file(url, extension=None):
 
 def delete_files(file_paths):
     log.debug('delete_files called with {} files'.format(len(file_paths)))
-    for file in file_paths:
+
+    if isinstance(file_paths, str):
         try:
-            os.remove(file)
+            os.remove(file_paths)
         except FileNotFoundError as exc:
             log.error('Fail to delete file {}'.format(exc))
-            continue
+    else:
+        for file in file_paths:
+            try:
+                os.remove(file)
+            except FileNotFoundError as exc:
+                log.error('Fail to delete file {}'.format(exc))
+                continue
     log.debug('delete_files finished')
 
 

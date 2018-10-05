@@ -215,20 +215,24 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
             attachments = upload_photo(session, horoscope_image_name, group_id)
+            record_text = ''
+        else:
 
-        if group.is_replace_russian_with_english:
-            record_text = replace_russian_with_english_letters(record_text)
+            if group.is_replace_russian_with_english:
+                record_text = replace_russian_with_english_letters(record_text)
 
-        record_text = delete_hashtags_from_text(record_text)
+            record_text = delete_hashtags_from_text(record_text)
 
-        if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
-            image_local_filename = download_file(horoscope_record.image_url)
-            attachments = upload_photo(session, image_local_filename, group_id)
+            if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
+                image_local_filename = download_file(horoscope_record.image_url)
+                attachments = upload_photo(session, image_local_filename, group_id)
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
                                       message=record_text,
                                       attachments=attachments)
+
+        delete_files(attachments)
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
