@@ -2,6 +2,7 @@
 
 from django.test import TestCase
 from posting import poster
+from posting.core import horoscopes_images
 
 
 # Create your tests here.
@@ -26,3 +27,14 @@ class ImagesTests(TestCase):
         new_size = poster.calculate_size_from_one_side(*origin_size, height=720)
 
         self.assertEqual(new_size, (1280, 720))
+
+    def test_horoscope_image(self):
+        file_name = 'test.jpg'
+
+        text = '20 of september, Text\n' \
+            'How to test this function if I got no text to examples. ' \
+            'Well now it is time to my imagination\nOr no, i cannot handle it'
+
+        result = horoscopes_images.transfer_horoscope_to_image(text)
+
+        self.assertEqual(result, file_name)
