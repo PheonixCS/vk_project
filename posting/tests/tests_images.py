@@ -30,8 +30,10 @@ class ImagesTests(TestCase):
 
     def test_horoscope_image(self):
         text = '20 of september, Text\n' \
-            'How to test this function if I got no text to examples. ' \
-            'Well now it is time to my imagination\nOr no, i cannot handle it'
+               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sodales vehicula ligula at finibus.' \
+               ' Donec elementum risus orci, vitae semper augue lobortis sit amet. Morbi porttitor, arcu in ultricies' \
+               ' bibendum, lectus leo malesuada sem, in ultrices lacus nunc hendrerit urna. Nam eu vulputate orci. ' \
+               'Vivamus sed bibendum felis. Aenean tempor.'
 
         file_name = 'horoscopes{}.jpg'.format(hash(text) % 1000)
 
