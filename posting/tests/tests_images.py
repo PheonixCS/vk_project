@@ -33,7 +33,7 @@ class ImagesTests(TestCase):
 
         text = '20 of september, Text\n' \
             'How to test this function if I got no text to examples. ' \
-            'Well now it is time to my imagination'
+            'Well now it is time to my imagination\nOr no, i cannot handle it'
 
         result = horoscopes_images.transfer_horoscope_to_image(text)
 
