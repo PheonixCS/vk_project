@@ -29,11 +29,11 @@ class ImagesTests(TestCase):
         self.assertEqual(new_size, (1280, 720))
 
     def test_horoscope_image(self):
-        file_name = 'test.jpg'
-
         text = '20 of september, Text\n' \
             'How to test this function if I got no text to examples. ' \
             'Well now it is time to my imagination\nOr no, i cannot handle it'
+
+        file_name = 'horoscopes{}.jpg'.format(hash(text) % 1000)
 
         result = horoscopes_images.transfer_horoscope_to_image(text)
 
