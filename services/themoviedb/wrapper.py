@@ -1,5 +1,7 @@
 #
 
+# FIXME do not forget to remove all comments
+
 import logging
 import os
 import pprint
