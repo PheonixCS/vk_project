@@ -27,7 +27,7 @@ def get_api_key():
 
 def initialize_api():
     tmdb = TMDb()
-    tmdb.api_key = 'ae02331036965fc7655049172b0247d0'  # get_api_key()
+    tmdb.api_key = ''  # get_api_key()
 
 
 def get_most_popular_films_ids():
