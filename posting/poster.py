@@ -58,18 +58,8 @@ def delete_files(file_paths):
     log.debug('delete_files finished')
 
 
-def upload_video(session, api, video_url, group_id):
+def upload_video(session, video_local_filename, group_id):
     log.debug('upload_video called')
-
-    try:
-        video = api.video.get(videos=video_url)
-    except:
-        log.error('exception while getting video', exc_info=True)
-        return
-
-    files = video['items'][0]
-    key_of_max_size_photo = max([key for key in files], key=lambda x: int(x.split('_')[1]))
-    video_local_filename = download_file(files[key_of_max_size_photo], key_of_max_size_photo.split('_')[0])
 
     try:
         upload = vk_api.VkUpload(session)
@@ -78,9 +68,6 @@ def upload_video(session, api, video_url, group_id):
     except:
         log.error('exception while uploading video', exc_info=True)
         return
-
-    if os.path.isfile(video_local_filename):
-        os.remove(video_local_filename)
 
     return 'video{}_{}'.format(video[0]['owner_id'], video[0]['id'])
 

@@ -11,6 +11,7 @@ def download_trailer(url):
     try:
         path = pytube.YouTube(url).streams.first().download()
     except url_error.URLError:
+        # this exception may occur, see https://github.com/nficano/pytube/issues/278
         import ssl
         ssl._create_default_https_context = ssl._create_stdlib_context
         path = pytube.YouTube(url).streams.first().download()

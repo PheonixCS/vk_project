@@ -15,14 +15,12 @@ from posting.poster import (
     fetch_group_id,
     upload_photo,
     delete_hashtags_from_text,
-    get_ad_in_last_hour,
     check_docs_availability,
     check_video_availability,
     delete_emoji_from_text,
     download_file,
     prepare_image_for_posting,
     merge_six_images_into_one,
-    is_images_size_nearly_the_same,
     is_text_on_image,
     is_all_images_not_horizontal,
     delete_files,
@@ -33,6 +31,7 @@ from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
 from scraping.models import Record, Horoscope
 from posting.text_utilities import replace_russian_with_english_letters
 from posting.core.horoscopes_images import transfer_horoscope_to_image
+from posting.core.vk_helper import is_ads_posted_recently
 
 log = logging.getLogger('posting.scheduled')
 
@@ -57,6 +56,7 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
+        # TODO it is not part of examine, need to move it to task or something
         if not group.group_id:
             api = create_vk_session_using_login_password(group.user.login,
                                                          group.user.password,
@@ -75,63 +75,33 @@ def examine_groups():
         log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
 
         horoscope_posting_interval = 3
-        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
-                and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
-                and not last_hour_ads_count:
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
-            if api:
-                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                if ad_record:
-                    try:
-                        AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                group=group,
-                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                          tz=timezone.utc))
-                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                        continue
-                    except:
-                        log.error('got unexpected error', exc_info=True)
-            if not api:
-                # if we got no api here, we still can continue posting
-                pass
 
-            try:
-                horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
-                                                              post_in_donor_date__gt=today_start).last().id
-                if horoscope_record_id:
-                    post_horoscope.delay(group.user.login,
-                                         group.user.password,
-                                         group.user.app_id,
-                                         group.group_id,
-                                         horoscope_record_id)
-                    continue
-                else:
-                    log.warning('got no horoscopes records')
-            except:
-                log.error('got unexpected exception in examine_groups', exc_info=True)
+        horoscope_condition = (
+            group.is_horoscopes
+            and group.horoscopes.filter(post_in_group_date__isnull=True)
+            and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0
+            and not last_hour_ads_count)
+
+        if horoscope_condition:
+            if is_ads_posted_recently(group):
+                continue
+
+            horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
+                                                          post_in_donor_date__gt=today_start).last().id
+            if horoscope_record_id:
+                post_horoscope.delay(group.user.login,
+                                     group.user.password,
+                                     group.user.app_id,
+                                     group.group_id,
+                                     horoscope_record_id)
+                continue
+            else:
+                log.warning('got no horoscopes records')
 
         if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
 
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
-            if api:
-                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                if ad_record:
-                    try:
-                        AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                group=group,
-                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                          tz=timezone.utc))
-                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                        continue
-                    except:
-                        log.error('got unexpected error', exc_info=True)
-            if not api:
-                # if we got no api here, we still can continue posting
-                pass
+            if is_ads_posted_recently(group):
+                continue
 
             donors = group.donors.all()
 
@@ -150,27 +120,24 @@ def examine_groups():
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
-            try:
-                if config.POSTING_BASED_ON_SEX:
+            if config.POSTING_BASED_ON_SEX:
 
-                    if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
-                        sex_statistics_weekly.delay()
-                        break
+                if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
+                    sex_statistics_weekly.delay()
+                    break
 
-                    if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
-                        group_male_female_ratio = 1
-                    else:
-                        group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
-
-                    the_best_record = find_the_best_post(
-                        records,
-                        group_male_female_ratio,
-                        config.RECORDS_SELECTION_PERCENT
-                    )
+                if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
+                    group_male_female_ratio = 1
                 else:
-                    the_best_record = max(records, key=lambda x: x.rate)
-            except:
-                log.debug('', exc_info=True)
+                    group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+
+                the_best_record = find_the_best_post(
+                    records,
+                    group_male_female_ratio,
+                    config.RECORDS_SELECTION_PERCENT
+                )
+            else:
+                the_best_record = max(records, key=lambda x: x.rate)
 
             the_best_record.is_involved_now = True
             the_best_record.save(update_fields=['is_involved_now'])
