@@ -25,5 +25,6 @@ CONSTANCE_CONFIG = {
     'RECORDS_SELECTION_PERCENT': (20, 'Percent of best records using in posting based on sex', int),
     'HOROSCOPES_TO_IMAGE_ENABLED': (False, 'Is transport horoscopes to image enabled?', bool),
 
-    'TMDB_KEY': ('', 'the movie db api key', str)
+    'TMDB_API_KEY': ('', 'The movie db api key', str),
+    'TMDB_SEARCH_START_YEAR': (1998, 'Discover movies starts with given year', int),
 }
