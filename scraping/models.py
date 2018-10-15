@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Count
+from random import randint
 
 
 class Donor(models.Model):
@@ -134,10 +136,32 @@ class Genre(models.Model):
 
 
 class Trailer(models.Model):
+    NEW_STATUS = 1
+    PENDING_STATUS = 2
+    DOWNLOADED_STATUS = 3
+    UPLOADED_STATUS = 4
+    POSTED_STATUS = 5
+    FAILED_STATUS = 6
+
+    STATUS_CHOICES = (
+        (NEW_STATUS, 'new'),
+        (PENDING_STATUS, 'pending'),
+        (DOWNLOADED_STATUS, 'downloaded'),
+        (UPLOADED_STATUS, 'uploaded'),
+        (POSTED_STATUS, 'posted'),
+        (FAILED_STATUS, 'failed')
+    )
+    status = models.IntegerField(choices=STATUS_CHOICES, default=NEW_STATUS, verbose_name='Статус')
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='trailers')
     url = models.CharField(max_length=128)
+    file_path = models.CharField(max_length=128)
+
+    def random(self):
+        count = self.aggregate(ids=Count('id'))['ids']
+        random_index = randint(0, count - 1)
+        return self.all()[random_index]
 
 
 class Frame(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='frames')
-    url = models.CharField(max_length=128)
+    url = models.CharField(max_length=256)

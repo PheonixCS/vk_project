@@ -7,8 +7,9 @@ from constance import config
 from django.utils import timezone
 
 from scraping.core.scraper import main, save_movie_to_db
-from scraping.models import Record, Horoscope
+from scraping.models import Record, Horoscope, Trailer
 from services.themoviedb.wrapper import discover_movies
+from services.youtube.core import download_trailer
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -47,4 +48,28 @@ def delete_old_horoscope_records():
 
     number_of_records, extended = Horoscope.objects.filter(add_to_db_date__lt=time_threshold).delete()
     log.debug('deleted {} records'.format(number_of_records))
+
+
+@task
+def download_youtube_trailers():
+    log.debug('download_youtube_trailers start analyzing')
+
+    downloaded_count = Trailer.objects.filter(status=Trailer.DOWNLOADED_STATUS).count()
+
+    if downloaded_count < config.TMDB_MIN_TRAILERS_COUNT:
+        log.debug('download_youtube_trailers start downloading')
+
+        trailer = Trailer.objects.random()
+
+        trailer.status = Trailer.PENDING_STATUS
+        trailer.save(update_fields=['status'])
+
+        trailer_path = download_trailer(trailer.url)
+        trailer.file_path = trailer_path
+
+        trailer.status = Trailer.DOWNLOADED_STATUS
+        trailer.save(update_fields=['file_path', 'status'])
+        log.debug('finish downloading trailer')
+
+
 
