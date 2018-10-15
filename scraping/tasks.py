@@ -6,8 +6,9 @@ from celery import task
 from constance import config
 from django.utils import timezone
 
-from scraping.core.scraper import main
+from scraping.core.scraper import main, save_movie_to_db
 from scraping.models import Record, Horoscope
+from services.themoviedb.wrapper import discover_movies
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -15,6 +16,12 @@ log = logging.getLogger('scraping.scheduled')
 @task
 def run_scraper():
     main()
+
+
+@task
+def scrape_tmdb_movies():
+    for movie in discover_movies():
+        save_movie_to_db(movie)
 
 
 @task
