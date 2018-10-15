@@ -112,3 +112,32 @@ class Horoscope(models.Model):
     image_url = models.CharField(max_length=256, null=True)
     post_in_donor_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
+
+
+class Movie(models.Model):
+    title = models.CharField(max_length=256)
+    rating = models.FloatField(null=True)
+    release_year = models.IntegerField(null=True)
+    runtime = models.CharField(null=True, verbose_name='ЧЧ:ММ')
+    overview = models.CharField(max_length=512, null=True)
+    poster = models.CharField(max_length=128)
+
+
+class ProductionCountry(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='countries')
+    code_name = models.CharField(max_length=8)
+
+
+class Genre(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='genres')
+    name = models.CharField(max_length=64)
+
+
+class Trailer(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='trailers')
+    url = models.CharField(max_length=128)
+
+
+class Frame(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='frames')
+    url = models.CharField(max_length=128)

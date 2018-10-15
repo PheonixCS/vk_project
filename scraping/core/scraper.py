@@ -21,7 +21,8 @@ from scraping.core.vk_helper import (
     fetch_liked_user_ids,
     get_users_sex_by_ids
 )
-from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope
+from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
+    Movie, ProductionCountry, Genre, Trailer, Frame
 
 log = logging.getLogger('scraping.scraper')
 
@@ -80,6 +81,42 @@ def save_record_to_db(donor, record):
                         audio_id=audio['audio']['id']
                     )
 
+    return created
+
+
+def save_movie_to_db(movie):
+    log.info('save_movie_to_db called')
+    obj, created = Movie.objects.get_or_create(
+        title=movie['title'],
+        release_year=movie['release_year'],
+        runtime=movie['runtime'],
+        defaults={
+            'rating': movie['rating'],
+            'overview': movie['overview'],
+            'poster': movie['poster']
+        }
+    )
+    if created:
+        for country in movie['countries']:
+            ProductionCountry.objects.create(
+                movie=obj,
+                code_name=country
+            )
+        for genre in movie['genres']:
+            Genre.objects.create(
+                movie=obj,
+                name=genre
+            )
+        for trailer in movie['trailers']:
+            Trailer.objects.create(
+                movie=obj,
+                url=trailer
+            )
+        for frame in movie['images']:
+            Frame.objects.create(
+                movie=obj,
+                url=frame
+            )
     return created
 
 
