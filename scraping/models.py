@@ -136,6 +136,13 @@ class Genre(models.Model):
     name = models.CharField(max_length=64)
 
 
+class TrailerManager(models.Manager):
+    def random(self):
+        count = self.aggregate(ids=Count('id'))['ids']
+        random_index = randint(0, count - 1)
+        return self.all()[random_index]
+
+
 class Trailer(models.Model):
     NEW_STATUS = 1
     PENDING_STATUS = 2
@@ -158,10 +165,7 @@ class Trailer(models.Model):
     # TODO it should be django's file field, but i'm hurry (and lazy)
     file_path = models.CharField(max_length=128)
 
-    def random(self):
-        count = self.aggregate(ids=Count('id'))['ids']
-        random_index = randint(0, count - 1)
-        return self.all()[random_index]
+    objects = TrailerManager()
 
 
 class Frame(models.Model):
