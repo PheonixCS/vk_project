@@ -200,7 +200,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
     trailer_name = '{title} ({rating}&#11088;)'.format(title=movie.title, rating=movie.rating)
     trailer_information = '{year}, {countries}, {genres}, {runtime}' \
         .format(
-            year=movie.year,
+            year=movie.release_year,
             countries=movie.genres.first().code_name,
             genres=', '.join(movie.genres.all().values_list('name', flat=True)),
             runtime=movie.runtime,
