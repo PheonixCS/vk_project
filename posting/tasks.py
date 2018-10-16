@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime, timedelta
 from random import choice, shuffle
+import pycountry
+import gettext
 
 import vk_api
 from celery import task
@@ -198,42 +200,50 @@ def post_movie(login, password, app_id, group_id, movie_id):
     attachments = []
 
     if movie.countries.first():
-        country = movie.countries.first().code_name
+        country_code = movie.countries.first().code_name
+        gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru']).install()
+        country = _(pycountry.countries.get(alpha2=country_code).name)
     else:
         country = ''
 
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
+                          f'{country}{", " if country else ""}'\
                           f'{", ".join(movie.genres.all().values_list("name", flat=True)[:3])}, ' \
                           f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
 
     video_description = f'{trailer_information}\n\n{movie.overview}'
 
     images = [frame.url for frame in movie.frames.all()]
-    images = shuffle(images)
+    log.debug(f'movie {movie.title}: got {len(images)} images')
     if images:
+        shuffle(images)
         images = images[:3]
-    else:
-        images = []
     images.append(movie.poster)
     images.reverse()
+    log.debug(f'movie {movie.title}: prepare {images} images to post')
 
     image_files = [download_file(image) for image in images]
 
     for image_local_filename in image_files:
         attachments.append(upload_photo(session, image_local_filename, group_id))
 
+    log.debug(f'movie {movie.title} post: got attachments {attachments}')
+
     trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
     if trailer:
         uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
     else:
-        log.error('got no trailer!')
+        log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
         pass
 
     trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
-    record_text = f'{trailer_name}\n\n{trailer_information}\n\n{trailer_link}\n\n{movie.overview}'
+    record_text = f'{trailer_name}\n\n' \
+                  f'{trailer_information}\n\n' \
+                  f'{trailer_link if uploaded_trailer else ""}\n\n' \
+                  f'{movie.overview}'
 
     if uploaded_trailer:
         trailer.status = Trailer.UPLOADED_STATUS

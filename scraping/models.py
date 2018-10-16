@@ -120,7 +120,7 @@ class Movie(models.Model):
     title = models.CharField(max_length=256)
     rating = models.FloatField(null=True)
     release_year = models.IntegerField(null=True)
-    runtime = models.CharField(null=True, verbose_name='ЧЧ:ММ', max_length=16)
+    runtime = models.CharField(null=True, max_length=16)
     overview = models.CharField(max_length=2048, null=True)
     poster = models.CharField(max_length=256)
     post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
