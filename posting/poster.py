@@ -69,7 +69,7 @@ def upload_video(session, video_local_filename, group_id):
         log.error('exception while uploading video', exc_info=True)
         return
 
-    return 'video{}_{}'.format(video[0]['owner_id'], video[0]['id'])
+    return 'video{}_{}'.format(video['owner_id'], video['vid'])
 
 
 def upload_gif(session, gif_url):
