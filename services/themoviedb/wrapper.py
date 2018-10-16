@@ -30,9 +30,10 @@ def send_request_to_api(path, **kwargs):
 def discover_movies():
     log.debug('discover_movies called')
 
-    min_average_rating = 5.9
+    min_average_rating = 6
+    start_year = config.TMDB_SEARCH_START_YEAR
 
-    for year in range(config.TMDB_SEARCH_START_YEAR, datetime.now().year):
+    for year in range(start_year, datetime.now().year):
         total_pages = send_request_to_api(path='/discover/movie',
                                           **{'page': 1,
                                              'primary_release_year': year,
@@ -59,19 +60,26 @@ def discover_movies():
                                                  'append_to_response': 'videos,images',
                                                  'include_image_language': 'null'}
                                               )
+
+                countries = [country.get('iso_3166_1', 'US') for country in details.get('production_countries', [])]
+                if 'IN' in countries:
+                    continue
+
                 yield {
-                    'title': details['title'],
-                    'rating': details['vote_average'],
-                    'release_year': datetime.strptime(details['release_date'], '%Y-%m-%d').year,
-                    'countries': [country['iso_3166_1'] for country in details['production_countries']],
-                    'genres': [genre['name'] for genre in details['genres']],
-                    'runtime': details['runtime'],
-                    'trailers': [(video['size'], f'{YOUTUBE_URL}{video["key"]}') for video in details['videos']['results']
-                                 if video['type'] == 'Trailer' and video['site'] == 'YouTube'],
-                    'overview': details['overview'],
-                    'poster': f'{IMAGE_URL}{details["poster_path"]}',
-                    'images': [f'{IMAGE_URL}{frame["file_path"]}' for frame in details['images']['backdrops'] if
-                               not frame['iso_639_1']],
+                    'title': details.get('title', ''),
+                    'rating': details.get('vote_average', min_average_rating),
+                    'release_year': datetime.strptime(details.get('release_date', start_year), '%Y-%m-%d').year,
+                    'countries': countries,
+                    'genres': [genre.get('name') for genre in details.get('genres', [])],
+                    'runtime': details.get('runtime', 120),
+                    'trailers': [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
+                                 for video in details.get('videos', {}).get('results', [])
+                                 if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube'],
+                    'overview': details.get('overview', ''),
+                    'poster': f'{IMAGE_URL}{details.get("poster_path")}',
+                    'images': [f'{IMAGE_URL}{frame.get("file_path")}'
+                               for frame in details.get('images', {}).get('backdrops', []) if
+                               not frame.get('iso_639_1', True)],
                 }
 
     log.debug('discover_movies done')
