@@ -213,6 +213,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = shuffle(images)
     if images:
         images = images[:3]
+    else:
+        images = []
     images.append(movie.poster)
     images.reverse()
 
