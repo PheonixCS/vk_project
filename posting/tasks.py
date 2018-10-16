@@ -29,7 +29,9 @@ from posting.poster import (
     get_group_week_statistics,
     find_the_best_post
 )
+from posting.core.horoscopes import generate_special_group_reference
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
+from scraping.core.horoscopes import fetch_zodiac_sign
 from scraping.models import Record, Horoscope
 from posting.text_utilities import replace_russian_with_english_letters
 from posting.core.horoscopes_images import transfer_horoscope_to_image
@@ -217,7 +219,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             attachments = upload_photo(session, horoscope_image_name, group_id)
             record_text = ''
         else:
-
             if group.is_replace_russian_with_english:
                 record_text = replace_russian_with_english_letters(record_text)
 
@@ -226,6 +227,11 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
                 attachments = upload_photo(session, image_local_filename, group_id)
+
+        group_zodiac_zign = fetch_zodiac_sign(group.name)
+        if not group_zodiac_zign:
+            text_to_add = generate_special_group_reference(horoscope_record.text, group.domain_or_id)
+            record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
                                       from_group=1,
