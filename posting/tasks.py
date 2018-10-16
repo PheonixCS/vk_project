@@ -230,7 +230,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         group_zodiac_zign = fetch_zodiac_sign(group.name)
         if not group_zodiac_zign:
-            text_to_add = generate_special_group_reference(horoscope_record.text, group.domain_or_id)
+            text_to_add = generate_special_group_reference(horoscope_record.text)
             record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
 
         post_response = api.wall.post(owner_id='-{}'.format(group_id),
