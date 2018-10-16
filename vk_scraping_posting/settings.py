@@ -74,7 +74,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'scrape_tmdb_movies': {
         'task': 'scraping.tasks.scrape_tmdb_movies',
-        'schedule': crontab(minute=10) # TODO just for test
+        'schedule': crontab(minute='*/10') # TODO just for test
     }
 }
 
