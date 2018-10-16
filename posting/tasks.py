@@ -197,10 +197,15 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     attachments = []
 
+    if movie.countries.first():
+        country = movie.countries.first().code_name
+    else:
+        country = ''
+
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
-                          f'{movie.countries.first().code_name}, ' \
-                          f'{", ".join(movie.genres.all().values_list("name", flat=True))}, ' \
+                          f'{country}, ' \
+                          f'{", ".join(movie.genres.all().values_list("name", flat=True)[:3])}, ' \
                           f'{str(timedelta(minutes=movie.runtime))[:-3]}'
 
     video_description = f'{trailer_information}\n\n{movie.overview}'

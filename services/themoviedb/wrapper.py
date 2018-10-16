@@ -30,10 +30,13 @@ def send_request_to_api(path, **kwargs):
 def discover_movies():
     log.debug('discover_movies called')
 
+    min_average_rating = 5.9
+
     for year in range(config.TMDB_SEARCH_START_YEAR, datetime.now().year):
         total_pages = send_request_to_api(path='/discover/movie',
                                           **{'page': 1,
-                                             'primary_release_date.gte': year,
+                                             'primary_release_year': year,
+                                             'vote_average.gte': min_average_rating,
                                              'language': 'ru-RU'}
                                           )['total_pages']
         log.debug(f'got {total_pages} total pages in the {year} year')
@@ -44,6 +47,7 @@ def discover_movies():
             movies = send_request_to_api(path='/discover/movie',
                                          **{'page': page_number,
                                             'primary_release_year': year,
+                                            'vote_average.gte': min_average_rating,
                                             'language': 'ru-RU'}
                                          )['results']
 
