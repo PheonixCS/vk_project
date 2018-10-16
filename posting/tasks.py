@@ -208,8 +208,12 @@ def post_movie(login, password, app_id, group_id, movie_id):
     for image_local_filename in image_files:
         attachments.append(upload_photo(session, image_local_filename, group_id))
 
-    trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
-    uploaded_trailer = upload_video(session, trailer.file_path, group_id)
+    trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
+    if trailer:
+        uploaded_trailer = upload_video(session, trailer.file_path, group_id)
+    else:
+        log.error('got no trailer!')
+        pass
 
     if uploaded_trailer:
         trailer.status = Trailer.UPLOADED_STATUS
