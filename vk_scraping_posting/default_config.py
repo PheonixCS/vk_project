@@ -29,5 +29,6 @@ CONSTANCE_CONFIG = {
     'TMDB_API_KEY': ('', 'The movie db api key', str),
     'TMDB_SEARCH_START_YEAR': (1998, 'Discover movies starts with given year', int),
     'TMDB_MIN_TRAILERS_COUNT': (1, 'Minimum count of downloaded youtube trailers', int),
-    'FORCE_MOVIE_POST': (False, 'Just for development, forcing movie posting', bool)
+    'FORCE_MOVIE_POST': (False, 'Just for dev. Forcing movie posting', bool),
+    'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool)
 }

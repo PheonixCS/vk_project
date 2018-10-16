@@ -67,6 +67,14 @@ CELERY_BEAT_SCHEDULE = {
     'sex_statistics_weekly': {
         'task': 'posting.tasks.sex_statistics_weekly',
         'schedule': crontab(minute=0, hour=0, day_of_week=0)  # at 0:00 am UTC every sunday (3:00 am by MSK)
+    },
+    'download_youtube_trailers': {
+        'task': 'scraping.tasks.download_youtube_trailers',
+        'schedule': crontab(minute=15)
+    },
+    'scrape_tmdb_movies': {
+        'task': 'scraping.tasks.scrape_tmdb_movies',
+        'schedule': crontab(minute=10) # TODO just for test
     }
 }
 

@@ -21,8 +21,9 @@ def run_scraper():
 
 @task
 def scrape_tmdb_movies():
-    for movie in discover_movies():
-        save_movie_to_db(movie)
+    if config.TMDB_SCRAPING_ENABLED:
+        for movie in discover_movies():
+            save_movie_to_db(movie)
 
 
 @task
