@@ -123,6 +123,7 @@ class Movie(models.Model):
     runtime = models.CharField(null=True, verbose_name='ЧЧ:ММ', max_length=16)
     overview = models.CharField(max_length=2048, null=True)
     poster = models.CharField(max_length=256)
+    post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
 
 
 class ProductionCountry(models.Model):
@@ -156,7 +157,6 @@ class Trailer(models.Model):
     url = models.CharField(max_length=128)
     # TODO it should be django's file field, but i'm hurry (and lazy)
     file_path = models.CharField(max_length=128)
-    post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
 
     def random(self):
         count = self.aggregate(ids=Count('id'))['ids']
