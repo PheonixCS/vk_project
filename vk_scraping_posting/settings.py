@@ -70,11 +70,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'download_youtube_trailers': {
         'task': 'scraping.tasks.download_youtube_trailers',
-        'schedule': crontab(minute=5)
+        'schedule': crontab(minute=20)
     },
     'scrape_tmdb_movies': {
         'task': 'scraping.tasks.scrape_tmdb_movies',
-        'schedule': crontab(minute='*/10') # TODO just for test
+        'schedule': crontab(minute='*/20')  # TODO just for test
     }
 }
 
