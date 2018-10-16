@@ -201,7 +201,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
     trailer_information = '{year}, {countries}, {genres}, {runtime}' \
         .format(
             year=movie.release_year,
-            countries=movie.genres.first().code_name,
+            countries=movie.countries.first().code_name,
             genres=', '.join(movie.genres.all().values_list('name', flat=True)),
             runtime=movie.runtime,
         )
