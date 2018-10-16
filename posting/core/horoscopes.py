@@ -22,4 +22,5 @@ def generate_special_group_reference(horoscope_text, group_id):
     }
 
     horoscope_date = fetch_date_from_horoscope_text(horoscope_text)
-    return f'[club{group_id}|Гороскоп для {replace_map[fetch_zodiac_sign(horoscope_text)]}] на {horoscope_date}'
+    return f'[club{group_id}|Гороскоп для {replace_map[fetch_zodiac_sign(horoscope_text).capitalize()]}] ' \
+           f'на {horoscope_date}'
