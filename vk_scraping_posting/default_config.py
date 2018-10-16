@@ -25,7 +25,9 @@ CONSTANCE_CONFIG = {
     'RECORDS_SELECTION_PERCENT': (20, 'Percent of best records using in posting based on sex', int),
     'HOROSCOPES_TO_IMAGE_ENABLED': (False, 'Is transport horoscopes to image enabled?', bool),
     'HOROSCOPES_POSTING_INTERVAL': (3, 'Horoscopes posting interval', int),
-
+    'HOROSCOPES_FONT_TITLE': (80, 'Text in horoscopes font size', int),
+    'HOROSCOPES_FONT_BODY': (60, 'Text in horoscopes font size', int)
+    
     'TMDB_API_KEY': ('', 'The movie db api key', str),
     'TMDB_SEARCH_START_YEAR': (1998, 'Discover movies starts with given year', int),
     'TMDB_MIN_TRAILERS_COUNT': (1, 'Minimum count of downloaded youtube trailers', int),
