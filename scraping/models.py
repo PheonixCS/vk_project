@@ -121,7 +121,7 @@ class Movie(models.Model):
     rating = models.FloatField(null=True)
     release_year = models.IntegerField(null=True)
     runtime = models.CharField(null=True, verbose_name='ЧЧ:ММ', max_length=16)
-    overview = models.CharField(max_length=512, null=True)
+    overview = models.CharField(max_length=2048, null=True)
     poster = models.CharField(max_length=256)
 
 

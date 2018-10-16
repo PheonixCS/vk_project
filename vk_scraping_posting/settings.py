@@ -301,5 +301,9 @@ LOGGING = {
             'handlers': ['console', 'celery'],
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
         },
+        'services': {
+            'handlers': [''],
+            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
+        },
     },
 }
