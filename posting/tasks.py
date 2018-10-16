@@ -68,7 +68,7 @@ def examine_groups():
             group.save(update_fields=['group_id'])
 
         if group.is_movies:
-            last_hour_posts_count = Movie.objects.filer(group=group, post_in_group_date__gt=time_threshold).count()
+            last_hour_posts_count = Movie.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         else:
             last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
 
