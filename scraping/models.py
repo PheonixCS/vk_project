@@ -122,7 +122,7 @@ class Movie(models.Model):
     release_year = models.IntegerField(null=True)
     runtime = models.CharField(null=True, verbose_name='ЧЧ:ММ')
     overview = models.CharField(max_length=512, null=True)
-    poster = models.CharField(max_length=128)
+    poster = models.CharField(max_length=256)
 
 
 class ProductionCountry(models.Model):
@@ -154,7 +154,9 @@ class Trailer(models.Model):
     status = models.IntegerField(choices=STATUS_CHOICES, default=NEW_STATUS, verbose_name='Статус')
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='trailers')
     url = models.CharField(max_length=128)
+    # TODO it should be django's file field, but i'm hurry (and lazy)
     file_path = models.CharField(max_length=128)
+    post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
 
     def random(self):
         count = self.aggregate(ids=Count('id'))['ids']
