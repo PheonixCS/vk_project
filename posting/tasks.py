@@ -86,15 +86,15 @@ def examine_groups():
             if is_ads_posted_recently(group):
                 continue
 
-            movie_id = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS).last().id
+            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS).last()
 
-            if movie_id:
+            if movie:
                 post_movie.delay(
                     group.user.login,
                     group.user.password,
                     group.user.app_id,
                     group.group_id,
-                    movie_id
+                    movie.id
                 )
 
         horoscope_condition = (
