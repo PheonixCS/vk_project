@@ -30,7 +30,7 @@ def send_request_to_api(path, **kwargs):
 def discover_movies():
     log.debug('discover_movies called')
 
-    min_average_rating = 5.9
+    min_average_rating = 6.0
 
     for year in range(config.TMDB_SEARCH_START_YEAR, datetime.now().year):
         total_pages = send_request_to_api(path='/discover/movie',
