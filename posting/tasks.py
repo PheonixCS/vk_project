@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime, timedelta
 from random import choice, shuffle
+import pycountry
+import gettext
 
 import vk_api
 from celery import task
@@ -14,15 +16,14 @@ from posting.poster import (
     create_vk_session_using_login_password,
     fetch_group_id,
     upload_photo,
+    upload_video,
     delete_hashtags_from_text,
-    get_ad_in_last_hour,
     check_docs_availability,
     check_video_availability,
     delete_emoji_from_text,
     download_file,
     prepare_image_for_posting,
     merge_six_images_into_one,
-    is_images_size_nearly_the_same,
     is_text_on_image,
     is_all_images_not_horizontal,
     delete_files,
@@ -31,10 +32,11 @@ from posting.poster import (
 )
 from posting.core.horoscopes import generate_special_group_reference
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
+from scraping.models import Record, Horoscope, Movie, Trailer
 from scraping.core.horoscopes import fetch_zodiac_sign
-from scraping.models import Record, Horoscope
 from posting.text_utilities import replace_russian_with_english_letters
 from posting.core.horoscopes_images import transfer_horoscope_to_image
+from posting.core.vk_helper import is_ads_posted_recently
 
 log = logging.getLogger('posting.scheduled')
 
@@ -59,6 +61,7 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
+        # TODO it is not part of examine, need to move it to task or something
         if not group.group_id:
             api = create_vk_session_using_login_password(group.user.login,
                                                          group.user.password,
@@ -68,72 +71,63 @@ def examine_groups():
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])
 
-        log.debug('start searching for posted records since {}'.format(time_threshold))
-        last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-        log.debug('got {} posts in last hour and 5 minutes'.format(last_hour_posts_count))
+        if group.is_movies:
+            last_hour_posts_count = Movie.objects.filter(post_in_group_date__gt=time_threshold).count()
+        else:
+            last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
 
-        log.debug('start searching for ads in last hour and 5 minutes')
+        log.debug(f'got {last_hour_posts_count} posts in last hour and 5 minutes')
+
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-        log.debug('got {} ads in last hour and 5 minutes'.format(last_hour_ads_count))
+        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes')
 
-        horoscope_posting_interval = 3
-        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True) \
-                and abs(now_minute - group.posting_time.minute) % horoscope_posting_interval == 0 \
-                and not last_hour_ads_count:
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
-            if api:
-                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                if ad_record:
-                    try:
-                        AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                group=group,
-                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                          tz=timezone.utc))
-                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                        continue
-                    except:
-                        log.error('got unexpected error', exc_info=True)
-            if not api:
-                # if we got no api here, we still can continue posting
-                pass
+        movies_condition = (
+            group.is_movies
+            and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
+        )
 
-            try:
-                horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
-                                                              post_in_donor_date__gt=today_start).last().id
-                if horoscope_record_id:
-                    post_horoscope.delay(group.user.login,
-                                         group.user.password,
-                                         group.user.app_id,
-                                         group.group_id,
-                                         horoscope_record_id)
-                    continue
-                else:
-                    log.warning('got no horoscopes records')
-            except:
-                log.error('got unexpected exception in examine_groups', exc_info=True)
+        if movies_condition:
+            if is_ads_posted_recently(group):
+                continue
 
-        if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count:
+            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS).last()
 
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
-            if api:
-                ad_record = get_ad_in_last_hour(api, group.domain_or_id)
-                if ad_record:
-                    try:
-                        AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                                group=group,
-                                                post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                                          tz=timezone.utc))
-                        log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
-                        continue
-                    except:
-                        log.error('got unexpected error', exc_info=True)
-            if not api:
-                # if we got no api here, we still can continue posting
-                pass
+            if movie:
+                post_movie.delay(
+                    group.user.login,
+                    group.user.password,
+                    group.user.app_id,
+                    group.group_id,
+                    movie.id
+                )
+
+        horoscope_condition = (
+            group.is_horoscopes
+            and group.horoscopes.filter(post_in_group_date__isnull=True)
+            and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+            and not last_hour_ads_count)
+
+        if horoscope_condition:
+            if is_ads_posted_recently(group):
+                continue
+
+            horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
+                                                          post_in_donor_date__gt=today_start).last().id
+            if horoscope_record_id:
+                post_horoscope.delay(group.user.login,
+                                     group.user.password,
+                                     group.user.app_id,
+                                     group.group_id,
+                                     horoscope_record_id)
+                continue
+            else:
+                log.warning('got no horoscopes records')
+
+        if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count\
+                and not group.is_movies:
+
+            if is_ads_posted_recently(group):
+                continue
 
             donors = group.donors.all()
 
@@ -152,27 +146,24 @@ def examine_groups():
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
-            try:
-                if config.POSTING_BASED_ON_SEX:
+            if config.POSTING_BASED_ON_SEX:
 
-                    if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
-                        sex_statistics_weekly.delay()
-                        break
+                if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
+                    sex_statistics_weekly.delay()
+                    break
 
-                    if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
-                        group_male_female_ratio = 1
-                    else:
-                        group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
-
-                    the_best_record = find_the_best_post(
-                        records,
-                        group_male_female_ratio,
-                        config.RECORDS_SELECTION_PERCENT
-                    )
+                if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
+                    group_male_female_ratio = 1
                 else:
-                    the_best_record = max(records, key=lambda x: x.rate)
-            except:
-                log.debug('', exc_info=True)
+                    group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+
+                the_best_record = find_the_best_post(
+                    records,
+                    group_male_female_ratio,
+                    config.RECORDS_SELECTION_PERCENT
+                )
+            else:
+                the_best_record = max(records, key=lambda x: x.rate)
 
             the_best_record.is_involved_now = True
             the_best_record.save(update_fields=['is_involved_now'])
@@ -188,6 +179,94 @@ def examine_groups():
                 log.error('got unexpected exception in examine_groups', exc_info=True)
                 the_best_record.is_involved_now = False
                 the_best_record.save(update_fields=['is_involved_now'])
+
+
+@task
+def post_movie(login, password, app_id, group_id, movie_id):
+    log.debug(f'start posting movies in {group_id} group')
+
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
+
+    if not session:
+        log.error(f'session not created in group {group_id}')
+        return
+
+    if not api:
+        log.error(f'no api was created in group {group_id}')
+        return
+
+    # group = Group.objects.get(group_id=group_id)
+    movie = Movie.objects.get(pk=movie_id)
+
+    attachments = []
+
+    if movie.countries.first():
+        country_code = movie.countries.first().code_name
+        t = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru'])
+        _ = t.gettext
+        country = _(pycountry.countries.get(alpha2=country_code).name)
+    else:
+        country = ''
+
+    trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
+    trailer_information = f'{movie.release_year}, ' \
+                          f'{country}{", " if country else ""}'\
+                          f'{", ".join(movie.genres.all().values_list("name", flat=True)[:3])}, ' \
+                          f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
+
+    video_description = f'{trailer_information}\n\n{movie.overview}'
+
+    images = [frame.url for frame in movie.frames.all()]
+    log.debug(f'movie {movie.title}: got {len(images)} images')
+    if images:
+        shuffle(images)
+        images = images[:3]
+    images.append(movie.poster)
+    images.reverse()
+    log.debug(f'movie {movie.title}: prepare {images} images to post')
+
+    image_files = [download_file(image) for image in images]
+
+    for image_local_filename in image_files:
+        attachments.append(upload_photo(session, image_local_filename, group_id))
+
+    log.debug(f'movie {movie.title} post: got attachments {attachments}')
+
+    trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
+    if trailer:
+        uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
+    else:
+        log.error(f'movie {movie.title} got no trailer!')
+        uploaded_trailer = None
+        pass
+
+    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+
+    record_text = f'{trailer_name}\n\n' \
+                  f'{trailer_information}\n\n' \
+                  f'{trailer_link if uploaded_trailer else ""}\n\n' \
+                  f'{movie.overview}'
+
+    if uploaded_trailer:
+        trailer.status = Trailer.UPLOADED_STATUS
+    else:
+        trailer.status = Trailer.FAILED_STATUS
+
+    trailer.save(update_fields=['status'])
+
+    post_response = api.wall.post(owner_id=f'-{group_id}',
+                                  from_group=1,
+                                  message=record_text,
+                                  attachments=','.join(attachments))
+
+    movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    movie.save(update_fields=['post_in_group_date'])
+
+    log.debug(f'{post_response} in group {group_id}')
+
+    delete_files(image_files)
+    delete_files(trailer.file_path)
 
 
 @task

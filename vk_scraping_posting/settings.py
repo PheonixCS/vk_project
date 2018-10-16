@@ -67,6 +67,14 @@ CELERY_BEAT_SCHEDULE = {
     'sex_statistics_weekly': {
         'task': 'posting.tasks.sex_statistics_weekly',
         'schedule': crontab(minute=0, hour=0, day_of_week=0)  # at 0:00 am UTC every sunday (3:00 am by MSK)
+    },
+    'download_youtube_trailers': {
+        'task': 'scraping.tasks.download_youtube_trailers',
+        'schedule': crontab(minute=5)
+    },
+    'scrape_tmdb_movies': {
+        'task': 'scraping.tasks.scrape_tmdb_movies',
+        'schedule': crontab(minute='*/10') # TODO just for test
     }
 }
 
@@ -265,7 +273,7 @@ LOGGING = {
         '': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/test.log",
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/other.log",
             'when': 'D',
             'interval': 1,
             'backupCount': 7,
@@ -291,6 +299,10 @@ LOGGING = {
         },
         'сelery': {
             'handlers': ['console', 'celery'],
+            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
+        },
+        'services': {
+            'handlers': [''],
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
         },
     },
