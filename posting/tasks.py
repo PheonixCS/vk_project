@@ -211,7 +211,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     images = [frame.url for frame in movie.frames.all()]
     images = shuffle(images)
-    images = images[:3]
+    if images:
+        images = images[:3]
     images.append(movie.poster)
     images.reverse()
 
