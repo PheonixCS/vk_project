@@ -21,7 +21,7 @@ log = logging.getLogger('posting.poster')
 
 def create_vk_session_using_login_password(login, password, app_id):
     log.debug('create api called')
-    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id)
+    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION)
     try:
         vk_session.auth()
     except vk_api.AuthError as error_msg:
@@ -69,7 +69,7 @@ def upload_video(session, video_local_filename, group_id):
         log.error('exception while uploading video', exc_info=True)
         return
 
-    return 'video{}_{}'.format(video['owner_id'], video['vid'])
+    return 'video{}_{}'.format(video['owner_id'], video['video_id'])
 
 
 def upload_gif(session, gif_url):
