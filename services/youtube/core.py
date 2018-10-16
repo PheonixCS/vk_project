@@ -15,6 +15,8 @@ def download_trailer(url):
         import ssl
         ssl._create_default_https_context = ssl._create_stdlib_context
         path = pytube.YouTube(url).streams.first().download()
+    except pytube.pytube.VideoUnavailable:
+        return ''
 
     log.debug('finished downloading trailer')
     return path

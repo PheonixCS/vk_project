@@ -66,6 +66,11 @@ def download_youtube_trailers():
         trailer.save(update_fields=['status'])
 
         trailer_path = download_trailer(trailer.url)
+        if not trailer_path:
+            trailer.status = Trailer.FAILED_STATUS
+            # TODO beware of endless loop
+            download_youtube_trailers.delay()
+            return
         trailer.file_path = trailer_path
 
         trailer.status = Trailer.DOWNLOADED_STATUS

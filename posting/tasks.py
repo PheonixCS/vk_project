@@ -179,7 +179,7 @@ def examine_groups():
 
 @task
 def post_movie(login, password, app_id, group_id, movie_id):
-    log.debug(f'start posting horoscopes in {group_id} group')
+    log.debug(f'start posting movies in {group_id} group')
 
     session = create_vk_session_using_login_password(login, password, app_id)
     api = session.get_api()
@@ -200,7 +200,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
     # TODO just for test, remove and improve
     record_text = f'{movie.title}, {movie.rating}, {movie.release_year}, {movie.runtime},\n{movie.overview}'
 
-    images = [frame.url for frame in movie.frames]
+    images = [frame.url for frame in movie.frames.all()]
     images.append(movie.poster)
 
     image_files = [download_file(image) for image in images]
