@@ -16,6 +16,7 @@ idna==2.6
 kombu==4.1.0
 more-itertools==4.3.0
 numpy==1.14.5
+opencv-python==3.4.1.15
 opencv-python-headless==3.4.1.15
 phonenumbers==8.9.5
 Pillow==5.1.0
@@ -31,7 +32,6 @@ raven==6.9.0
 requests==2.18.4
 sentry-sdk==0.3.6
 six==1.11.0
-tmdbv3api==1.1.0
 uritools==2.2.0
 urlextract==0.8.3
 urllib3==1.22

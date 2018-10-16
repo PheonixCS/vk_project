@@ -185,11 +185,11 @@ def post_movie(login, password, app_id, group_id, movie_id):
     api = session.get_api()
 
     if not session:
-        log.error('session not created in group {}'.format(group_id))
+        log.error(f'session not created in group {group_id}')
         return
 
     if not api:
-        log.error('no api was created in group {}'.format(group_id))
+        log.error(f'no api was created in group {group_id}')
         return
 
     # group = Group.objects.get(group_id=group_id)
@@ -197,20 +197,18 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     attachments = []
 
-    trailer_name = '{title} ({rating}&#11088;)'.format(title=movie.title, rating=movie.rating)
-    trailer_information = '{year}, {countries}, {genres}, {runtime}' \
-        .format(
-            year=movie.release_year,
-            countries=movie.countries.first().code_name,
-            genres=', '.join(movie.genres.all().values_list('name', flat=True)),
-            runtime=movie.runtime,
-        )
+    trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
+    trailer_information = f'{movie.release_year}, ' \
+                          f'{movie.countries.first().code_name}, ' \
+                          f'{", ".join(movie.genres.all().values_list("name", flat=True))}, ' \
+                          f'{str(timedelta(minutes=movie.runtime))[:-3]}'
 
-    video_description = '{}\n\n{}'.format(trailer_information, movie.overview)
+    video_description = f'{trailer_information}\n\n{movie.overview}'
 
     images = [frame.url for frame in movie.frames.all()]
-    images = images[:3]
+    images = shuffle(images)[:3]
     images.append(movie.poster)
+    images.reverse()
 
     image_files = [download_file(image) for image in images]
 
@@ -225,21 +223,9 @@ def post_movie(login, password, app_id, group_id, movie_id):
         uploaded_trailer = None
         pass
 
-    # record_text = f'{movie.title}, ({movie.rating})\n\n' \
-    #               f'{movie.release_year}, {movie.countries.first().code_name}, ' \
-    #               f'{movie.genres.all().values_list(\'name\', flat=True)}{movie.runtime}\n\n' \
-    #               f'Трейлер: vk.com://{uploaded_trailer}\n\n' \
-    #               f'{movie.overview}'
+    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
-    trailer_link = 'Трейлер: vk.com/{}'.format(uploaded_trailer)
-
-    record_text = '{name}\n\n{info}\n\n{link}\n\n{overview}'\
-        .format(
-            name=trailer_name,
-            info=trailer_information,
-            link=trailer_link,
-            overview=movie.overview,
-    )
+    record_text = f'{trailer_name}\n\n{trailer_information}\n\n{trailer_link}\n\n{movie.overview}'
 
     if uploaded_trailer:
         trailer.status = Trailer.UPLOADED_STATUS
@@ -248,15 +234,15 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     trailer.save(update_fields=['status'])
 
-    post_response = api.wall.post(owner_id='-{}'.format(group_id),
+    post_response = api.wall.post(owner_id=f'-{group_id}',
                                   from_group=1,
                                   message=record_text,
-                                  attachments=attachments)
+                                  attachments=','.join(attachments))
 
     movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     movie.save(update_fields=['post_in_group_date'])
 
-    log.debug('{} in group {}'.format(post_response, group_id))
+    log.debug(f'{post_response} in group {group_id}')
 
     delete_files(image_files)
     delete_files(trailer.file_path)
