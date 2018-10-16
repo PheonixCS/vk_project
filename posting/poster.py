@@ -49,22 +49,34 @@ def download_file(url, extension=None):
 
 def delete_files(file_paths):
     log.debug('delete_files called with {} files'.format(len(file_paths)))
-    for file in file_paths:
+
+    if isinstance(file_paths, list):
+        for file in file_paths:
+            try:
+                os.remove(file)
+            except FileNotFoundError as exc:
+                log.error('Fail to delete file {}'.format(exc))
+                continue
+    elif isinstance(file_paths, str):
         try:
-            os.remove(file)
+            os.remove(file_paths)
         except FileNotFoundError as exc:
             log.error('Fail to delete file {}'.format(exc))
-            continue
+    else:
+        log.warning('delete_files got wrong type')
+        return
     log.debug('delete_files finished')
 
 
-def upload_video(session, video_local_filename, group_id):
+def upload_video(session, video_local_filename, group_id, name, description):
     log.debug('upload_video called')
 
     try:
         upload = vk_api.VkUpload(session)
         video = upload.video(video_file=video_local_filename,
-                             group_id=int(group_id))
+                             group_id=int(group_id),
+                             name=name,
+                             description=description)
     except:
         log.error('exception while uploading video', exc_info=True)
         return

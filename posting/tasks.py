@@ -197,10 +197,19 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     attachments = []
 
-    # TODO just for test, remove and improve
-    record_text = f'{movie.title}, {movie.rating}, {movie.release_year}, {movie.runtime},\n{movie.overview}'
+    trailer_name = '{title} ({rating}&#11088;)'.format(title=movie.title, rating=movie.rating)
+    trailer_information = '{year}, {countries}, {genres}, {runtime}' \
+        .format(
+            year=movie.year,
+            countries=movie.genres.first().code_name,
+            genres=', '.join(movie.genres.all().values_list('name', flat=True)),
+            runtime=movie.runtime,
+        )
+
+    video_description = '{}\n\n{}'.format(trailer_information, movie.overview)
 
     images = [frame.url for frame in movie.frames.all()]
+    images = images[:3]
     images.append(movie.poster)
 
     image_files = [download_file(image) for image in images]
@@ -210,17 +219,30 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
     if trailer:
-        uploaded_trailer = upload_video(session, trailer.file_path, group_id)
+        uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
     else:
         log.error('got no trailer!')
+        uploaded_trailer = None
         pass
+
+    # record_text = f'{movie.title}, ({movie.rating})\n\n' \
+    #               f'{movie.release_year}, {movie.countries.first().code_name}, ' \
+    #               f'{movie.genres.all().values_list(\'name\', flat=True)}{movie.runtime}\n\n' \
+    #               f'Трейлер: vk.com://{uploaded_trailer}\n\n' \
+    #               f'{movie.overview}'
+
+    trailer_link = 'Трейлер: vk.com/{}'.format(uploaded_trailer)
+
+    record_text = '{name}\n\n{info}\n\n{link}\n\n{overview}'\
+        .format(
+            name=trailer_name,
+            info=trailer_information,
+            link=trailer_link,
+            overview=movie.overview,
+    )
 
     if uploaded_trailer:
         trailer.status = Trailer.UPLOADED_STATUS
-        if len(attachments) < 10:
-            attachments.append(uploaded_trailer)
-        else:
-            attachments[-1] = uploaded_trailer
     else:
         trailer.status = Trailer.FAILED_STATUS
 
@@ -236,7 +258,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     log.debug('{} in group {}'.format(post_response, group_id))
 
-    delete_files(attachments)
+    delete_files(image_files)
+    delete_files(trailer.file_path)
 
 
 @task
