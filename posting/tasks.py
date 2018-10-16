@@ -204,7 +204,6 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
-                          f'{country}, ' \
                           f'{", ".join(movie.genres.all().values_list("name", flat=True)[:3])}, ' \
                           f'{str(timedelta(minutes=movie.runtime))[:-3]}'
 
