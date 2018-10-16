@@ -201,7 +201,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     if movie.countries.first():
         country_code = movie.countries.first().code_name
-        gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru']).install()
+        t = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru'])
+        _ = t.gettext
         country = _(pycountry.countries.get(alpha2=country_code).name)
     else:
         country = ''
