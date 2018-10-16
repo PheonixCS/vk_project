@@ -12,7 +12,7 @@ log = logging.getLogger('posting.core.vk_helper')
 
 
 def is_ads_posted_recently(group):
-    api = create_vk_session_using_login_password(group.login, group.password, group.app_id).get_api()
+    api = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id).get_api()
     if api:
         ad_record = get_ad_in_last_hour(api, group.domain_or_id)
         if ad_record:
