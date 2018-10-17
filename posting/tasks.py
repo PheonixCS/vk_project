@@ -206,6 +206,12 @@ def post_movie(login, password, app_id, group_id, movie_id):
         t = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru'])
         _ = t.gettext
         country = _(pycountry.countries.get(alpha2=country_code).name)
+
+        country_map = {
+            'Соединенные штаты': 'США',
+            'Российская Федерация': 'Россия'
+        }
+        country = country_map.get(country, country)
     else:
         country = ''
 
