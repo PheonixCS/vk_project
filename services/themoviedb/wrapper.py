@@ -23,7 +23,8 @@ def send_request_to_api(path, **kwargs):
 
     if response.status_code != 200:
         log.error(f'TMDb API response: {response.status_code}\n URL: {response.url}')
-        raise Exception(f'TMDb API response: {response.status_code}\n URL: {response.url}')
+        # raise Exception(f'TMDb API response: {response.status_code}\n URL: {response.url}')
+        return {}
     return response.json()
 
 
@@ -40,6 +41,9 @@ def discover_movies():
                                              'vote_average.gte': min_average_rating,
                                              'language': 'ru-RU'}
                                           )['total_pages']
+        if not total_pages:
+            log.error('total_pages is empty')
+            continue
         log.debug(f'got {total_pages} total pages in the {year} year')
 
         for page_number in range(1, total_pages):
@@ -52,6 +56,10 @@ def discover_movies():
                                             'language': 'ru-RU'}
                                          )['results']
 
+            if not movies:
+                log.error('movies is empty')
+                continue
+
             for movie in movies:
                 log.debug(f'working with {movie["id"]} movie')
 
@@ -60,9 +68,18 @@ def discover_movies():
                                                  'append_to_response': 'videos,images',
                                                  'include_image_language': 'null'}
                                               )
+                if not details:
+                    log.error('details is empty')
+                    continue
 
                 countries = [country.get('iso_3166_1', 'US') for country in details.get('production_countries', [])]
                 if 'IN' in countries:
+                    continue
+
+                images = [f'{IMAGE_URL}{frame.get("file_path")}' for frame in
+                          details.get('images', {}).get('backdrops', []) if not frame.get('iso_639_1', True)]
+
+                if images and len(images) < 3:
                     continue
 
                 yield {
@@ -77,9 +94,7 @@ def discover_movies():
                                  if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube'],
                     'overview': details.get('overview', ''),
                     'poster': f'{IMAGE_URL}{details.get("poster_path")}',
-                    'images': [f'{IMAGE_URL}{frame.get("file_path")}'
-                               for frame in details.get('images', {}).get('backdrops', []) if
-                               not frame.get('iso_639_1', True)],
+                    'images': images,
                 }
 
     log.debug('discover_movies done')
