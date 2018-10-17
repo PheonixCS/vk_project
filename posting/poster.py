@@ -21,7 +21,7 @@ log = logging.getLogger('posting.poster')
 
 def create_vk_session_using_login_password(login, password, app_id):
     log.debug('create api called')
-    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id)
+    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION)
     try:
         vk_session.auth()
     except vk_api.AuthError as error_msg:
@@ -50,46 +50,38 @@ def download_file(url, extension=None):
 def delete_files(file_paths):
     log.debug('delete_files called with {} files'.format(len(file_paths)))
 
-    if isinstance(file_paths, str):
-        try:
-            os.remove(file_paths)
-        except FileNotFoundError as exc:
-            log.error('Fail to delete file {}'.format(exc))
-    else:
+    if isinstance(file_paths, list):
         for file in file_paths:
             try:
                 os.remove(file)
             except FileNotFoundError as exc:
                 log.error('Fail to delete file {}'.format(exc))
                 continue
+    elif isinstance(file_paths, str):
+        try:
+            os.remove(file_paths)
+        except FileNotFoundError as exc:
+            log.error('Fail to delete file {}'.format(exc))
+    else:
+        log.warning('delete_files got wrong type')
+        return
     log.debug('delete_files finished')
 
 
-def upload_video(session, api, video_url, group_id):
+def upload_video(session, video_local_filename, group_id, name, description):
     log.debug('upload_video called')
-
-    try:
-        video = api.video.get(videos=video_url)
-    except:
-        log.error('exception while getting video', exc_info=True)
-        return
-
-    files = video['items'][0]
-    key_of_max_size_photo = max([key for key in files], key=lambda x: int(x.split('_')[1]))
-    video_local_filename = download_file(files[key_of_max_size_photo], key_of_max_size_photo.split('_')[0])
 
     try:
         upload = vk_api.VkUpload(session)
         video = upload.video(video_file=video_local_filename,
-                             group_id=int(group_id))
+                             group_id=int(group_id),
+                             name=name,
+                             description=description)
     except:
         log.error('exception while uploading video', exc_info=True)
         return
 
-    if os.path.isfile(video_local_filename):
-        os.remove(video_local_filename)
-
-    return 'video{}_{}'.format(video[0]['owner_id'], video[0]['id'])
+    return 'video{}_{}'.format(video['owner_id'], video['video_id'])
 
 
 def upload_gif(session, gif_url):

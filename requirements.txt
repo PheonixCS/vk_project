@@ -23,8 +23,11 @@ pluggy==0.7.1
 psycopg2==2.7.4
 psycopg2-binary==2.7.4
 py==1.5.4
+pycountry==1.0
 pytesseract==0.2.4
+pytube==9.3.0
 pytz==2018.4
+ratelimit==2.2.0
 raven==6.9.0
 requests==2.18.4
 sentry-sdk==0.3.6

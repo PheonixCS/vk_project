@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Count
+from random import randint
 
 
 class Donor(models.Model):
@@ -112,3 +114,60 @@ class Horoscope(models.Model):
     image_url = models.CharField(max_length=256, null=True)
     post_in_donor_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
+
+
+class Movie(models.Model):
+    title = models.CharField(max_length=256)
+    rating = models.FloatField(null=True)
+    release_year = models.IntegerField(null=True)
+    runtime = models.CharField(null=True, max_length=16)
+    overview = models.CharField(max_length=2048, null=True)
+    poster = models.CharField(max_length=256)
+    post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
+
+
+class ProductionCountry(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='countries')
+    code_name = models.CharField(max_length=8)
+
+
+class Genre(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='genres')
+    name = models.CharField(max_length=64)
+
+
+class TrailerManager(models.Manager):
+    def random(self):
+        count = self.aggregate(ids=Count('id'))['ids']
+        random_index = randint(0, count - 1)
+        return self.all()[random_index]
+
+
+class Trailer(models.Model):
+    NEW_STATUS = 1
+    PENDING_STATUS = 2
+    DOWNLOADED_STATUS = 3
+    UPLOADED_STATUS = 4
+    POSTED_STATUS = 5
+    FAILED_STATUS = 6
+
+    STATUS_CHOICES = (
+        (NEW_STATUS, 'new'),
+        (PENDING_STATUS, 'pending'),
+        (DOWNLOADED_STATUS, 'downloaded'),
+        (UPLOADED_STATUS, 'uploaded'),
+        (POSTED_STATUS, 'posted'),
+        (FAILED_STATUS, 'failed')
+    )
+    status = models.IntegerField(choices=STATUS_CHOICES, default=NEW_STATUS, verbose_name='Статус')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='trailers')
+    url = models.CharField(max_length=128)
+    # TODO it should be django's file field, but i'm hurry (and lazy)
+    file_path = models.CharField(max_length=128)
+
+    objects = TrailerManager()
+
+
+class Frame(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='frames')
+    url = models.CharField(max_length=256)
