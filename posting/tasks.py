@@ -212,7 +212,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
                           f'{country}{", " if country else ""}'\
-                          f'{", ".join(movie.genres.all().values_list("name", flat=True)[:3])}, ' \
+                          f'{", ".join(movie.genres.all().values_list("name", flat=True)[:2])}, ' \
                           f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
 
     video_description = f'{trailer_information}\n\n{movie.overview}'
@@ -239,7 +239,6 @@ def post_movie(login, password, app_id, group_id, movie_id):
     else:
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
-        pass
 
     trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
