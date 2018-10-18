@@ -76,7 +76,8 @@ def upload_video(session, video_local_filename, group_id, name, description):
         video = upload.video(video_file=video_local_filename,
                              group_id=int(group_id),
                              name=name,
-                             description=description)
+                             description=description,
+                             no_comments=True)
     except:
         log.error('exception while uploading video', exc_info=True)
         return
