@@ -76,10 +76,10 @@ def examine_groups():
         else:
             last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
 
-        log.debug(f'got {last_hour_posts_count} posts in last hour and 5 minutes')
+        log.debug(f'got {last_hour_posts_count} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes')
+        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
 
         movies_condition = (
             group.is_movies
@@ -87,6 +87,7 @@ def examine_groups():
         )
 
         if movies_condition:
+            log.debug(f'{group.domain_or_id} in movies condition')
             if is_ads_posted_recently(group):
                 continue
 
@@ -108,23 +109,25 @@ def examine_groups():
             and not last_hour_ads_count)
 
         if horoscope_condition:
+            log.debug(f'{group.domain_or_id} in horosopes condition')
             if is_ads_posted_recently(group):
                 continue
 
-            horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
-                                                          post_in_donor_date__gt=today_start).last().id
-            if horoscope_record_id:
+            horoscope_record = group.horoscopes.filter(post_in_group_date__isnull=True,
+                                                       post_in_donor_date__gt=today_start).last()
+            if horoscope_record:
                 post_horoscope.delay(group.user.login,
                                      group.user.password,
                                      group.user.app_id,
                                      group.group_id,
-                                     horoscope_record_id)
+                                     horoscope_record.id)
                 continue
             else:
                 log.warning('got no horoscopes records')
 
         if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count\
                 and not group.is_movies:
+            log.debug(f'{group.domain_or_id} in common condition')
 
             if is_ads_posted_recently(group):
                 continue
@@ -208,7 +211,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
         country = _(pycountry.countries.get(alpha2=country_code).name)
 
         country_map = {
-            'Соединенные штаты': 'США',
+            'Соединённые штаты': 'США',
             'Российская Федерация': 'Россия'
         }
         country = country_map.get(country, country)
