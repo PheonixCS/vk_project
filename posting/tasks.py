@@ -111,14 +111,14 @@ def examine_groups():
             if is_ads_posted_recently(group):
                 continue
 
-            horoscope_record_id = group.horoscopes.filter(post_in_group_date__isnull=True,
-                                                          post_in_donor_date__gt=today_start).last().id
-            if horoscope_record_id:
+            horoscope_record = group.horoscopes.filter(post_in_group_date__isnull=True,
+                                                       post_in_donor_date__gt=today_start).last()
+            if horoscope_record:
                 post_horoscope.delay(group.user.login,
                                      group.user.password,
                                      group.user.app_id,
                                      group.group_id,
-                                     horoscope_record_id)
+                                     horoscope_record.id)
                 continue
             else:
                 log.warning('got no horoscopes records')
