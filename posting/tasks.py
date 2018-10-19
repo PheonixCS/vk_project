@@ -249,7 +249,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
 
-    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+    trailer_link = f'Смотреть: vk.com/{uploaded_trailer}'
 
     record_text = f'{trailer_name}\n\n' \
                   f'{trailer_information}\n\n' \
