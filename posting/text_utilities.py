@@ -22,11 +22,11 @@ def replace_russian_with_english_letters(text):
         'В': 'B',
         'Р': 'P',
         'М': 'M',
-        'и': 'u',
-        '1': 'I',
-        'м': 'm',
-        'к': 'k',
-        'Ы': 'bI'
+        # 'и': 'u',
+        # '1': 'I',
+        # 'м': 'm',
+        # 'к': 'k',
+        # 'Ы': 'bI'
     }
     # Comment because of
     # result_text = ''
