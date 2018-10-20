@@ -122,13 +122,9 @@ class Movie(models.Model):
     release_year = models.IntegerField(null=True)
     runtime = models.CharField(null=True, max_length=16)
     overview = models.CharField(max_length=2048, null=True)
-    poster = models.CharField(max_length=256)
+    poster = models.CharField(max_length=256, null=True)
+    production_country_code = models.CharField(max_length=2, null=True)
     post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
-
-
-class ProductionCountry(models.Model):
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='countries')
-    code_name = models.CharField(max_length=8)
 
 
 class Genre(models.Model):

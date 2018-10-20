@@ -93,15 +93,11 @@ def save_movie_to_db(movie):
         defaults={
             'rating': movie['rating'],
             'overview': movie['overview'],
-            'poster': movie['poster']
+            'poster': movie['poster'],
+            'production_country_code': movie['country']
         }
     )
     if created:
-        for country in movie['countries']:
-            ProductionCountry.objects.create(
-                movie=obj,
-                code_name=country
-            )
         for genre in movie['genres']:
             Genre.objects.create(
                 movie=obj,

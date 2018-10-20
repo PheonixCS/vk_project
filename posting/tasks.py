@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 from random import choice, shuffle
-import pycountry
-import gettext
 
 import vk_api
 from celery import task
@@ -28,7 +26,8 @@ from posting.poster import (
     is_all_images_not_horizontal,
     delete_files,
     get_group_week_statistics,
-    find_the_best_post
+    find_the_best_post,
+    get_country_name_by_code
 )
 from posting.core.horoscopes import generate_special_group_reference
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
@@ -204,19 +203,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     attachments = []
 
-    if movie.countries.first():
-        country_code = movie.countries.first().code_name
-        t = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru'])
-        _ = t.gettext
-        country = _(pycountry.countries.get(alpha2=country_code).name)
-
-        country_map = {
-            'Соединённые штаты': 'США',
-            'Российская Федерация': 'Россия'
-        }
-        country = country_map.get(country, country)
-    else:
-        country = ''
+    country_code = movie.production_country_code
+    country = get_country_name_by_code(country_code) if country_code else ''
 
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
