@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from random import shuffle
 
 import requests
 from constance import config
@@ -26,6 +27,16 @@ def send_request_to_api(path, **kwargs):
         # raise Exception(f'TMDb API response: {response.status_code}\n URL: {response.url}')
         return {}
     return response.json()
+
+
+def find_suitable_images(images):
+    images_sizes = set(map(lambda x: (x['height'], x['width']), images))
+    grouped_images = [[image for image in images if image['height'] in size and image['width'] in size]
+                      for size in images_sizes]
+    grouped_images = [group for group in grouped_images if not len(group) < 3]
+    suitable_images = max(grouped_images, key=lambda x: (x[0]['height'], x[0]['width']))
+    shuffle(suitable_images)
+    return [f'{IMAGE_URL}{image["file_path"]}' for image in suitable_images[:3]]
 
 
 def discover_movies():
@@ -76,10 +87,9 @@ def discover_movies():
                 if 'IN' in countries:
                     continue
 
-                images = [f'{IMAGE_URL}{frame.get("file_path")}' for frame in
-                          details.get('images', {}).get('backdrops', []) if not frame.get('iso_639_1', True)]
-
-                if images and len(images) < 3:
+                frames = [frame for frame in details.get('images', {}).get('backdrops', []) if not frame['iso_639_1']]
+                images = find_suitable_images(frames)
+                if not images:
                     continue
 
                 yield {
