@@ -27,7 +27,8 @@ from posting.poster import (
     delete_files,
     get_group_week_statistics,
     find_the_best_post,
-    get_country_name_by_code
+    get_country_name_by_code,
+    merge_poster_and_three_images
 )
 from posting.core.horoscopes import generate_special_group_reference
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
@@ -215,18 +216,11 @@ def post_movie(login, password, app_id, group_id, movie_id):
     video_description = f'{trailer_information}\n\n{movie.overview}'
 
     images = [frame.url for frame in movie.frames.all()]
-    log.debug(f'movie {movie.title}: got {len(images)} images')
-    if images:
-        shuffle(images)
-        images = images[:3]
-    images.append(movie.poster)
-    images.reverse()
-    log.debug(f'movie {movie.title}: prepare {images} images to post')
-
     image_files = [download_file(image) for image in images]
 
-    for image_local_filename in image_files:
-        attachments.append(upload_photo(session, image_local_filename, group_id))
+    attachments.append(upload_photo(session,
+                                    merge_poster_and_three_images(download_file(movie.poster), image_files),
+                                    group_id))
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
