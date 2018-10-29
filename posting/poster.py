@@ -292,10 +292,10 @@ def calculate_size_from_one_side(origin_width, origin_height, width=None, height
     r_width, r_height = origin_width, origin_height
 
     if width:
-        r_width, r_height = width, int(width/origin_width*origin_height)
+        r_width, r_height = int(width), int(width/origin_width*origin_height)
 
     if height:
-        r_width, r_height = int(origin_width/origin_height*height), height
+        r_width, r_height = int(origin_width/origin_height*height), int(height)
 
     log.debug('calculate_size_from_one_side finished with sizes orig - {}:{}, new - {}:{}'.format(
         origin_width, origin_height, r_width, r_height
@@ -315,7 +315,7 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
     else:
         new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
 
-    image_object.thumbnail(new_size, Image.ANTIALIAS)
+    return image_object.resize(new_size, Image.ANTIALIAS)
 
 
 def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
@@ -323,7 +323,7 @@ def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None)
 
     new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
-    image_object.thumbnail(new_size, Image.ANTIALIAS)
+    return image_object.resize(new_size)
 
 
 def merge_poster_and_three_images(poster, images):
@@ -332,13 +332,39 @@ def merge_poster_and_three_images(poster, images):
     offset = config.SIX_IMAGES_OFFSET
     filepath = f'temp_{poster}'
 
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in images]
     poster_width, poster_height = Image.open(os.path.join(settings.BASE_DIR, poster)).size
-    image_width, image_height = Image.open(os.path.join(settings.BASE_DIR, images[0])).size
+    print(poster_width, poster_height)
 
-    result = Image.new('RGB', (image_width * 2 + offset, image_height * 3 + offset * 2), 'White')
+    poster_image_object = Image.open(os.path.join(settings.BASE_DIR, poster))
 
+    required_width = min([size[0] for size in images_sizes])
+    required_height = min([size[1] for size in images_sizes])
 
+    height = required_height * 3 + offset * 2
 
+    poster_width, poster_height = calculate_size_from_one_side(poster_width, poster_height, height=height)
+
+    width = poster_width + offset + required_width
+
+    print(width, height, poster_width, poster_height)
+
+    result = Image.new('RGB', (width, height), 'White')
+    poster_image_object = resize_image_aspect_ratio_by_two_sides(poster_image_object, width=poster_width, height=height)
+    cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
+    result.paste(cropped)
+
+    for index, image in enumerate(images):
+        x = poster_width + offset
+        y = index*(required_height + offset)
+
+        img_object = Image.open(os.path.join(settings.BASE_DIR, image))
+        img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
+
+        cropped = img_object.crop((0, 0, required_width, required_height))
+        result.paste(cropped, (x, y, x + required_width, y + required_height))
+
+    result.save(filepath, 'JPEG', quality=95, progressive=True)
     log.debug('merge_poster_and_three_images finished')
     return filepath
 
@@ -361,12 +387,12 @@ def merge_six_images_into_one(files):
         y = index // 3 * (min_height + offset)
 
         img = Image.open(os.path.join(settings.BASE_DIR, img_file_name))
-        resize_image_aspect_ratio_by_two_sides(img, width=min_width, height=min_height)
+        img = resize_image_aspect_ratio_by_two_sides(img, width=min_width, height=min_height)
 
         cropped = img.crop((0, 0, min_width, min_height))
         result.paste(cropped, (x, y, x + min_width, y + min_height))
 
-    resize_image_aspect_ratio_by_one_side(result, width=config.SIX_IMAGES_WIDTH)
+    result = resize_image_aspect_ratio_by_one_side(result, width=config.SIX_IMAGES_WIDTH)
     result.save(filepath, 'JPEG', quality=95, progressive=True)
 
     log.debug('merge_six_images_into_one finished')
