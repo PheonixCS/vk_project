@@ -68,8 +68,8 @@ def paste_text_to_center(img_obj, font_obj, text, text_type):
     if not is_text_fit_to_width(text, len(text), image_width - width_offset, font_obj):
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width - width_offset, font_obj)
         wrapped_text = wrap(text, text_max_width_in_chars)
-
-        text_width = font_obj.getsize(max(wrapped_text, key=len))[0]
+        max_text = max(wrapped_text, key=lambda line: font_obj.getsize(line)[0])
+        text_width = font_obj.getsize(max_text)[0]
         text_height = font_obj.getsize(wrapped_text[0])[1] * len(wrapped_text) + 10*(len(wrapped_text)-1)
 
         if text_height >= custom_height:
