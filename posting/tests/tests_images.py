@@ -30,10 +30,10 @@ class ImagesTests(TestCase):
 
     def test_horoscope_image(self):
         text = '20 of september, Text\n' \
-               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sodales vehicula ligula at finibus.' \
-               ' Donec elementum risus orci, vitae semper augue lobortis sit amet. Morbi porttitor, arcu in ultricies' \
-               ' bibendum, lectus leo malesuada sem, in ultrices lacus nunc hendrerit urna. Nam eu vulputate orci. ' \
-               'Vivamus sed bibendum felis. Aenean tempor.'
+               'Нестабильный, двойственный день, он будет намного лучше, если вы сможете заранее его спланировать. ' \
+               'В этот день не рекомендуюся перестановки в доме, начало новых дел, смена места работы или проживания.' \
+               'Постарайтесь избегать сегодня проявления негативных эмоций и агрессии, пусть в вашей душе царит покой' \
+               ' и равновесие.'
 
         file_name = 'horoscopes{}.jpg'.format(hash(text) % 1000)
 
