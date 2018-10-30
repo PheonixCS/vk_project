@@ -329,7 +329,7 @@ def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None)
 def merge_poster_and_three_images(poster, images):
     log.debug('merge_poster_and_three_images called')
 
-    offset = config.SIX_IMAGES_OFFSET
+    offset = 3*config.SIX_IMAGES_OFFSET
     filepath = f'temp_{poster}'
 
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in images]
