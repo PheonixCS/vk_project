@@ -28,7 +28,8 @@ from posting.poster import (
     get_group_week_statistics,
     find_the_best_post,
     get_country_name_by_code,
-    merge_poster_and_three_images
+    merge_poster_and_three_images,
+    get_next_interval_by_movie_rating
 )
 from posting.core.horoscopes import generate_special_group_reference
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
@@ -91,7 +92,10 @@ def examine_groups():
             if is_ads_posted_recently(group):
                 continue
 
-            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS).last()
+            last_posted_movie = Movie.objects.latest('post_in_group_date')
+            next_rating_interval = get_next_interval_by_movie_rating(last_posted_movie.rating)
+            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
+                                         rating__in=next_rating_interval).last()
 
             if movie:
                 post_movie.delay(
