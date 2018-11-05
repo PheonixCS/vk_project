@@ -335,7 +335,6 @@ def merge_poster_and_three_images(poster, images):
 
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in images]
     poster_width, poster_height = Image.open(os.path.join(settings.BASE_DIR, poster)).size
-    print(poster_width, poster_height)
 
     poster_image_object = Image.open(os.path.join(settings.BASE_DIR, poster))
 
@@ -348,12 +347,13 @@ def merge_poster_and_three_images(poster, images):
 
     width = poster_width + offset + required_width
 
-    print(width, height, poster_width, poster_height)
-
-    result = Image.new('RGB', (width, height), 'White')
-    poster_image_object = resize_image_aspect_ratio_by_two_sides(poster_image_object, width=poster_width, height=height)
-    cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
-    result.paste(cropped)
+    try:
+        result = Image.new('RGB', (width, height), 'White')
+        poster_image_object = resize_image_aspect_ratio_by_two_sides(poster_image_object, width=poster_width, height=height)
+        cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
+        result.paste(cropped)
+    except:
+        log.error('', exc_info=True)
 
     for index, image in enumerate(images):
         x = poster_width + offset
