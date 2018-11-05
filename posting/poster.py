@@ -371,6 +371,7 @@ def merge_poster_and_three_images(poster, images):
             img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
             log.debug('cropping')
             cropped = img_object.crop((0, 0, required_width, required_height))
+            cropped.load()
             log.debug('pasting')
             result.paste(cropped, (x, y, x + required_width, y + required_height))
             log.debug('end of for body')
