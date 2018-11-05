@@ -102,7 +102,7 @@ def discover_movies():
                     'title': details.get('title', ''),
                     'rating': details.get('vote_average', min_average_rating),
                     'release_year': datetime.strptime(details.get('release_date', start_year), '%Y-%m-%d').year,
-                    'country': countries[0],
+                    'country': countries[0] if countries else '',
                     'genres': [genre.get('name') for genre in details.get('genres', [])],
                     'runtime': details.get('runtime', 120),
                     'trailer': choice(trailers),
