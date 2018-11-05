@@ -22,7 +22,7 @@ from scraping.core.vk_helper import (
     get_users_sex_by_ids
 )
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
-    Movie, ProductionCountry, Genre, Trailer, Frame
+    Movie, Genre, Trailer, Frame
 
 log = logging.getLogger('scraping.scraper')
 

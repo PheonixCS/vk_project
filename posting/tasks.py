@@ -257,6 +257,9 @@ def post_movie(login, password, app_id, group_id, movie_id):
     movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     movie.save(update_fields=['post_in_group_date'])
 
+    trailer.status = Trailer.POSTED_STATUS
+    trailer.save(update_fields=['status'])
+
     log.debug(f'{post_response} in group {group_id}')
 
     delete_files(image_files)
