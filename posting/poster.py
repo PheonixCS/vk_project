@@ -359,7 +359,7 @@ def merge_poster_and_three_images(poster, images):
         cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
         cropped = cropped.load()
         log.debug('paste')
-        result.paste(cropped)
+        result.paste(cropped, (0, 0, poster_width, poster_height))
         log.debug('for starts')
         for index, image in enumerate(images):
             x = poster_width + offset
