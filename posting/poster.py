@@ -347,7 +347,8 @@ def merge_poster_and_three_images(poster, images):
 
     log.debug('calculate poster width and height')
     poster_width, poster_height = calculate_size_from_one_side(poster_width, poster_height, height=height)
-
+    poster_height = int(poster_height)
+    poster_width = int(poster_width)
     width = poster_width + offset + required_width
 
     try:
