@@ -316,7 +316,7 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
     else:
         new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
 
-    return image_object.resize(new_size, Image.ANTIALIAS)
+    return image_object.resize(new_size)
 
 
 def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
