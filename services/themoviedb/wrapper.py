@@ -34,7 +34,7 @@ def find_suitable_images(images):
     grouped_images = [[image for image in images if image['height'] in size and image['width'] in size]
                       for size in images_sizes]
     grouped_images = [group for group in grouped_images if not len(group) < 3]
-    suitable_images = max(grouped_images, key=lambda x: (x[0]['height'], x[0]['width']))
+    suitable_images = max(grouped_images, key=lambda x: (x[0]['height'], x[0]['width'])) if grouped_images else []
     shuffle(suitable_images)
     return [f'{IMAGE_URL}{image["file_path"]}' for image in suitable_images[:3]]
 
