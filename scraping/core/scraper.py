@@ -103,11 +103,10 @@ def save_movie_to_db(movie):
                 movie=obj,
                 name=genre
             )
-        for trailer in movie['trailers']:
-            Trailer.objects.create(
-                movie=obj,
-                url=trailer
-            )
+        Trailer.objects.create(
+            movie=obj,
+            url=movie['trailer']
+        )
         for frame in movie['images']:
             Frame.objects.create(
                 movie=obj,

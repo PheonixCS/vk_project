@@ -105,7 +105,7 @@ def discover_movies():
                     'country': countries[0],
                     'genres': [genre.get('name') for genre in details.get('genres', [])],
                     'runtime': details.get('runtime', 120),
-                    'trailers': choice(trailers),
+                    'trailer': choice(trailers),
                     'overview': details.get('overview', ''),
                     'poster': f'{IMAGE_URL}{details.get("poster_path")}',
                     'images': images,
