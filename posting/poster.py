@@ -352,18 +352,19 @@ def merge_poster_and_three_images(poster, images):
         poster_image_object = resize_image_aspect_ratio_by_two_sides(poster_image_object, width=poster_width, height=height)
         cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
         result.paste(cropped)
+
+        for index, image in enumerate(images):
+            x = poster_width + offset
+            y = index*(required_height + offset)
+    
+            img_object = Image.open(os.path.join(settings.BASE_DIR, image))
+            img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
+
+            cropped = img_object.crop((0, 0, required_width, required_height))
+            result.paste(cropped, (x, y, x + required_width, y + required_height))
+
     except:
         log.error('', exc_info=True)
-
-    for index, image in enumerate(images):
-        x = poster_width + offset
-        y = index*(required_height + offset)
-
-        img_object = Image.open(os.path.join(settings.BASE_DIR, image))
-        img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
-
-        cropped = img_object.crop((0, 0, required_width, required_height))
-        result.paste(cropped, (x, y, x + required_width, y + required_height))
 
     result.save(filepath, 'JPEG', quality=95, progressive=True)
     log.debug('merge_poster_and_three_images finished')
