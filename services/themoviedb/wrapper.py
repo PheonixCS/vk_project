@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from random import shuffle
+from random import shuffle, choice
 
 import requests
 from constance import config
@@ -92,6 +92,12 @@ def discover_movies():
                 if not images:
                     continue
 
+                trailers = [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
+                            for video in details.get('videos', {}).get('results', [])
+                            if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube']
+                if not trailers:
+                    continue
+
                 yield {
                     'title': details.get('title', ''),
                     'rating': details.get('vote_average', min_average_rating),
@@ -99,9 +105,7 @@ def discover_movies():
                     'country': countries[0],
                     'genres': [genre.get('name') for genre in details.get('genres', [])],
                     'runtime': details.get('runtime', 120),
-                    'trailers': [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
-                                 for video in details.get('videos', {}).get('results', [])
-                                 if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube'],
+                    'trailers': choice(trailers),
                     'overview': details.get('overview', ''),
                     'poster': f'{IMAGE_URL}{details.get("poster_path")}',
                     'images': images,
