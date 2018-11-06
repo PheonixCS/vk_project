@@ -105,6 +105,8 @@ def examine_groups():
                     group.group_id,
                     movie.id
                 )
+            else:
+                log.warning('got no movie')
 
         horoscope_condition = (
             group.is_horoscopes
