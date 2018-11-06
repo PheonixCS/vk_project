@@ -93,7 +93,9 @@ def examine_groups():
                 continue
 
             last_posted_movie = Movie.objects.latest('post_in_group_date')
+            log.debug(f'last posted movie id: {last_posted_movie.id or None}')
             next_rating_interval = get_next_interval_by_movie_rating(last_posted_movie.rating)
+            log.debug(f'next rating interval {next_rating_interval}')
             movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
                                          rating__in=next_rating_interval).last()
 
