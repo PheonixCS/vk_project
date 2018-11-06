@@ -89,7 +89,7 @@ def examine_groups():
 
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
-            if is_ads_posted_recently(group):
+            if is_ads_posted_recently(group) and not config.IS_DEV:
                 continue
 
             last_posted_movie = Movie.objects.latest('post_in_group_date')
