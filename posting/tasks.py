@@ -92,7 +92,7 @@ def examine_groups():
             if is_ads_posted_recently(group) and not config.IS_DEV:
                 continue
 
-            last_posted_movie = Movie.objects.latest('post_in_group_date')
+            last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
             log.debug(f'last posted movie id: {last_posted_movie.id or None}')
             next_rating_interval = get_next_interval_by_movie_rating(last_posted_movie.rating)
             log.debug(f'next rating interval {next_rating_interval}')
