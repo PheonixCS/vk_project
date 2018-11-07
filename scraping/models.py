@@ -159,7 +159,7 @@ class Trailer(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='trailers')
     url = models.CharField(max_length=128)
     # TODO it should be django's file field, but i'm hurry (and lazy)
-    file_path = models.CharField(max_length=128)
+    file_path = models.CharField(max_length=256)
 
     objects = TrailerManager()
 
