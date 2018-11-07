@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 from random import choice, shuffle
-import pycountry
-import gettext
 
 import vk_api
 from celery import task
@@ -28,7 +26,10 @@ from posting.poster import (
     is_all_images_not_horizontal,
     delete_files,
     get_group_week_statistics,
-    find_the_best_post
+    find_the_best_post,
+    get_country_name_by_code,
+    merge_poster_and_three_images,
+    get_next_interval_by_movie_rating
 )
 from posting.core.horoscopes import generate_special_group_reference
 from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
@@ -88,10 +89,15 @@ def examine_groups():
 
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
-            if is_ads_posted_recently(group):
+            if is_ads_posted_recently(group) and not config.IS_DEV:
                 continue
 
-            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS).last()
+            last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
+            log.debug(f'last posted movie id: {last_posted_movie.id or None}')
+            next_rating_interval = get_next_interval_by_movie_rating(last_posted_movie.rating)
+            log.debug(f'next rating interval {next_rating_interval}')
+            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
+                                         rating__in=next_rating_interval).last()
 
             if movie:
                 post_movie.delay(
@@ -101,6 +107,8 @@ def examine_groups():
                     group.group_id,
                     movie.id
                 )
+            else:
+                log.warning('got no movie')
 
         horoscope_condition = (
             group.is_horoscopes
@@ -204,19 +212,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     attachments = []
 
-    if movie.countries.first():
-        country_code = movie.countries.first().code_name
-        t = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['ru'])
-        _ = t.gettext
-        country = _(pycountry.countries.get(alpha2=country_code).name)
-
-        country_map = {
-            'Соединённые штаты': 'США',
-            'Российская Федерация': 'Россия'
-        }
-        country = country_map.get(country, country)
-    else:
-        country = ''
+    country_code = movie.production_country_code
+    country = get_country_name_by_code(country_code) if country_code else ''
 
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
@@ -227,18 +224,11 @@ def post_movie(login, password, app_id, group_id, movie_id):
     video_description = f'{trailer_information}\n\n{movie.overview}'
 
     images = [frame.url for frame in movie.frames.all()]
-    log.debug(f'movie {movie.title}: got {len(images)} images')
-    if images:
-        shuffle(images)
-        images = images[:3]
-    images.append(movie.poster)
-    images.reverse()
-    log.debug(f'movie {movie.title}: prepare {images} images to post')
-
     image_files = [download_file(image) for image in images]
 
-    for image_local_filename in image_files:
-        attachments.append(upload_photo(session, image_local_filename, group_id))
+    attachments.append(upload_photo(session,
+                                    merge_poster_and_three_images(download_file(movie.poster), image_files),
+                                    group_id))
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
@@ -270,6 +260,9 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     movie.save(update_fields=['post_in_group_date'])
+
+    trailer.status = Trailer.POSTED_STATUS
+    trailer.save(update_fields=['status'])
 
     log.debug(f'{post_response} in group {group_id}')
 

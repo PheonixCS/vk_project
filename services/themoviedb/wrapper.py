@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from random import shuffle, choice
 
 import requests
 from constance import config
@@ -26,6 +27,16 @@ def send_request_to_api(path, **kwargs):
         # raise Exception(f'TMDb API response: {response.status_code}\n URL: {response.url}')
         return {}
     return response.json()
+
+
+def find_suitable_images(images):
+    images_sizes = set(map(lambda x: (x['height'], x['width']), images))
+    grouped_images = [[image for image in images if image['height'] in size and image['width'] in size]
+                      for size in images_sizes]
+    grouped_images = [group for group in grouped_images if not len(group) < 3]
+    suitable_images = max(grouped_images, key=lambda x: (x[0]['height'], x[0]['width'])) if grouped_images else []
+    shuffle(suitable_images)
+    return [f'{IMAGE_URL}{image["file_path"]}' for image in suitable_images[:3]]
 
 
 def discover_movies():
@@ -76,22 +87,25 @@ def discover_movies():
                 if 'IN' in countries:
                     continue
 
-                images = [f'{IMAGE_URL}{frame.get("file_path")}' for frame in
-                          details.get('images', {}).get('backdrops', []) if not frame.get('iso_639_1', True)]
+                frames = [frame for frame in details.get('images', {}).get('backdrops', []) if not frame['iso_639_1']]
+                images = find_suitable_images(frames)
+                if not images:
+                    continue
 
-                if images and len(images) < 3:
+                trailers = [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
+                            for video in details.get('videos', {}).get('results', [])
+                            if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube']
+                if not trailers:
                     continue
 
                 yield {
                     'title': details.get('title', ''),
                     'rating': details.get('vote_average', min_average_rating),
                     'release_year': datetime.strptime(details.get('release_date', start_year), '%Y-%m-%d').year,
-                    'countries': countries,
+                    'country': countries[0] if countries else '',
                     'genres': [genre.get('name') for genre in details.get('genres', [])],
                     'runtime': details.get('runtime', 120),
-                    'trailers': [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
-                                 for video in details.get('videos', {}).get('results', [])
-                                 if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube'],
+                    'trailer': choice(trailers),
                     'overview': details.get('overview', ''),
                     'poster': f'{IMAGE_URL}{details.get("poster_path")}',
                     'images': images,
