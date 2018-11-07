@@ -13,6 +13,13 @@ class ImagesTests(TestCase):
     #     result = poster.merge_six_images_into_one(files)
     #
     #     self.assertEqual(result, 'temp_1test.jpg')
+    #
+    def test_merging_horoscopes(self):
+        files = ['film{}.jpg'.format(num) for num in range(1, 4)]
+        poster_file = 'poster.jpg'
+        result = poster.merge_poster_and_three_images(poster_file, files)
+
+        self.assertEqual(result, 'temp_poster.jpg')
 
     def test_size_calculation_width(self):
         origin_size = (1920, 1080)

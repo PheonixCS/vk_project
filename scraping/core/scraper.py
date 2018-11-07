@@ -22,7 +22,7 @@ from scraping.core.vk_helper import (
     get_users_sex_by_ids
 )
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
-    Movie, ProductionCountry, Genre, Trailer, Frame
+    Movie, Genre, Trailer, Frame
 
 log = logging.getLogger('scraping.scraper')
 
@@ -93,25 +93,20 @@ def save_movie_to_db(movie):
         defaults={
             'rating': movie['rating'],
             'overview': movie['overview'],
-            'poster': movie['poster']
+            'poster': movie['poster'],
+            'production_country_code': movie['country']
         }
     )
     if created:
-        for country in movie['countries']:
-            ProductionCountry.objects.create(
-                movie=obj,
-                code_name=country
-            )
         for genre in movie['genres']:
             Genre.objects.create(
                 movie=obj,
                 name=genre
             )
-        for trailer in movie['trailers']:
-            Trailer.objects.create(
-                movie=obj,
-                url=trailer
-            )
+        Trailer.objects.create(
+            movie=obj,
+            url=movie['trailer']
+        )
         for frame in movie['images']:
             Frame.objects.create(
                 movie=obj,

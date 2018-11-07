@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 from celery import task
 from constance import config
 from django.utils import timezone
+from random import choice
 
+from posting.poster import get_movies_rating_intervals
 from scraping.core.scraper import main, save_movie_to_db
 from scraping.models import Record, Horoscope, Trailer
 from services.themoviedb.wrapper import discover_movies
@@ -55,27 +57,35 @@ def delete_old_horoscope_records():
 def download_youtube_trailers():
     log.debug('download_youtube_trailers start analyzing')
 
-    downloaded_count = Trailer.objects.filter(status=Trailer.DOWNLOADED_STATUS).count()
+    downloaded_trailers = Trailer.objects.filter(status=Trailer.DOWNLOADED_STATUS)
+    downloaded_count = downloaded_trailers.count()
+
+    rating_intervals = get_movies_rating_intervals()
 
     if downloaded_count < config.TMDB_MIN_TRAILERS_COUNT:
         log.debug('download_youtube_trailers start downloading')
 
-        trailer = Trailer.objects.random()
+        for trailer in downloaded_trailers:
+            movie_rating_interval = [rating for interval in rating_intervals for rating in interval
+                                     if trailer.movie.rating in interval]
+            rating_intervals.remove(movie_rating_interval)
 
-        trailer.status = Trailer.PENDING_STATUS
-        trailer.save(update_fields=['status'])
+        for rating_interval in rating_intervals:
+            trailer = choice(Trailer.objects.filter(status=Trailer.NEW_STATUS,
+                                                    movie__rating__in=rating_interval))
 
-        trailer_path = download_trailer(trailer.url)
-        if not trailer_path:
-            trailer.status = Trailer.FAILED_STATUS
-            # TODO beware of endless loop
-            download_youtube_trailers.delay()
-            return
-        trailer.file_path = trailer_path
+            trailer.status = Trailer.PENDING_STATUS
+            trailer.save(update_fields=['status'])
 
-        trailer.status = Trailer.DOWNLOADED_STATUS
-        trailer.save(update_fields=['file_path', 'status'])
+            trailer_path = download_trailer(trailer.url)
+            if not trailer_path:
+                trailer.status = Trailer.FAILED_STATUS
+                # TODO beware of endless loop
+                download_youtube_trailers.delay()
+                return
+            trailer.file_path = trailer_path
+
+            trailer.status = Trailer.DOWNLOADED_STATUS
+            trailer.save(update_fields=['file_path', 'status'])
+
         log.debug('finish downloading trailer')
-
-
-

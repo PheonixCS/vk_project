@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from posting.extras.transforms import RGBTransform
 from scraping.core.vk_helper import get_wall
+from posting.core.countries import countries_map
 
 log = logging.getLogger('posting.poster')
 
@@ -292,10 +293,10 @@ def calculate_size_from_one_side(origin_width, origin_height, width=None, height
     r_width, r_height = origin_width, origin_height
 
     if width:
-        r_width, r_height = width, int(width/origin_width*origin_height)
+        r_width, r_height = int(width), int(width/origin_width*origin_height)
 
     if height:
-        r_width, r_height = int(origin_width/origin_height*height), height
+        r_width, r_height = int(origin_width/origin_height*height), int(height)
 
     log.debug('calculate_size_from_one_side finished with sizes orig - {}:{}, new - {}:{}'.format(
         origin_width, origin_height, r_width, r_height
@@ -314,8 +315,8 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
         new_size = calculate_size_from_one_side(orig_width, orig_height, height=height)
     else:
         new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
-
-    image_object.thumbnail(new_size, Image.ANTIALIAS)
+    log.debug('resize_image_aspect_ratio_by_two_sides finished')
+    return image_object.resize(new_size)
 
 
 def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
@@ -323,7 +324,51 @@ def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None)
 
     new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
-    image_object.thumbnail(new_size, Image.ANTIALIAS)
+    return image_object.resize(new_size)
+
+
+def merge_poster_and_three_images(poster, images):
+    log.debug('merge_poster_and_three_images called')
+
+    offset = 3*config.SIX_IMAGES_OFFSET
+    filepath = f'temp_{poster}'
+
+    images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in images]
+    poster_width, poster_height = Image.open(os.path.join(settings.BASE_DIR, poster)).size
+
+    poster_image_object = Image.open(os.path.join(settings.BASE_DIR, poster))
+
+    required_width = min([size[0] for size in images_sizes])
+    required_height = min([size[1] for size in images_sizes])
+    height = required_height * 3 + offset * 2
+
+    poster_width, poster_height = calculate_size_from_one_side(poster_width, poster_height, height=height)
+    poster_height = int(poster_height)
+    poster_width = int(poster_width)
+    width = poster_width + offset + required_width
+
+    result = Image.new('RGB', (width, height), 'White')
+
+    poster_image_object = resize_image_aspect_ratio_by_two_sides(poster_image_object, width=poster_width, height=height)
+    # cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
+    result.paste(poster_image_object)
+
+    log.debug('for starts in merge_poster_and_three_images')
+    for index, image in enumerate(images):
+        x = poster_width + offset
+        y = index*(required_height + offset)
+
+        img_object = Image.open(os.path.join(settings.BASE_DIR, image))
+        img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
+        #cropped = img_object.crop((0, 0, required_width, required_height))
+        result.paste(img_object, (x, y, x + required_width, y + required_height))
+        log.debug('for loop body end')
+    log.debug('for end and resize result')
+    result = resize_image_aspect_ratio_by_one_side(result, width=1920)
+    log.debug('saving')
+    result.save(filepath, 'JPEG', quality=95, progressive=True)
+    log.debug('merge_poster_and_three_images finished')
+    return filepath
 
 
 def merge_six_images_into_one(files):
@@ -344,12 +389,12 @@ def merge_six_images_into_one(files):
         y = index // 3 * (min_height + offset)
 
         img = Image.open(os.path.join(settings.BASE_DIR, img_file_name))
-        resize_image_aspect_ratio_by_two_sides(img, width=min_width, height=min_height)
+        img = resize_image_aspect_ratio_by_two_sides(img, width=min_width, height=min_height)
 
         cropped = img.crop((0, 0, min_width, min_height))
         result.paste(cropped, (x, y, x + min_width, y + min_height))
 
-    resize_image_aspect_ratio_by_one_side(result, width=config.SIX_IMAGES_WIDTH)
+    result = resize_image_aspect_ratio_by_one_side(result, width=config.SIX_IMAGES_WIDTH)
     result.save(filepath, 'JPEG', quality=95, progressive=True)
 
     log.debug('merge_six_images_into_one finished')
@@ -552,3 +597,21 @@ def find_the_best_post(records, best_ratio, percent=20):
         best_record = max(records, key=lambda x: x.rate)
 
     return best_record
+
+
+def get_country_name_by_code(code):
+    return countries_map.get(code, '')
+
+
+def get_movies_rating_intervals():
+    intervals_borders = [(65, 70), (70, 75), (75, 80), (80, 101)]
+
+    return [[value / 10 for value in range(interval[0], interval[1])] for interval in intervals_borders]
+
+
+def get_next_interval_by_movie_rating(rating):
+    rating_intervals = get_movies_rating_intervals()
+
+    for interval in rating_intervals:
+        if rating in interval:
+            return rating_intervals[(rating_intervals.index(interval) + 1) % len(rating_intervals)]
