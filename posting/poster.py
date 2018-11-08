@@ -333,6 +333,12 @@ def merge_poster_and_three_images(poster, images):
     offset = 3*config.SIX_IMAGES_OFFSET
     filepath = f'temp_{poster}'
 
+    if len(images) != 3:
+        log.warning('number of images in merge_poster_and_three_images not equal 3!')
+    elif len(images) < 3:
+        log.error('lack of images in merge_poster_and_three_images!')
+        # TODO catch this state
+
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in images]
     poster_width, poster_height = Image.open(os.path.join(settings.BASE_DIR, poster)).size
 
@@ -350,8 +356,11 @@ def merge_poster_and_three_images(poster, images):
     result = Image.new('RGB', (width, height), 'White')
 
     poster_image_object = resize_image_aspect_ratio_by_two_sides(poster_image_object, width=poster_width, height=height)
-    # cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
-    result.paste(poster_image_object)
+    try:
+        result.paste(poster_image_object)
+    except ValueError:
+        cropped = poster_image_object.crop((0, 0, poster_width, poster_height))
+        result.paste(cropped)
 
     log.debug('for starts in merge_poster_and_three_images')
     for index, image in enumerate(images):
@@ -360,8 +369,9 @@ def merge_poster_and_three_images(poster, images):
 
         img_object = Image.open(os.path.join(settings.BASE_DIR, image))
         img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
-        #cropped = img_object.crop((0, 0, required_width, required_height))
-        result.paste(img_object, (x, y, x + required_width, y + required_height))
+        log.debug('cropping in loop')
+        cropped = img_object.crop((0, 0, required_width, required_height))
+        result.paste(cropped, (x, y, x+required_width, y+required_height))
         log.debug('for loop body end')
     log.debug('for end and resize result')
     result = resize_image_aspect_ratio_by_one_side(result, width=1920)
