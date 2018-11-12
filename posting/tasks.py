@@ -226,8 +226,10 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
-    poster_and_three_images = merge_poster_and_three_images(download_file(movie.poster), image_files)
+    poster_file = download_file(movie.poster)
+    poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
     delete_files(image_files)
+    delete_files(poster_file)
 
     attachments.append(upload_photo(
         session,
