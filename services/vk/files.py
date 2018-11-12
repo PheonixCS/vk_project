@@ -1,10 +1,9 @@
+import logging
 import os
 
 import vk_api
 
 from posting.poster import download_file
-import logging
-
 
 log = logging.getLogger('services.vk.files')
 

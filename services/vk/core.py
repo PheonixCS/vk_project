@@ -1,10 +1,9 @@
+import logging
+
 import vk_api
 import vk_requests
 from constance import config
-import logging
-
 from vk_requests.exceptions import VkAPIError
-
 
 log = logging.getLogger('services.vk.core')
 

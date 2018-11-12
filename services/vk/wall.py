@@ -1,10 +1,9 @@
+import logging
 from datetime import datetime, timedelta
 
 from constance import config
 from django.utils import timezone
 from vk_requests.exceptions import VkAPIError
-
-import logging
 
 log = logging.getLogger('services.vk.wall')
 
