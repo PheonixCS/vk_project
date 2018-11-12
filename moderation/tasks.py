@@ -10,7 +10,7 @@ from moderation.core.process_comment import process_comment
 from moderation.core.vk_helpers import get_groups_by_id, ban_user
 from moderation.models import WebhookTransaction
 from posting.models import Group
-from posting.poster import create_vk_session_using_login_password
+from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('moderation.tasks')
 

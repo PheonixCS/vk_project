@@ -10,7 +10,7 @@ from moderation.core.helpers import prepare_id_white_list, is_moderation_needed
 from moderation.core.vk_helpers import delete_comment, ban_user
 from moderation.models import ModerationRule, Comment
 from posting.models import Group
-from posting.poster import create_vk_session_using_login_password
+from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('moderation.core.process_comment')
 

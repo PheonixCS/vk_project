@@ -1,37 +1,19 @@
 import logging
 import os
 import re
-from datetime import datetime, timedelta
 from math import ceil
 from textwrap import wrap
 
 import pytesseract
 import requests
-import vk_api
 from PIL import Image, ImageFont, ImageDraw
 from constance import config
 from django.conf import settings
-from django.utils import timezone
 
-from posting.extras.transforms import RGBTransform
-from scraping.core.vk_helper import get_wall
 from posting.core.countries import countries_map
+from posting.extras.transforms import RGBTransform
 
 log = logging.getLogger('posting.poster')
-
-
-def create_vk_session_using_login_password(login, password, app_id):
-    log.debug('create api called')
-    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION)
-    try:
-        vk_session.auth()
-    except vk_api.AuthError as error_msg:
-        log.info('User {} got api error: {}'.format(login, error_msg))
-        return None
-    except:
-        log.error('got unexpected error in create_vk_session_using_login_password', exc_info=True)
-
-    return vk_session
 
 
 def download_file(url, extension=None):
@@ -67,40 +49,6 @@ def delete_files(file_paths):
         log.warning('delete_files got wrong type')
         return
     log.debug('delete_files finished')
-
-
-def upload_video(session, video_local_filename, group_id, name, description):
-    log.debug('upload_video called')
-
-    try:
-        upload = vk_api.VkUpload(session)
-        video = upload.video(video_file=video_local_filename,
-                             group_id=int(group_id),
-                             name=name,
-                             description=description,
-                             no_comments=True)
-    except:
-        log.error('exception while uploading video', exc_info=True)
-        return
-
-    return 'video{}_{}'.format(video['owner_id'], video['video_id'])
-
-
-def upload_gif(session, gif_url):
-    log.debug('upload_gif called')
-    gif_local_filename = download_file(gif_url, 'gif')
-
-    try:
-        upload = vk_api.VkUpload(session)
-        gif = upload.document(doc=gif_local_filename)
-    except:
-        log.error('exception while uploading gif', exc_info=True)
-        return
-
-    if os.path.isfile(gif_local_filename):
-        os.remove(gif_local_filename)
-
-    return 'doc{}_{}'.format(gif[0]['owner_id'], gif[0]['id'])
 
 
 def crop_image(filepath, box):
@@ -463,33 +411,6 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
 
 
-def upload_photo(session, image_local_filepath, group_id):
-    log.debug('upload_photo called')
-
-    try:
-        upload = vk_api.VkUpload(session)
-        photo = upload.photo_wall(photos=image_local_filepath,
-                                  group_id=int(group_id))
-    except:
-        log.error('exception while uploading photo', exc_info=True)
-        return
-
-    return 'photo{}_{}'.format(photo[0]['owner_id'], photo[0]['id'])
-
-
-def fetch_group_id(api, domain_or_id):
-    log.debug('fetch_group_id called for group {}'.format(domain_or_id))
-    if domain_or_id.isdigit():
-        group_id = domain_or_id
-    else:
-        try:
-            group_id = api.utils.resolveScreenName(domain_or_id)['object_id']
-        except:
-            log.error('got exception while fetching group id', exc_info=True)
-            return
-    return group_id
-
-
 def delete_double_spaces_from_text(text):
     text = re.sub(' +', ' ', text)
     return text
@@ -510,81 +431,6 @@ def delete_emoji_from_text(text):
     log.debug('text after deleting "{}"'.format(text_without_emoji))
     text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
     return text_without_double_spaces
-
-
-def get_ad_in_last_hour(api, group_id):
-    log.debug('get_ad_in_last_hour called')
-    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1)
-
-    try:
-        wall = [record for record in get_wall(api, group_id)['items']
-                if record.get('marked_as_ads', False) and
-                datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
-
-        if wall and wall[0].get('id', None) and wall[0].get('date', None):
-            ad = {'id': wall[0].get('id'),
-                  'date': wall[0].get('date')}
-            log.debug('got ad with id {} in group {}'.format(ad['id'], group_id))
-            return ad
-    except:
-        log.error('got unexpected error in get_ad_in_last_hour', exc_info=True)
-
-
-def check_docs_availability(api, docs):
-    """
-
-    :param docs: list of dictionaries
-    :type docs: list
-    :return: true if all docs are available
-    :rtype: bool
-    """
-    log.debug('check_docs_availability called')
-
-    try:
-        resp = api.docs.getById(docs=','.join(docs))
-
-        if len(resp) == len(docs):
-            return True
-        else:
-            log.info('check_docs_availability failed')
-            return False
-
-    except:
-        log.error('got unexpected error in check_docs_availability', exc_info=True)
-
-
-def check_video_availability(api, owner_id, video_id):
-    """
-
-    :param api: api object
-    :param video_id: video id from vk
-    :param owner_id: string  representing video owner in vk way
-    :return: true if video available
-    """
-
-    log.debug('check_video_availability called')
-
-    try:
-        resp = api.video.get(owner_id=owner_id, videos='{}_{}'.format(owner_id, video_id))
-
-        if resp.get('items'):
-            return True
-        else:
-            log.info('check_video_availability failed')
-            return False
-
-    except:
-        log.error('got unexpected error in check_video_availability', exc_info=True)
-
-
-def get_group_week_statistics(api, group_id):
-
-    now = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')
-    week_ago = (datetime.now(tz=timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
-
-    print(now, week_ago)
-
-    return api.stats.get(group_id=group_id, date_from=week_ago, date_to=now)
 
 
 def find_the_best_post(records, best_ratio, percent=20):
