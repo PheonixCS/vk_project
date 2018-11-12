@@ -1,10 +1,7 @@
-#
 import re
 
 
-def replace_russian_with_english_letters(text):
-
-    # replace map goes with russian letter as a key
+def replace_words(match_obj):
     replace_map = {
         'а': 'a',
         'с': 'c',
@@ -21,14 +18,8 @@ def replace_russian_with_english_letters(text):
         'С': 'C',
         'В': 'B',
         'Р': 'P',
-        'М': 'M',
-        # 'и': 'u',
-        # '1': 'I',
-        # 'м': 'm',
-        # 'к': 'k',
-        # 'Ы': 'bI'
+        'М': 'M'
     }
-    # Comment because of
     # result_text = ''
     # replaced = False
     #
@@ -43,9 +34,15 @@ def replace_russian_with_english_letters(text):
     #         replaced = False
     #     result_text += word
 
-    result_text = text
+    word = match_obj.group(0)
 
     for letter, replacement in replace_map.items():
-        result_text = re.sub(letter, replacement, result_text)
+        word = re.sub(letter, replacement, word)
+
+    return word
+
+
+def replace_russian_with_english_letters(text):
+    result_text = re.sub(r'((?<!#)\b\w+)', replace_words, text)
 
     return result_text
