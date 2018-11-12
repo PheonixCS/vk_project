@@ -9,11 +9,9 @@ log = logging.getLogger('services.vk.stat')
 
 
 def get_group_week_statistics(api, group_id):
-
+    log.debug('get_group_week_statistics called for group {}'.format(group_id))
     now = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')
     week_ago = (datetime.now(tz=timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
-
-    print(now, week_ago)
 
     return api.stats.get(group_id=group_id, date_from=week_ago, date_to=now)
 
@@ -24,22 +22,23 @@ def fetch_liked_user_ids(api, group_id, post_id):
     try:
         likes_list = api.likes.getList(
             type='post',
-            owner_id='-{}'.format(group_id),
+            owner_id=f'-{group_id}',
             item_id=post_id,
             filter='likes',
             extended=1,  # needed for user type, we need just profile
             api_version=config.VK_API_VERSION
             )
-
     except VkAPIError as error_msg:
         log.error('group {} got api error while : {}'.format(group_id, error_msg))
         return None
 
     log.debug('got {} likes list'.format(likes_list.get('count')))
-    # TODO think what is default in .get('id')
-    ids_list = [profile.get('id', 0) for profile in likes_list['items'] if profile.get('type', '') == 'profile']
-    log.debug('got {} likes after extracting'.format(len(ids_list)))
 
+    ids_list = [profile.get('id') for profile in likes_list['items']
+                if profile.get('type', '') == 'profile'
+                and profile.get('id', None)]
+
+    log.debug('got {} likes after filter non profiles and without id'.format(len(ids_list)))
     return ids_list
 
 

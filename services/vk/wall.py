@@ -11,19 +11,25 @@ log = logging.getLogger('services.vk.wall')
 def get_wall(api, group_id, count=20):
     log.debug('get_wall api called for group {}'.format(group_id))
 
+    version = config.VK_API_VERSION
+
     try:
         if group_id.isdigit():
             log.debug('group id is digit')
-            wall = api.wall.get(owner_id='-{}'.format(group_id),
-                                filter='owner',
-                                api_version=config.VK_API_VERSION,
-                                count=count)
+            wall = api.wall.get(
+                owner_id=f'-{group_id}',
+                filter='owner',
+                api_version=version,
+                count=count
+            )
         else:
-            log.debug('group id os not digit')
-            wall = api.wall.get(domain=group_id,
-                                filter='owner',
-                                api_version=config.VK_API_VERSION,
-                                count=count)
+            log.debug('group id is not digit')
+            wall = api.wall.get(
+                domain=group_id,
+                filter='owner',
+                api_version=version,
+                count=count
+            )
     except VkAPIError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None
@@ -34,10 +40,12 @@ def get_wall(api, group_id, count=20):
 def get_wall_by_post_id(api, group_id, posts_ids):
     log.debug('get_wall_by_post_id api called for group {}'.format(group_id))
 
-    posts = ['-{}_{}'.format(group_id, post) for post in posts_ids]
+    posts = [f'-{group_id}_{post}' for post in posts_ids]
     try:
-        all_non_rated = api.wall.getById(posts=posts,
-                                         api_version=config.VK_API_VERSION)
+        all_non_rated = api.wall.getById(
+            posts=posts,
+            api_version=config.VK_API_VERSION
+        )
     except VkAPIError as error_msg:
         log.error('group {} got api error while : {}'.format(group_id, error_msg))
         return None
