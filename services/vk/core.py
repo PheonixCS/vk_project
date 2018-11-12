@@ -9,7 +9,8 @@ log = logging.getLogger('services.vk.core')
 
 
 def create_vk_session_using_login_password(login, password, app_id):
-    log.debug('create api with login and password called')
+    log.debug('create_vk_session_using_login_password called')
+
     vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION)
     try:
         vk_session.auth()
@@ -23,7 +24,7 @@ def create_vk_session_using_login_password(login, password, app_id):
 
 
 def create_vk_api_using_service_token(token):
-    log.debug('create api with token called')
+    log.debug('create_vk_api_using_service_token called')
 
     try:
         api = vk_requests.create_api(service_token=token, api_version=config.VK_API_VERSION)
@@ -36,12 +37,14 @@ def create_vk_api_using_service_token(token):
 
 def fetch_group_id(api, domain_or_id):
     log.debug('fetch_group_id called for group {}'.format(domain_or_id))
+
     if domain_or_id.isdigit():
         group_id = domain_or_id
     else:
         try:
-            group_id = api.utils.resolveScreenName(domain_or_id)['object_id']
+            group_id = api.utils.resolveScreenName(domain_or_id).get('object_id')
         except:
             log.error('got exception while fetching group id', exc_info=True)
-            return
+            return None
+
     return group_id
