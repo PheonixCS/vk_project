@@ -226,9 +226,17 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
-    attachments.append(upload_photo(session,
-                                    merge_poster_and_three_images(download_file(movie.poster), image_files),
-                                    group_id))
+    poster_file = download_file(movie.poster)
+    poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+    delete_files(image_files)
+    delete_files(poster_file)
+
+    attachments.append(upload_photo(
+        session,
+        poster_and_three_images,
+        group_id)
+    )
+    delete_files(poster_and_three_images)
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
@@ -238,6 +246,9 @@ def post_movie(login, password, app_id, group_id, movie_id):
     else:
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
+
+    log.debug('delete trailer file')
+    delete_files(trailer.file_path)
 
     trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
@@ -265,9 +276,6 @@ def post_movie(login, password, app_id, group_id, movie_id):
     trailer.save(update_fields=['status'])
 
     log.debug(f'{post_response} in group {group_id}')
-
-    delete_files(image_files)
-    delete_files(trailer.file_path)
 
 
 @task
@@ -297,6 +305,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
             attachments = upload_photo(session, horoscope_image_name, group_id)
+            delete_files(horoscope_image_name)
             record_text = ''
         else:
             if group.is_replace_russian_with_english:
@@ -307,9 +316,10 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
                 attachments = upload_photo(session, image_local_filename, group_id)
+                delete_files(image_local_filename)
 
-        group_zodiac_zign = fetch_zodiac_sign(group.name)
-        if not group_zodiac_zign:
+        group_zodiac_sign = fetch_zodiac_sign(group.name)
+        if not group_zodiac_sign:
             text_to_add = generate_special_group_reference(horoscope_record.text)
             record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
 
