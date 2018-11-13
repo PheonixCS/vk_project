@@ -6,7 +6,8 @@ from datetime import datetime
 from django.utils import timezone
 
 from posting.models import AdRecord
-from posting.poster import create_vk_session_using_login_password, get_ad_in_last_hour
+from services.vk.wall import get_ad_in_last_hour
+from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('posting.core.vk_helper')
 

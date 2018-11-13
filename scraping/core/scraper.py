@@ -14,13 +14,9 @@ from scraping.core.filters import (
 )
 from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
 from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
-from scraping.core.vk_helper import (
-    get_wall,
-    get_wall_by_post_id,
-    create_vk_api_using_service_token,
-    fetch_liked_user_ids,
-    get_users_sex_by_ids
-)
+from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
+from services.vk.wall import get_wall, get_wall_by_post_id
+from services.vk.core import create_vk_api_using_service_token
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
     Movie, Genre, Trailer, Frame
 
