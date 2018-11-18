@@ -22,7 +22,8 @@ from posting.poster import (
     find_the_best_post,
     get_country_name_by_code,
     merge_poster_and_three_images,
-    get_next_interval_by_movie_rating
+    get_next_interval_by_movie_rating,
+    get_movies_rating_intervals
 )
 from services.vk.stat import get_group_week_statistics
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
@@ -89,11 +90,19 @@ def examine_groups():
                 continue
 
             last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
+            next_movie_rating = last_posted_movie.rating
             log.debug(f'last posted movie id: {last_posted_movie.id or None}')
-            next_rating_interval = get_next_interval_by_movie_rating(last_posted_movie.rating)
-            log.debug(f'next rating interval {next_rating_interval}')
-            movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
-                                         rating__in=next_rating_interval).last()
+
+            for _ in range(len(get_movies_rating_intervals())):
+                next_rating_interval = get_next_interval_by_movie_rating(next_movie_rating)
+                log.debug(f'next rating interval {next_rating_interval}')
+
+                movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
+                                             rating__in=next_rating_interval).last()
+                if movie:
+                    break
+
+                next_movie_rating = next_rating_interval[0]
 
             if movie:
                 post_movie.delay(
