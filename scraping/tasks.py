@@ -71,8 +71,13 @@ def download_youtube_trailers():
             rating_intervals.remove(movie_rating_interval)
 
         for rating_interval in rating_intervals:
-            trailer = choice(Trailer.objects.filter(status=Trailer.NEW_STATUS,
-                                                    movie__rating__in=rating_interval))
+            trailers = Trailer.objects.filter(status=Trailer.NEW_STATUS,
+                                              movie__rating__in=rating_interval)
+            if trailers:
+                trailer = choice(trailers)
+            else:
+                log.debug(f'got no trailers in {rating_interval} movie rating interval')
+                continue
 
             trailer.status = Trailer.PENDING_STATUS
             trailer.save(update_fields=['status'])
