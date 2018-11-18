@@ -10,7 +10,7 @@ from random import choice
 from posting.poster import get_movies_rating_intervals
 from scraping.core.scraper import main, save_movie_to_db
 from scraping.models import Record, Horoscope, Trailer
-from services.themoviedb.wrapper import discover_movies
+from services.themoviedb.wrapper import discover_movies, discover_new_movies
 from services.youtube.core import download_trailer
 
 log = logging.getLogger('scraping.scheduled')
@@ -94,3 +94,17 @@ def download_youtube_trailers():
             trailer.save(update_fields=['file_path', 'status'])
 
         log.debug('finish downloading trailer')
+
+@task
+def scrap_new_movies():
+    log.debug('scrap_new_movies called')
+
+    utc_now = datetime.utcnow()
+    date_start = (utc_now - timedelta(days=config.TMDB_NEW_MOVIES_PERIOD)).strftime('%Y-%m-%d')
+
+    new_movies = discover_new_movies(date_start)
+
+    for movie in new_movies:
+        save_movie_to_db(movie)
+
+    log.debug('scrap_new_movies finished')
