@@ -72,7 +72,7 @@ def download_youtube_trailers():
 
         for rating_interval in rating_intervals:
             trailers = Trailer.objects.filter(status=Trailer.NEW_STATUS,
-                                                    movie__rating__in=rating_interval)
+                                              movie__rating__in=rating_interval)
             if trailers:
                 trailer = choice(trailers)
             else:
