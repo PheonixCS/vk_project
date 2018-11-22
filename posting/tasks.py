@@ -82,6 +82,7 @@ def examine_groups():
         movies_condition = (
             group.is_movies
             and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
+            and not last_hour_ads_count
         )
 
         if movies_condition:
