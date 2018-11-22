@@ -276,7 +276,8 @@ def post_movie(login, password, app_id, group_id, movie_id):
                                   attachments=','.join(attachments))
 
     movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    movie.save(update_fields=['post_in_group_date'])
+    movie.group = Group.objects.get(group_id=group_id)
+    movie.save(update_fields=['post_in_group_date', 'group'])
 
     trailer.status = Trailer.POSTED_STATUS
     trailer.save(update_fields=['status'])
@@ -672,7 +673,8 @@ def update_statistics():
 
                 group.number_of_posts_yesterday = \
                     Record.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
-                    Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
+                    Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
+                    Movie.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
 
                 group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
                     filter(starts & ends).count()
