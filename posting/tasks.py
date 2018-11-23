@@ -235,9 +235,14 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
-    attachments.append(upload_photo(session,
-                                    merge_poster_and_three_images(download_file(movie.poster), image_files),
-                                    group_id))
+    if config.ENABLE_MERGE_IMAGES_MOVIES:
+        attachments.append(upload_photo(session,
+                                        merge_poster_and_three_images(download_file(movie.poster), image_files),
+                                        group_id))
+    else:
+        attachments.append(upload_photo(session, download_file(movie.poster), group_id))
+        for image in image_files:
+            attachments.append(upload_photo(session, image, group_id))
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
@@ -248,7 +253,11 @@ def post_movie(login, password, app_id, group_id, movie_id):
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
 
-    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+    if config.PUT_TRAILERS_TO_ATTACHMENTS:
+        attachments.append(uploaded_trailer)
+        trailer_link = ''
+    else:
+        trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
     record_text = f'{trailer_name}\n\n' \
                   f'{trailer_information}\n\n' \
