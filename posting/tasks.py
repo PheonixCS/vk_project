@@ -253,7 +253,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
 
-    if config.PUT_TRAILERS_TO_ATTACHMENTS:
+    if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
         attachments.append(uploaded_trailer)
         trailer_link = ''
     else:
