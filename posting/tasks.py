@@ -235,13 +235,18 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
+    try:
+        assert len(image_files) == 3
+    except AssertionError as error:
+        log.error('Number of images is not equal 3' + repr(error))
+
     if config.ENABLE_MERGE_IMAGES_MOVIES:
         attachments.append(upload_photo(session,
                                         merge_poster_and_three_images(download_file(movie.poster), image_files),
                                         group_id))
     else:
         attachments.append(upload_photo(session, download_file(movie.poster), group_id))
-        for image in image_files:
+        for image in image_files[:2]:
             attachments.append(upload_photo(session, image, group_id))
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
