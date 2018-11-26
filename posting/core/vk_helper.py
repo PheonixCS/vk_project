@@ -17,10 +17,10 @@ def is_ads_posted_recently(group):
     if api:
         ad_record = get_ad_in_last_hour(api, group.domain_or_id)
         if ad_record:
-            AdRecord.objects.create(ad_record_id=ad_record['id'],
-                                    group=group,
-                                    post_in_group_date=datetime.fromtimestamp(ad_record['date'],
-                                                                              tz=timezone.utc))
+            AdRecord.objects.get_or_create(ad_record_id=ad_record['id'],
+                                           group=group,
+                                           post_in_group_date=datetime.fromtimestamp(ad_record['date'],
+                                                                                     tz=timezone.utc))
             log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
             return True
     if not api:
