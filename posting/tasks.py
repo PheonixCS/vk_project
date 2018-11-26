@@ -320,6 +320,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
             attachments = upload_photo(session, horoscope_image_name, group_id)
+            delete_files(horoscope_image_name)
             record_text = ''
         else:
             if group.is_replace_russian_with_english:
@@ -330,6 +331,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
                 attachments = upload_photo(session, image_local_filename, group_id)
+                delete_files(image_local_filename)
 
         group_zodiac_zign = fetch_zodiac_sign(group.name)
         if not group_zodiac_zign:
@@ -341,7 +343,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
                                       message=record_text,
                                       attachments=attachments)
 
-        delete_files(attachments)
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
