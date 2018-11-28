@@ -117,6 +117,7 @@ class Horoscope(models.Model):
 
 
 class Movie(models.Model):
+    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='movies', null=True)
     title = models.CharField(max_length=256)
     rating = models.FloatField(null=True)
     release_year = models.IntegerField(null=True)

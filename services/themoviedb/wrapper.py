@@ -44,13 +44,15 @@ def discover_movies():
 
     start_year = config.TMDB_SEARCH_START_YEAR
     min_average_rating = 6.0
+    min_runtime = 60
 
     for year in range(start_year, datetime.now().year+1):
         total_pages = send_request_to_api(path='/discover/movie',
                                           **{'page': 1,
                                              'primary_release_year': year,
                                              'vote_average.gte': min_average_rating,
-                                             'language': 'ru-RU'}
+                                             'language': 'ru-RU',
+                                             'with_runtime.gte':  min_runtime},
                                           )['total_pages']
         if not total_pages:
             log.error('total_pages is empty')

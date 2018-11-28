@@ -11,13 +11,7 @@ from constance import config
 
 from posting.models import Group, ServiceToken, AdRecord
 from posting.poster import (
-    create_vk_session_using_login_password,
-    fetch_group_id,
-    upload_photo,
-    upload_video,
     delete_hashtags_from_text,
-    check_docs_availability,
-    check_video_availability,
     delete_emoji_from_text,
     download_file,
     prepare_image_for_posting,
@@ -25,15 +19,17 @@ from posting.poster import (
     is_text_on_image,
     is_all_images_not_horizontal,
     delete_files,
-    get_group_week_statistics,
     find_the_best_post,
     get_country_name_by_code,
     merge_poster_and_three_images,
     get_next_interval_by_movie_rating,
     get_movies_rating_intervals
 )
+from services.vk.stat import get_group_week_statistics
+from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
+from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
 from posting.core.horoscopes import generate_special_group_reference
-from scraping.core.vk_helper import get_wall, create_vk_api_using_service_token
+from services.vk.wall import get_wall
 from scraping.models import Record, Horoscope, Movie, Trailer
 from scraping.core.horoscopes import fetch_zodiac_sign
 from posting.text_utilities import replace_russian_with_english_letters
@@ -86,6 +82,7 @@ def examine_groups():
         movies_condition = (
             group.is_movies
             and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
+            and not last_hour_ads_count
         )
 
         if movies_condition:
@@ -235,25 +232,37 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
+<<<<<<< posting/tasks.py
     try:
         assert len(image_files) == 3
     except AssertionError as error:
         log.error('Number of images is not equal 3' + repr(error))
 
     if config.ENABLE_MERGE_IMAGES_MOVIES:
-        attachments.append(upload_photo(session,
-                                        merge_poster_and_three_images(download_file(movie.poster), image_files),
-                                        group_id))
+        poster_file = download_file(movie.poster)
+        poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+        delete_files(image_files)
+        delete_files(poster_file)
+        
+        attachments.append(upload_photo(
+            session,
+            poster_and_three_images,
+            group_id)
+        )
+        delete_files(poster_and_three_images)
     else:
         attachments.append(upload_photo(session, download_file(movie.poster), group_id))
         for image in image_files[:2]:
             attachments.append(upload_photo(session, image, group_id))
+        delete(image_files)
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
     trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
     if trailer:
         uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
+        log.debug('delete trailer file')
+        delete_files(trailer.file_path)
     else:
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
@@ -282,15 +291,13 @@ def post_movie(login, password, app_id, group_id, movie_id):
                                   attachments=','.join(attachments))
 
     movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    movie.save(update_fields=['post_in_group_date'])
+    movie.group = Group.objects.get(group_id=group_id)
+    movie.save(update_fields=['post_in_group_date', 'group'])
 
     trailer.status = Trailer.POSTED_STATUS
     trailer.save(update_fields=['status'])
 
     log.debug(f'{post_response} in group {group_id}')
-
-    delete_files(image_files)
-    delete_files(trailer.file_path)
 
 
 @task
@@ -333,8 +340,8 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
                 attachments = upload_photo(session, image_local_filename, group_id)
                 delete_files(image_local_filename)
 
-        group_zodiac_zign = fetch_zodiac_sign(group.name)
-        if not group_zodiac_zign:
+        group_zodiac_sign = fetch_zodiac_sign(group.name)
+        if not group_zodiac_sign:
             text_to_add = generate_special_group_reference(horoscope_record.text)
             record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
 
@@ -680,7 +687,8 @@ def update_statistics():
 
                 group.number_of_posts_yesterday = \
                     Record.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
-                    Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
+                    Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
+                    Movie.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
 
                 group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
                     filter(starts & ends).count()
