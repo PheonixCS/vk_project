@@ -232,31 +232,46 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
-    poster_file = download_file(movie.poster)
-    poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
-    delete_files(image_files)
-    delete_files(poster_file)
+<<<<<<< posting/tasks.py
+    try:
+        assert len(image_files) == 3
+    except AssertionError as error:
+        log.error('Number of images is not equal 3' + repr(error))
 
-    attachments.append(upload_photo(
-        session,
-        poster_and_three_images,
-        group_id)
-    )
-    delete_files(poster_and_three_images)
+    if config.ENABLE_MERGE_IMAGES_MOVIES:
+        poster_file = download_file(movie.poster)
+        poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+        delete_files(image_files)
+        delete_files(poster_file)
+        
+        attachments.append(upload_photo(
+            session,
+            poster_and_three_images,
+            group_id)
+        )
+        delete_files(poster_and_three_images)
+    else:
+        attachments.append(upload_photo(session, download_file(movie.poster), group_id))
+        for image in image_files[:2]:
+            attachments.append(upload_photo(session, image, group_id))
+        delete(image_files)
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
     trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
     if trailer:
         uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
+        log.debug('delete trailer file')
+        delete_files(trailer.file_path)
     else:
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
 
-    log.debug('delete trailer file')
-    delete_files(trailer.file_path)
-
-    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+    if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
+        attachments.append(uploaded_trailer)
+        trailer_link = ''
+    else:
+        trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
     record_text = f'{trailer_name}\n\n' \
                   f'{trailer_information}\n\n' \
@@ -335,7 +350,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
                                       message=record_text,
                                       attachments=attachments)
 
-        delete_files(attachments)
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))

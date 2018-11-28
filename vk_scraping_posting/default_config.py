@@ -32,5 +32,7 @@ CONSTANCE_CONFIG = {
     'TMDB_SEARCH_START_YEAR': (1998, 'Discover movies starts with given year', int),
     'TMDB_MIN_TRAILERS_COUNT': (4, 'Minimum count of downloaded youtube trailers', int),
     'FORCE_MOVIE_POST': (False, 'Just for dev. Forcing movie posting', bool),
-    'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool)
+    'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool),
+    'ENABLE_MERGE_IMAGES_MOVIES': (True, 'Enable merging images in movies to one', bool),
+    'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool)
 }
