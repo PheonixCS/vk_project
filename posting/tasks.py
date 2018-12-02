@@ -232,7 +232,6 @@ def post_movie(login, password, app_id, group_id, movie_id):
     images = [frame.url for frame in movie.frames.all()]
     image_files = [download_file(image) for image in images]
 
-<<<<<<< posting/tasks.py
     try:
         assert len(image_files) == 3
     except AssertionError as error:
@@ -254,7 +253,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
         attachments.append(upload_photo(session, download_file(movie.poster), group_id))
         for image in image_files[:2]:
             attachments.append(upload_photo(session, image, group_id))
-        delete(image_files)
+        delete_files(image_files)
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
