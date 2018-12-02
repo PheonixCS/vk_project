@@ -89,7 +89,7 @@ def examine_groups():
             log.debug(f'{group.domain_or_id} in movies condition')
             if is_ads_posted_recently(group) and not config.IS_DEV:
                 continue
-
+            # TODO first find new movies. If there is not new movies, get the oldest posted
             last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
             next_movie_rating = last_posted_movie.rating
             log.debug(f'last posted movie id: {last_posted_movie.id or None}')
