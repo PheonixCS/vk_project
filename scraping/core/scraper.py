@@ -171,7 +171,10 @@ def rate_records(donor_id, records):
             ))
             continue
 
-        resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
+        if delta_likes == 0 or delta_reposts == 0 or delta_views == 0:
+            resulting_rate = 1  # consider that this is right minimum
+        else:
+            resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
         record_obj.rate = int(resulting_rate)
 
         log.info('record {} in group {} rated {} with deltas likes: {}, reposts: {}, views:{}'.format(
