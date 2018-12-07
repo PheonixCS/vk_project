@@ -149,15 +149,18 @@ def rate_records(donor_id, records):
     default_timedelta = 3600
     factor = 0.5
 
-    for record in records:
-        # TODO make one query with all records instead of one call each record
-        log.debug('rating {}'.format(record['id']))
-        try:
-            record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
-        except:
-            log.error('handling record error', exc_info=True)
+    records_ids = [record['id'] for record in records]
+    records_objects = Record.objects.filter(record_id__in=records_ids, donor_id=donor_id)
 
-        delta_likes = record['likes']['count'] - record_obj.likes_count
+    for record_obj in records_objects.iterate():
+        # TODO make one query with all records instead of one call each record
+        # log.debug('rating {}'.format(record['id']))
+        # try:
+        #     record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
+        # except:
+        #     log.error('handling record error', exc_info=True)
+
+        delta_likes = record[record_obj.id]['likes']['count'] - record_obj.likes_count
         delta_reposts = record['reposts']['count'] - record_obj.reposts_count
         delta_views = record.get('views', dict()).get('count', 0) - record_obj.views_count
 
