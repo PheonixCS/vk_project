@@ -171,7 +171,10 @@ def rate_records(donor_id, records):
             ))
             continue
 
-        resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
+        if delta_likes == 0 or delta_reposts == 0 or delta_views == 0:
+            resulting_rate = 1  # consider that this is right minimum
+        else:
+            resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
         record_obj.rate = int(resulting_rate)
 
         log.info('record {} in group {} rated {} with deltas likes: {}, reposts: {}, views:{}'.format(
@@ -327,7 +330,7 @@ def extract_records_sex(api, donor_id, records):
         females_count = sex_list.count(1)
         males_count = sex_list.count(2)
 
-        males_females_ratio = males_count/females_count
+        males_females_ratio = males_count/(females_count or 1)
 
         record_obj.females_count = females_count
         record_obj.males_count = males_count
