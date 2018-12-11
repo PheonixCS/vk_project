@@ -333,7 +333,7 @@ def extract_records_sex(api, donor_id, records):
         females_count = sex_list.count(1)
         males_count = sex_list.count(2)
 
-        males_females_ratio = males_count/females_count
+        males_females_ratio = males_count/(females_count or 1)
 
         record_obj.females_count = females_count
         record_obj.males_count = males_count
