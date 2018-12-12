@@ -439,8 +439,8 @@ def find_the_best_post(records, best_ratio, percent=20):
     eps = 0.1
     records.sort(key=lambda x: x.rate, reverse=True)
 
-    if len(records) > 10:
-        records = records[:int(len(records) / 100 * percent)]
+    end_index = int(len(records) / 100 * percent) or 1
+    records = records[:end_index]
 
     for i in range(1, 6):
         exact_ratio_records = [record for record in records if

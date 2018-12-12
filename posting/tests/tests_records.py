@@ -56,3 +56,12 @@ class BestRecordTest(TestCase):
 
         self.assertEqual(best_record.rate, 900)
         self.assertEqual(best_record.males_females_ratio, 1.22)
+
+    def test_one_record(self):
+        records = [
+            Record(900, 1.88)
+        ]
+        best_record = poster.find_the_best_post(records, 0.5, 20)
+
+        self.assertEqual(best_record.rate, 900)
+        self.assertEqual(best_record.males_females_ratio, 1.88)
