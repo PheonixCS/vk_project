@@ -28,4 +28,5 @@ class Command(BaseCommand):
             group.user.app_id
         ).get_api()
 
+        # TODO find in db these movies
         results = videos.get_all_group_videos(api, group_id)
