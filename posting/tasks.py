@@ -59,6 +59,13 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
+        last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
+
+        if (last_hour_ads_count or is_ads_posted_recently(group)) and not config.IS_DEV:
+            log.info(f'pass group {group.domain_or_id} because ad post was published recently')
+            continue
+
         # TODO it is not part of examine, need to move it to task or something
         if not group.group_id:
             api = create_vk_session_using_login_password(group.user.login,
@@ -76,9 +83,6 @@ def examine_groups():
 
         log.debug(f'got {last_hour_posts_count} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
-        last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
-
         movies_condition = (
             group.is_movies
             and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
@@ -87,8 +91,7 @@ def examine_groups():
 
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
-            if is_ads_posted_recently(group) and not config.IS_DEV:
-                continue
+
             # TODO first find new movies. If there is not new movies, get the oldest posted
             last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
             next_movie_rating = last_posted_movie.rating
@@ -124,8 +127,6 @@ def examine_groups():
 
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horosopes condition')
-            if is_ads_posted_recently(group):
-                continue
 
             horoscope_record = group.horoscopes.filter(post_in_group_date__isnull=True,
                                                        post_in_donor_date__gt=today_start).last()
@@ -142,9 +143,6 @@ def examine_groups():
         if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count\
                 and not group.is_movies:
             log.debug(f'{group.domain_or_id} in common condition')
-
-            if is_ads_posted_recently(group):
-                continue
 
             donors = group.donors.all()
 
