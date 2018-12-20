@@ -1,3 +1,4 @@
+import ast
 import logging
 import os
 import re
@@ -460,7 +461,11 @@ def get_country_name_by_code(code):
 
 
 def get_movies_rating_intervals():
-    intervals_borders = [(65, 70), (70, 75), (75, 80), (80, 101)]
+    try:
+        intervals_borders = ast.literal_eval(config.TMDB_MOVIE_INTERVALS)
+    except SyntaxError:
+        intervals_borders = ast.literal_eval(settings.CONFIG['TMDB_MOVIE_INTERVALS'][0])
+        log.warning('get_movies_rating_intervals got wrong format from config, return default', exc_info=True)
 
     return [[value / 10 for value in range(interval[0], interval[1])] for interval in intervals_borders]
 
