@@ -91,21 +91,41 @@ def examine_groups():
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
 
-            # TODO first find new movies. If there is not new movies, get the oldest posted
-            last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
-            next_movie_rating = last_posted_movie.rating
-            log.debug(f'last posted movie id: {last_posted_movie.id or None}')
+            posted_movies = Movie.objects.filter(post_in_group_date__isnull=False)
+            if posted_movies:
+                last_posted_movie = posted_movies.latest('post_in_group_date')
+                last_movie_rating = last_posted_movie.rating
+                log.debug(f'last posted movie id: {last_posted_movie.id or None}')
+            else:
+                log.warning('got no posted movies')
+                last_movie_rating = None
 
             for _ in range(len(get_movies_rating_intervals())):
-                next_rating_interval = get_next_interval_by_movie_rating(next_movie_rating)
+                next_rating_interval = get_next_interval_by_movie_rating(last_movie_rating)
                 log.debug(f'next rating interval {next_rating_interval}')
 
-                movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
-                                             rating__in=next_rating_interval).last()
-                if movie:
+                new_movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
+                                                 rating__in=next_rating_interval,
+                                                 post_in_group_date__isnull=True).last()
+                if not new_movie:
+                    # TODO week ago should be in live settings
+                    old_movie = Movie.objects.filter(trailers__vk_url__isnull=False,
+                                                     post_in_group_date__lte=week_ago).last()
+
+                    if not old_movie:
+                        # TODO beda
+                        log.error('beda')
+                        movie = None
+
+                    else:
+                        movie = old_movie
+                        break
+
+                else:
+                    movie = new_movie
                     break
 
-                next_movie_rating = next_rating_interval[0]
+                last_movie_rating = next_rating_interval[0]
 
             if movie:
                 post_movie.delay(

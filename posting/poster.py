@@ -473,6 +473,9 @@ def get_movies_rating_intervals():
 def get_next_interval_by_movie_rating(rating):
     rating_intervals = get_movies_rating_intervals()
 
+    if not rating:
+        return rating_intervals[0]
+
     for interval in rating_intervals:
         if rating in interval:
             return rating_intervals[(rating_intervals.index(interval) + 1) % len(rating_intervals)]
