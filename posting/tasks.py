@@ -88,7 +88,6 @@ def examine_groups():
             and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
             and not last_hour_ads_count
         )
-
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
 
@@ -123,8 +122,8 @@ def examine_groups():
             group.is_horoscopes
             and group.horoscopes.filter(post_in_group_date__isnull=True)
             and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            and not last_hour_ads_count)
-
+            and not last_hour_ads_count
+        )
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horosopes condition')
 
@@ -140,8 +139,12 @@ def examine_groups():
             else:
                 log.warning('got no horoscopes records')
 
-        if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count\
-                and not group.is_movies:
+        common_condition = (
+            (group.posting_time.minute == now_minute or not last_hour_posts_count)
+            and not last_hour_ads_count
+            and not group.is_movies
+        )
+        if common_condition:
             log.debug(f'{group.domain_or_id} in common condition')
 
             donors = group.donors.all()
