@@ -1,8 +1,12 @@
 # This command solve 152 task problem: parse
 
+import re
+
 from django.core.management.base import BaseCommand
-from services.vk import core, videos
+
 from posting.models import Group
+from scraping.models import Movie
+from services.vk import core, videos
 
 
 class Command(BaseCommand):
@@ -19,6 +23,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         group_id = options['group_id']
+        pattern = r'(.*) \((\d\.\d).*\)'
 
         group = Group.objects.get(group_id=group_id)
 
@@ -30,3 +35,17 @@ class Command(BaseCommand):
 
         # TODO find in db these movies
         results = videos.get_all_group_videos(api, group_id)
+
+        for video in results:
+            try:
+                vk_title, vk_rating = re.findall(pattern, video.get('title', '')).pop()
+            except IndexError:
+                # TODO print message
+                continue
+
+            db_movie = Movie.objects.get(title=vk_title, rating=vk_rating)
+            if db_movie and db_movie.trailers.exists():
+                db_movie.trailers.first().update(vk_url=f'video-{video.get("owner_id")}{video.get("id")}')
+            else:
+                # TODO print message
+                continue
