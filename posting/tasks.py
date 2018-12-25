@@ -234,7 +234,6 @@ def post_movie(login, password, app_id, group_id, movie_id):
         log.error(f'no api was created in group {group_id}')
         return
 
-    # group = Group.objects.get(group_id=group_id)
     movie = Movie.objects.get(pk=movie_id)
 
     attachments = []
@@ -278,32 +277,33 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
-    trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
-    if trailer:
+    uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
+    downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
+
+    if uploaded_trailers.exist():
+        trailer = uploaded_trailers.first()
+        uploaded_trailer = trailer.vk_url
+    elif downloaded_trailers.exist():
+        trailer = downloaded_trailers.first()
         uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
-        log.debug('delete trailer file')
         delete_files(trailer.file_path)
+
+        trailer.vk_url = uploaded_trailer
+        trailer.status = Trailer.UPLOADED_STATUS
     else:
         log.error(f'movie {movie.title} got no trailer!')
         uploaded_trailer = None
+        trailer = None
 
-    if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
-        attachments.append(uploaded_trailer)
-        trailer_link = ''
-    else:
-        trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
     record_text = f'{trailer_name}\n\n' \
                   f'{trailer_information}\n\n' \
                   f'{trailer_link if uploaded_trailer else ""}\n\n' \
                   f'{movie.overview}'
 
-    if uploaded_trailer:
-        trailer.status = Trailer.UPLOADED_STATUS
-    else:
-        trailer.status = Trailer.FAILED_STATUS
-
-    trailer.save(update_fields=['status'])
+    if uploaded_trailer and trailer:
+        trailer.save(update_fields=['status', 'vk_url'])
 
     post_response = api.wall.post(owner_id=f'-{group_id}',
                                   from_group=1,
@@ -313,9 +313,6 @@ def post_movie(login, password, app_id, group_id, movie_id):
     movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     movie.group = Group.objects.get(group_id=group_id)
     movie.save(update_fields=['post_in_group_date', 'group'])
-
-    trailer.status = Trailer.POSTED_STATUS
-    trailer.save(update_fields=['status'])
 
     log.debug(f'{post_response} in group {group_id}')
 
