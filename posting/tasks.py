@@ -254,26 +254,27 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     try:
         assert len(image_files) == 3
-    except AssertionError as error:
-        log.error('Number of images is not equal 3' + repr(error))
+    except AssertionError:
+        log.error('Number of images is not equal 3', exc_info=True)
 
     if config.ENABLE_MERGE_IMAGES_MOVIES:
         poster_file = download_file(movie.poster)
         poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
-        delete_files(image_files)
-        delete_files(poster_file)
-        
+
         attachments.append(upload_photo(
             session,
             poster_and_three_images,
             group_id)
         )
+
+        delete_files(poster_file)
         delete_files(poster_and_three_images)
     else:
         attachments.append(upload_photo(session, download_file(movie.poster), group_id))
         for image in image_files[:2]:
             attachments.append(upload_photo(session, image, group_id))
-        delete_files(image_files)
+
+    delete_files(image_files)
 
     log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
@@ -295,15 +296,19 @@ def post_movie(login, password, app_id, group_id, movie_id):
         uploaded_trailer = None
         trailer = None
 
-    trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+    if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
+        attachments.append(uploaded_trailer)
+        trailer_link = ''
+    else:
+        trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+
+    if uploaded_trailer and trailer:
+        trailer.save(update_fields=['status', 'vk_url'])
 
     record_text = f'{trailer_name}\n\n' \
                   f'{trailer_information}\n\n' \
                   f'{trailer_link if uploaded_trailer else ""}\n\n' \
                   f'{movie.overview}'
-
-    if uploaded_trailer and trailer:
-        trailer.save(update_fields=['status', 'vk_url'])
 
     post_response = api.wall.post(owner_id=f'-{group_id}',
                                   from_group=1,
