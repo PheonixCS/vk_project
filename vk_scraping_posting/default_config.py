@@ -35,7 +35,7 @@ CONSTANCE_CONFIG = {
     'FORCE_MOVIE_POST': (False, 'Just for dev. Forcing movie posting', bool),
     'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool),
     'ENABLE_MERGE_IMAGES_MOVIES': (True, 'Enable merging images in movies to one', bool),
-    'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool)
+    'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool),
     'TMDB_MOVIE_INTERVALS': ('[(60, 65), (65, 70), (70, 75), (75, 80), (80, 101)]',
                              'Intervals for posting. Note that values must be integers',
                              str),
