@@ -2,7 +2,7 @@ import logging
 
 import vk_api
 
-from posting.poster import download_file
+from posting.core.poster import download_file
 
 log = logging.getLogger('services.vk.files')
 

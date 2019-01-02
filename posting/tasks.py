@@ -10,21 +10,17 @@ from django.db.models import Q
 from constance import config
 
 from posting.models import Group, ServiceToken, AdRecord
-from posting.poster import (
-    delete_hashtags_from_text,
-    delete_emoji_from_text,
+from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
-    merge_six_images_into_one,
-    is_text_on_image,
-    is_all_images_not_horizontal,
     delete_files,
     find_the_best_post,
     get_country_name_by_code,
-    merge_poster_and_three_images,
     get_next_interval_by_movie_rating,
     get_movies_rating_intervals
 )
+from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
+    is_text_on_image
 from services.vk.stat import get_group_week_statistics
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
@@ -32,7 +28,8 @@ from posting.core.horoscopes import generate_special_group_reference
 from services.vk.wall import get_wall
 from scraping.models import Record, Horoscope, Movie, Trailer
 from scraping.core.horoscopes import fetch_zodiac_sign
-from posting.text_utilities import replace_russian_with_english_letters
+from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
+    delete_emoji_from_text
 from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.vk_helper import is_ads_posted_recently
 

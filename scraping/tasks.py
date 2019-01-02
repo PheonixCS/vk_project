@@ -7,7 +7,7 @@ from constance import config
 from django.utils import timezone
 from random import choice
 
-from posting.poster import get_movies_rating_intervals
+from posting.core.poster import get_movies_rating_intervals
 from scraping.core.scraper import main, save_movie_to_db
 from scraping.models import Record, Horoscope, Trailer
 from services.themoviedb.wrapper import discover_movies
