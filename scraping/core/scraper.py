@@ -74,7 +74,9 @@ def save_record_to_db(donor, record):
                     Audio.objects.create(
                         record=obj,
                         owner_id=audio['audio']['owner_id'],
-                        audio_id=audio['audio']['id']
+                        audio_id=audio['audio']['id'],
+                        artist=audio['audio']['artist'],
+                        title=audio['audio']['title']
                     )
 
     return created

@@ -1,9 +1,11 @@
 import logging
 import os
+from collections import Counter
 
 import requests
 
 from posting.core.countries import countries_map
+from posting.core.text_utilities import delete_emoji_from_text
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
 
@@ -100,3 +102,19 @@ def get_next_interval_by_movie_rating(rating):
     for interval in rating_intervals:
         if rating in interval:
             return rating_intervals[(rating_intervals.index(interval) + 1) % len(rating_intervals)]
+
+
+def get_music_compilation_artist(audios):
+    artists = [delete_emoji_from_text(audio['artist']) for audio in audios]
+    artist, _ = Counter(artists).most_common(1)
+    return artist
+
+
+def get_music_compilation_genre(audios):
+    # TODO заменять id жанров ВК на свои
+    genres = [audio['genre_id'] for audio in audios]
+    if len(genres) > 1:
+        genre, _ = Counter(genres).most_common(1)
+        return genre
+    else:
+        return None
