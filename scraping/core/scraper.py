@@ -76,7 +76,7 @@ def save_record_to_db(donor, record):
                         owner_id=audio['audio']['owner_id'],
                         audio_id=audio['audio']['id'],
                         artist=audio['audio']['artist'],
-                        title=audio['audio']['title']
+                        genre=str(audio['audio'].get('genre_id', ''))
                     )
 
     return created

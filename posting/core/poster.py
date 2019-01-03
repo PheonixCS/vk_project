@@ -105,14 +105,14 @@ def get_next_interval_by_movie_rating(rating):
 
 
 def get_music_compilation_artist(audios):
-    artists = [delete_emoji_from_text(audio['artist']) for audio in audios]
+    artists = [delete_emoji_from_text(audio.artist) for audio in audios]
     artist, _ = Counter(artists).most_common(1)
     return artist
 
 
 def get_music_compilation_genre(audios):
     # TODO заменять id жанров ВК на свои
-    genres = [audio['genre_id'] for audio in audios]
+    genres = [audio.genre for audio in audios]
     if len(genres) > 1:
         genre, _ = Counter(genres).most_common(1)
         return genre

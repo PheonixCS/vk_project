@@ -99,7 +99,7 @@ class Audio(models.Model):
     owner_id = models.IntegerField(null=True)
     audio_id = models.IntegerField(null=True)
     artist = models.CharField(max_length=128, null=True)
-    title = models.CharField(max_length=128, null=True)
+    genre = models.CharField(max_length=128, null=True)
 
 
 class Video(models.Model):
