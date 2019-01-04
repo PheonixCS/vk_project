@@ -140,7 +140,6 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class BackgroundAbstractionAdmin(admin.ModelAdmin):
-    fields = ('image_tag',)
     readonly_fields = ('image_tag',)
 
     def image_tag(self, obj):
