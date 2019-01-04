@@ -118,3 +118,13 @@ class AdRecord(models.Model):
     ad_record_id = models.IntegerField()
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ad_records')
     post_in_group_date = models.DateTimeField()
+
+
+class BackgroundAbstraction(models.Model):
+    picture = models.ImageField(upload_to='backgrounds')
+
+    def __str__(self):
+        return f'{self.id}'
+
+    class Meta:
+        app_label = 'posting'

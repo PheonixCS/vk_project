@@ -4,7 +4,7 @@ from django.db.models import Sum, TextField
 from django.forms import Textarea
 from django.utils.html import format_html
 
-from .models import User, ServiceToken, Group, AdditionalText
+from .models import User, ServiceToken, Group, AdditionalText, BackgroundAbstraction
 
 
 class MembershipInline(admin.TabularInline):
@@ -139,6 +139,15 @@ class UserAdmin(admin.ModelAdmin):
     vk_url_field.short_description = 'Ссылка'
 
 
+class BackgroundAbstractionAdmin(admin.ModelAdmin):
+    fields = ('image_tag',)
+    readonly_fields = ('image_tag',)
+
+    def image_tag(self, obj):
+        return format_html(f'<img src="{obj.picture.url}" width="{obj.picture.width}" height={obj.picture.height} />')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(ServiceToken)
 admin.site.register(Group, GroupAdmin)
+admin.site.register(BackgroundAbstraction, BackgroundAbstractionAdmin)
