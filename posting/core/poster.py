@@ -4,7 +4,7 @@ from collections import Counter
 
 import requests
 
-from posting.core.countries import countries_map
+from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
@@ -87,7 +87,7 @@ def find_the_best_post(records, best_ratio, percent=20):
 
 
 def get_country_name_by_code(code):
-    return countries_map.get(code, '')
+    return countries.get(code, '')
 
 
 def get_movies_rating_intervals():
@@ -110,11 +110,14 @@ def get_music_compilation_artist(audios):
     return artist
 
 
+def get_music_genre_by_number(number):
+    return genres.get(number, '')
+
+
 def get_music_compilation_genre(audios):
-    # TODO заменять id жанров ВК на свои
-    genres = [audio.genre for audio in audios]
+    genres = [get_music_genre_by_number(audio.genre) for audio in audios]
     if len(genres) > 1:
         genre, _ = Counter(genres).most_common(1)
         return genre
     else:
-        return None
+        return ''

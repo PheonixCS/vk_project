@@ -76,6 +76,12 @@ def examine_groups():
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
 
+        music_condition = ''
+
+        if music_condition:
+            # TODO не брать record'ы с музыкой с 'banned' жанром
+            pass
+
         movies_condition = (
             group.is_movies
             and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
