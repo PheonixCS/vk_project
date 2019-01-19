@@ -9,7 +9,7 @@ from posting.models import Group
 from scraping.models import Movie
 from services.vk import core, videos
 
-log = logging.getLogger('scraping.commands')
+log = logging.getLogger('django.commands')
 
 
 class Command(BaseCommand):
@@ -48,7 +48,9 @@ class Command(BaseCommand):
 
             db_movie = Movie.objects.get(title=vk_title, rating=vk_rating)
             if db_movie and db_movie.trailers.exists():
-                db_movie.trailers.first().update(vk_url=f'video-{video.get("owner_id")}{video.get("id")}')
+                first_trailer = db_movie.trailers.first()
+                first_trailer.vk_url = f'video-{video.get("owner_id")}{video.get("id")}'
+                log.debug(f'{video.get("title")} updated')
             else:
                 log.warning(f'Movie {db_movie.title} has no trailer')
                 continue
