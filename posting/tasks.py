@@ -110,15 +110,15 @@ def examine_groups():
                                                      post_in_group_date__lte=week_ago).last()
 
                     if not old_movie:
-                        # TODO beda
-                        log.error('beda')
+                        log.error('Got no movies!')
                         movie = None
 
                     else:
+                        log.debug('Found old movie')
                         movie = old_movie
                         break
-
                 else:
+                    log.debug('Found new movie')
                     movie = new_movie
                     break
 
