@@ -6,7 +6,7 @@ from urlextract import URLExtract
 from constance import config
 from vk_api import ApiError
 
-from posting.poster import delete_emoji_from_text
+from posting.core.text_utilities import delete_emoji_from_text
 
 log = logging.getLogger('moderation.core.checks')
 

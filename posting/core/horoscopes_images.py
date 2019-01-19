@@ -7,10 +7,7 @@ from django.conf import settings
 from textwrap import wrap
 from constance import config
 
-from posting.poster import (
-    calculate_max_len_in_chars,
-    is_text_fit_to_width
-)
+from posting.core.images import is_text_fit_to_width, calculate_max_len_in_chars
 
 log = logging.getLogger('posting.horoscopes')
 

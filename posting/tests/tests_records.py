@@ -1,7 +1,7 @@
 #
 
 from django.test import TestCase
-from posting import poster
+from posting.core import poster
 
 
 class Record:

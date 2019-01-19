@@ -1,55 +1,51 @@
 import ast
 import logging
 import os
-import re
 from math import ceil
 from textwrap import wrap
 
 import pytesseract
-import requests
 from PIL import Image, ImageFont, ImageDraw
 from constance import config
 from django.conf import settings
 
-from posting.core.countries import countries_map
 from posting.extras.transforms import RGBTransform
 
-log = logging.getLogger('posting.poster')
+log = logging.getLogger('posting.core.images')
 
 
-def download_file(url, extension=None):
-    log.debug('download_file called')
-    local_filename = url.split('/')[-1]
-    if extension:
-        local_filename += '.{}'.format(extension)
+def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
+    """
 
-    r = requests.get(url)
-    with open(local_filename, 'wb') as f:
-        f.write(r.content)
+    :param text: text as string
+    :param width_in_chars:
+    :param width_in_pixels:
+    :param font_object:
+    :return:
 
-    log.debug('{} file downloaded'.format(local_filename))
-    return local_filename
+    :type text: str
+    """
+    for line in wrap(text, width_in_chars):
+        if font_object.getsize(line)[0] > width_in_pixels:
+            return False
+    return True
 
 
-def delete_files(file_paths):
-    log.debug('delete_files called with {} files'.format(len(file_paths)))
+def calculate_max_len_in_chars(text, width_in_pixels, font_object):
+    log.debug('calculate_max_len_in_chars called')
 
-    if isinstance(file_paths, list):
-        for file in file_paths:
-            try:
-                os.remove(file)
-            except FileNotFoundError as exc:
-                log.error('Fail to delete file {}'.format(exc))
-                continue
-    elif isinstance(file_paths, str):
-        try:
-            os.remove(file_paths)
-        except FileNotFoundError as exc:
-            log.error('Fail to delete file {}'.format(exc))
-    else:
-        log.warning('delete_files got wrong type')
-        return
-    log.debug('delete_files finished')
+    max_width_in_chars = len(text)
+    temp_text = wrap(text, max_width_in_chars)
+
+    while (
+        max_width_in_chars
+        and not is_text_fit_to_width(' '.join(temp_text), max_width_in_chars, width_in_pixels, font_object)
+    ):
+        max_width_in_chars -= 1
+        temp_text = wrap(text, max_width_in_chars)
+
+    log.debug('max_width_in_chars = {}'.format(max_width_in_chars))
+    return max_width_in_chars
 
 
 def crop_image(filepath, box):
@@ -118,40 +114,6 @@ def expand_image_with_white_color(filepath, pixels):
     log.debug('expand_image_with_white_color finished')
 
     return filepath
-
-
-def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
-    """
-
-    :param text: text as string
-    :param width_in_chars:
-    :param width_in_pixels:
-    :param font_object:
-    :return:
-
-    :type text: str
-    """
-    for line in wrap(text, width_in_chars):
-        if font_object.getsize(line)[0] > width_in_pixels:
-            return False
-    return True
-
-
-def calculate_max_len_in_chars(text, width_in_pixels, font_object):
-    log.debug('calculate_max_len_in_chars called')
-
-    max_width_in_chars = len(text)
-    temp_text = wrap(text, max_width_in_chars)
-
-    while (
-        max_width_in_chars
-        and not is_text_fit_to_width(' '.join(temp_text), max_width_in_chars, width_in_pixels, font_object)
-    ):
-        max_width_in_chars -= 1
-        temp_text = wrap(text, max_width_in_chars)
-
-    log.debug('max_width_in_chars = {}'.format(max_width_in_chars))
-    return max_width_in_chars
 
 
 def fill_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
@@ -393,89 +355,3 @@ def mirror_image(filepath):
         return False
     log.debug('image {} mirrored'.format(filepath))
     return True
-
-
-def prepare_image_for_posting(image_local_filepath, **kwargs):
-    keys = kwargs.keys()
-
-    if 'mirror' in keys:
-        mirror_image(image_local_filepath)
-
-    if 'crop_to_square' in keys:
-        crop_percentage_from_image_edges(image_local_filepath, kwargs.get('crop_to_square'))
-
-    if 'rgb_tone' in keys:
-        red_tone, green_tone, blue_tone, factor = list(map(int, kwargs.get('rgb_tone').split()))
-        color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
-
-    if 'text_to_fill' in keys:
-        fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
-
-
-def delete_double_spaces_from_text(text):
-    text = re.sub(' +', ' ', text)
-    return text
-
-
-def delete_hashtags_from_text(text):
-    # link hashtag looks like '#hello@user', common looks like '#hello'
-    text_without_link_hashtags = re.sub(r'(@\w*)', '', text)
-    text_without_double_spaces = delete_double_spaces_from_text(text_without_link_hashtags)
-    return text_without_double_spaces
-
-
-def delete_emoji_from_text(text):
-    log.debug('delete_emoji_from_text called. Text: "{}"'.format(text))
-    # text_without_emoji = re.sub(u'[\u0000-\u052F]+', ' ', text)
-    last_char_code = 1279  # 04FF
-    text_without_emoji = ''.join(letter for letter in text if ord(letter) <= last_char_code)
-    log.debug('text after deleting "{}"'.format(text_without_emoji))
-    text_without_double_spaces = delete_double_spaces_from_text(text_without_emoji)
-    return text_without_double_spaces
-
-
-def find_the_best_post(records, best_ratio, percent=20):
-    log.debug('find_the_best_post called')
-
-    eps = 0.1
-    records.sort(key=lambda x: x.rate, reverse=True)
-
-    end_index = int(len(records) / 100 * percent) or 1
-    records = records[:end_index]
-
-    for i in range(1, 6):
-        exact_ratio_records = [record for record in records if
-                               0 <= abs(record.males_females_ratio-best_ratio) <= i*eps]
-
-        if exact_ratio_records:
-            best_record = max(exact_ratio_records, key=lambda x: x.rate)
-            break
-    else:
-        best_record = max(records, key=lambda x: x.rate)
-
-    return best_record
-
-
-def get_country_name_by_code(code):
-    return countries_map.get(code, '')
-
-
-def get_movies_rating_intervals():
-    try:
-        intervals_borders = ast.literal_eval(config.TMDB_MOVIE_INTERVALS)
-    except SyntaxError:
-        intervals_borders = ast.literal_eval(settings.CONFIG['TMDB_MOVIE_INTERVALS'][0])
-        log.warning('get_movies_rating_intervals got wrong format from config, return default', exc_info=True)
-
-    return [[value / 10 for value in range(interval[0], interval[1])] for interval in intervals_borders]
-
-
-def get_next_interval_by_movie_rating(rating):
-    rating_intervals = get_movies_rating_intervals()
-
-    if not rating:
-        return rating_intervals[0]
-
-    for interval in rating_intervals:
-        if rating in interval:
-            return rating_intervals[(rating_intervals.index(interval) + 1) % len(rating_intervals)]
