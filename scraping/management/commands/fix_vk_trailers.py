@@ -1,5 +1,6 @@
 # This command solve 152 task problem: parse
 
+import logging
 import re
 
 from django.core.management.base import BaseCommand
@@ -7,6 +8,8 @@ from django.core.management.base import BaseCommand
 from posting.models import Group
 from scraping.models import Movie
 from services.vk import core, videos
+
+log = logging.getLogger('scraping.commands')
 
 
 class Command(BaseCommand):
@@ -40,12 +43,12 @@ class Command(BaseCommand):
             try:
                 vk_title, vk_rating = re.findall(pattern, video.get('title', '')).pop()
             except IndexError:
-                # TODO print message
+                log.warning('Index error', exc_info=True)
                 continue
 
             db_movie = Movie.objects.get(title=vk_title, rating=vk_rating)
             if db_movie and db_movie.trailers.exists():
                 db_movie.trailers.first().update(vk_url=f'video-{video.get("owner_id")}{video.get("id")}')
             else:
-                # TODO print message
+                log.warning(f'Movie {db_movie.title} has no trailer')
                 continue
