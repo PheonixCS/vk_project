@@ -156,9 +156,11 @@ class Trailer(models.Model):
         (POSTED_STATUS, 'posted'),
         (FAILED_STATUS, 'failed')
     )
+
     status = models.IntegerField(choices=STATUS_CHOICES, default=NEW_STATUS, verbose_name='Статус')
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='trailers')
     url = models.CharField(max_length=128)
+    vk_url = models.CharField(max_length=256, null=True)
     # TODO it should be django's file field, but i'm hurry (and lazy)
     file_path = models.CharField(max_length=256)
 

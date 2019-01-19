@@ -24,7 +24,8 @@ def run_scraper():
 @task
 def scrape_tmdb_movies():
     if config.TMDB_SCRAPING_ENABLED:
-        for movie in discover_movies():
+        now_year = datetime.year
+        for movie in discover_movies(end_year=now_year):
             save_movie_to_db(movie)
 
 
@@ -94,3 +95,16 @@ def download_youtube_trailers():
             trailer.save(update_fields=['file_path', 'status'])
 
         log.debug('finish downloading trailer')
+
+
+@task
+def scrap_new_movies():
+    log.debug('scrap_new_movies called')
+
+    now_year = datetime.utcnow().year
+    years_offset = config.TMDB_NEW_MOVIES_OFFSET
+
+    for movie in discover_movies(end_year=now_year, years_offset=years_offset):
+        save_movie_to_db(movie)
+
+    log.debug('scrap_new_movies finished')
