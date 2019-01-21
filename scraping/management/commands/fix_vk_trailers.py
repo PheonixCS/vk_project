@@ -26,19 +26,22 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         group_id = options['group_id']
+
+        self.find_trailers(group_id)
+
+    @staticmethod
+    def find_trailers(group_id):
         pattern = r'(.*) \((\d\.\d).*\)'
 
         group = Group.objects.get(group_id=group_id)
-
         api = core.create_vk_session_using_login_password(
             group.user.login,
             group.user.password,
             group.user.app_id
         ).get_api()
-
+        
         # TODO find in db these movies
         results = videos.get_all_group_videos(api, group_id)
-
         for video in results:
             try:
                 vk_title, vk_rating = re.findall(pattern, video.get('title', '')).pop()
