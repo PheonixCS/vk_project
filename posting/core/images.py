@@ -235,7 +235,11 @@ def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None)
 
     new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
-    return image_object.resize(new_size)
+    try:
+        resized_image = image_object.resize(new_size)
+    except:
+        log.error('error in resize_image_aspect_ratio_by_two_sides', exc_info=True)
+    return resized_image
 
 
 def merge_poster_and_three_images(poster, images):
