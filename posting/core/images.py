@@ -5,7 +5,7 @@ from math import ceil
 from textwrap import wrap
 
 import pytesseract
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageFile
 from constance import config
 from django.conf import settings
 
@@ -231,14 +231,20 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
 
 
 def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
+    # maybe solution of problem
+    # https://stackoverflow.com/questions/12984426/python-pil-ioerror-image-file-truncated-with-big-images
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+
     log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
 
     new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
     try:
-        resized_image = image_object.resize(new_size)
+        resized_image = image_object.resize(new_size, resample=Image.NEAREST)
     except:
         log.error('error in resize_image_aspect_ratio_by_two_sides', exc_info=True)
+        return
+
     return resized_image
 
 
