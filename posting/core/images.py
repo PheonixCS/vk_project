@@ -217,6 +217,9 @@ def calculate_size_from_one_side(origin_width, origin_height, width=None, height
 
 
 def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
+    # maybe solution of problem
+    # https://stackoverflow.com/questions/12984426/python-pil-ioerror-image-file-truncated-with-big-images
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
     log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
 
     orig_width = image_object.size[0]
@@ -227,7 +230,14 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
     else:
         new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
     log.debug('resize_image_aspect_ratio_by_two_sides finished')
-    return image_object.resize(new_size)
+
+    try:
+        resized_image = image_object.resize(new_size, resample=Image.NEAREST)
+    except:
+        log.error('error in resize_image_aspect_ratio_by_one_side', exc_info=True)
+        return
+
+    return resized_image
 
 
 def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None):
@@ -235,14 +245,14 @@ def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None)
     # https://stackoverflow.com/questions/12984426/python-pil-ioerror-image-file-truncated-with-big-images
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    log.debug('resize_image_aspect_ratio_by_two_sides called with {}:{}'.format(width, height))
+    log.debug('resize_image_aspect_ratio_by_one_side called with {}:{}'.format(width, height))
 
     new_size = calculate_size_from_one_side(image_object.size[0], image_object.size[1], width, height)
 
     try:
         resized_image = image_object.resize(new_size, resample=Image.NEAREST)
     except:
-        log.error('error in resize_image_aspect_ratio_by_two_sides', exc_info=True)
+        log.error('error in resize_image_aspect_ratio_by_one_side', exc_info=True)
         return
 
     return resized_image
