@@ -4,6 +4,7 @@ from collections import Counter
 
 import requests
 
+from posting.models import BackgroundAbstraction
 from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
@@ -121,3 +122,12 @@ def get_music_compilation_genre(audios):
         return genre
     else:
         return ''
+
+
+def find_next_background_abstraction(last_user_abstraction_id):
+    background_abstractions = BackgroundAbstraction.objects.all().order_by('id')
+    background_abstraction = next(
+        (image for image in background_abstractions if image.id > last_user_abstraction_id),
+        background_abstractions[0]
+    )
+    return background_abstraction

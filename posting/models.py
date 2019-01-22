@@ -66,16 +66,20 @@ class Group(models.Model):
     is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
     is_replace_russian_with_english = models.BooleanField(default=False,
                                                           verbose_name='Заменять русские буквы английскими?')
+
     is_additional_text_enabled = models.BooleanField(default=False,
                                                      verbose_name='Добавлять к записи дополнительный текст?')
+    last_used_additional_text_id = models.IntegerField(null=True, default=0)
+
+    is_background_abstraction_enabled = models.BooleanField(default=False,
+                                                            verbose_name='Переносить картинку в шаблон CD-диска?')
+    last_used_background_abstraction_id = models.IntegerField(null=True, default=0)
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
     number_of_posts_yesterday = models.IntegerField(null=True, verbose_name='Посты за вчера')
     number_of_ad_posts_yesterday = models.IntegerField(null=True, verbose_name='Реклама за вчера')
     statistics_last_update_date = models.DateTimeField(null=True)
-
-    last_used_additional_text_id = models.IntegerField(null=True, default=0)
 
     male_weekly_average_count = models.IntegerField(default=0,
                                                     verbose_name='Среднее количество мужчин за неделю')

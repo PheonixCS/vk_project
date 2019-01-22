@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from constance import config
 
-from posting.models import Group, ServiceToken, AdRecord
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -17,7 +17,8 @@ from posting.core.poster import (
     find_the_best_post,
     get_country_name_by_code,
     get_next_interval_by_movie_rating,
-    get_movies_rating_intervals
+    get_movies_rating_intervals,
+    find_next_background_abstraction,
 )
 from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
     is_text_on_image
@@ -76,11 +77,13 @@ def examine_groups():
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
 
-        music_condition = ''
+        # TODO не брать record'ы с музыкой с 'banned' жанром
+        music_condition = ()
 
         if music_condition:
-            # TODO не брать record'ы с музыкой с 'banned' жанром
-            pass
+            background_abstraction = find_next_background_abstraction(group.last_used_background_abstraction_id)
+            group.last_used_background_abstraction_id = background_abstraction.id
+            group.save(update_fields=['last_used_background_abstraction_id'])
 
         movies_condition = (
             group.is_movies
@@ -245,7 +248,7 @@ def post_movie(login, password, app_id, group_id, movie_id):
         poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
         delete_files(image_files)
         delete_files(poster_file)
-        
+
         attachments.append(upload_photo(
             session,
             poster_and_three_images,
@@ -750,7 +753,7 @@ def sex_statistics_weekly():
                 male_average_count = sum(male_count_list)//len(male_count_list)
             else:
                 male_average_count = 0
-                
+
             if female_count_list:
                 female_average_count = sum(female_count_list)//len(female_count_list)
             else:
