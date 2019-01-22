@@ -112,7 +112,7 @@ def get_music_compilation_artist(audios):
 
 
 def get_music_genre_by_number(number):
-    return genres.get(number, '')
+    return {genre['id']: genre['genre'] for genre in genres}.get(number, '')
 
 
 def get_music_compilation_genre(audios):
