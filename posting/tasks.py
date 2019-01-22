@@ -280,10 +280,10 @@ def post_movie(group_id, movie_id):
         uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
         downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
 
-        if uploaded_trailers.exist():
+        if uploaded_trailers.exists():
             trailer = uploaded_trailers.first()
             uploaded_trailer = trailer.vk_url
-        elif downloaded_trailers.exist():
+        elif downloaded_trailers.exists():
             trailer = downloaded_trailers.first()
             uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
             delete_files(trailer.file_path)
