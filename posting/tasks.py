@@ -45,18 +45,23 @@ def examine_groups():
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-    now_time = datetime.now(tz=timezone.utc)
-    now_minute = now_time.minute
+    now_time_utc = datetime.now(tz=timezone.utc)
+    now_minute = now_time_utc.minute
 
-    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+    ads_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
     allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
     week_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
-    today_start = now_time.replace(hour=0, minute=0, second=0)
+    today_start = now_time_utc.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
-        last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+        last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
+        if last_hour_ads.exists():
+            last_hour_ads_count = last_hour_ads.count()
+        else:
+            last_hour_ads_count = 0
+
         log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
 
         if (last_hour_ads_count or is_ads_posted_recently(group)) and not config.IS_DEV:
@@ -74,15 +79,17 @@ def examine_groups():
             group.save(update_fields=['group_id'])
 
         if group.is_movies:
-            last_hour_posts_count = Movie.objects.filter(post_in_group_date__gt=time_threshold).count()
+            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=ads_time_threshold)
         else:
-            last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
 
-        log.debug(f'got {last_hour_posts_count} posts in last hour and 5 minutes for group {group.domain_or_id}')
+        last_hour_posts_exist = last_hour_posts.exists()
+
+        log.debug(f'got {last_hour_posts_exist} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
         movies_condition = (
             group.is_movies
-            and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
+            and (group.posting_time.minute == now_minute or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
             and not last_hour_ads_count
         )
         if movies_condition:
@@ -105,14 +112,12 @@ def examine_groups():
                                                  rating__in=next_rating_interval,
                                                  post_in_group_date__isnull=True).last()
                 if not new_movie:
-                    # TODO week ago should be in live settings
+                    old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
                     old_movie = Movie.objects.filter(trailers__vk_url__isnull=False,
-                                                     post_in_group_date__lte=week_ago).last()
+                                                     post_in_group_date__lte=old_movie_threshold).last()
 
                     if not old_movie:
                         log.error('Got no movies!')
-                        movie = None
-
                     else:
                         log.debug('Found old movie')
                         movie = old_movie
@@ -154,7 +159,7 @@ def examine_groups():
                 log.warning('got no horoscopes records')
 
         common_condition = (
-            (group.posting_time.minute == now_minute or not last_hour_posts_count)
+            (group.posting_time.minute == now_minute or not last_hour_posts_exist)
             and not last_hour_ads_count
             and not group.is_movies
         )

@@ -38,5 +38,6 @@ CONSTANCE_CONFIG = {
     'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool),
     'TMDB_MOVIE_INTERVALS': ('[(60, 65), (65, 70), (70, 75), (75, 80), (80, 101)]',
                              'Intervals for posting. Note that values must be integers',
-                             str)
+                             str),
+    'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int)
 }
