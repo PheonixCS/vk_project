@@ -33,28 +33,31 @@ class Command(BaseCommand):
     def find_trailers(group_id):
         pattern = r'(.*) \((\d\.\d).*\)'
 
-        group = Group.objects.get(group_id=group_id)
-        api = core.create_vk_session_using_login_password(
-            group.user.login,
-            group.user.password,
-            group.user.app_id
-        ).get_api()
-        
-        # TODO find in db these movies
-        results = videos.get_all_group_videos(api, group_id)
-        for video in results:
-            try:
-                vk_title, vk_rating = re.findall(pattern, video.get('title', '')).pop()
-            except IndexError:
-                log.warning('Index error', exc_info=True)
-                continue
+        try:
+            group = Group.objects.get(group_id=group_id)
+            api = core.create_vk_session_using_login_password(
+                group.user.login,
+                group.user.password,
+                group.user.app_id
+            ).get_api()
 
-            db_movie = Movie.objects.get(title=vk_title, rating=vk_rating)
-            if db_movie and db_movie.trailers.exists():
-                first_trailer = db_movie.trailers.first()
-                first_trailer.vk_url = f'video-{video.get("owner_id")}{video.get("id")}'
-                first_trailer.save()
-                log.debug(f'{video.get("title")} updated')
-            else:
-                log.warning(f'Movie {db_movie.title} has no trailer')
-                continue
+            # TODO find in db these movies
+            results = videos.get_all_group_videos(api, group_id)
+            for video in results:
+                try:
+                    vk_title, vk_rating = re.findall(pattern, video.get('title', '')).pop()
+                except IndexError:
+                    log.warning('Index error', exc_info=True)
+                    continue
+
+                db_movie = Movie.objects.get(title=vk_title, rating=vk_rating)
+                if db_movie and db_movie.trailers.exists():
+                    first_trailer = db_movie.trailers.first()
+                    first_trailer.vk_url = f'video-{video.get("owner_id")}{video.get("id")}'
+                    first_trailer.save()
+                    log.debug(f'{video.get("title")} updated')
+                else:
+                    log.warning(f'Movie {db_movie.title} has no trailer')
+                    continue
+        except:
+            log.error('error in fix_vk_trailer', exc_info=True)
