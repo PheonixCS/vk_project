@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from random import choice, shuffle
 
 import vk_api
-from celery import task
+from celery import task, shared_task
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -36,7 +36,7 @@ from posting.core.vk_helper import is_ads_posted_recently
 log = logging.getLogger('posting.scheduled')
 
 
-@task
+@shared_task(time_limit=55)
 def examine_groups():
     log.debug('start group examination')
     groups_to_post_in = Group.objects.filter(user__isnull=False,
@@ -218,7 +218,7 @@ def examine_groups():
                 the_best_record.save(update_fields=['is_involved_now'])
 
 
-@task
+@shared_task
 def post_movie(group_id, movie_id):
     log.debug(f'start posting movies in {group_id} group')
 
@@ -331,7 +331,7 @@ def post_movie(group_id, movie_id):
         log.error('error in movie posting', exc_info=True)
 
 
-@task
+@shared_task
 def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('start posting horoscopes in {} group'.format(group_id))
 
@@ -394,7 +394,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('post horoscopes in group {} finished'.format(group_id))
 
 
-@task
+@shared_task
 def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
@@ -566,7 +566,7 @@ def post_record(login, password, app_id, group_id, record_id):
     log.debug('post in group {} finished'.format(group_id))
 
 
-@task
+@shared_task
 def pin_best_post():
     """
 
@@ -625,7 +625,7 @@ def pin_best_post():
             continue
 
 
-@task
+@shared_task
 def delete_old_ads():
     """
 
@@ -674,7 +674,7 @@ def delete_old_ads():
         log.info('finish deleting old ads')
 
 
-@task
+@shared_task
 def update_statistics():
     log.debug('update_statistics called')
 
@@ -743,7 +743,7 @@ def update_statistics():
     log.debug('update_statistics finished successfully')
 
 
-@task
+@shared_task
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 

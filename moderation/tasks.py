@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from celery import task
+from celery import shared_task
 from constance import config
 from django.utils import timezone
 
@@ -15,7 +15,7 @@ from services.vk.core import create_vk_session_using_login_password
 log = logging.getLogger('moderation.tasks')
 
 
-@task
+@shared_task
 def process_transactions():
     log.info('start process_transactions task')
 
@@ -40,7 +40,7 @@ def process_transactions():
     log.info('process_transactions task completed')
 
 
-@task
+@shared_task
 def ban_donors_admins():
     log.info('start ban_donors_admins task')
 
@@ -68,7 +68,7 @@ def ban_donors_admins():
     log.info('ban_donors_admins task completed')
 
 
-@task
+@shared_task
 def delete_old_transactions():
     hours = config.OLD_MODERATION_TRANSACTIONS_HOURS
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)

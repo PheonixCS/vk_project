@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from celery import task
+from celery import task, shared_task
 from constance import config
 from django.utils import timezone
 
@@ -15,12 +15,12 @@ from services.youtube.core import download_trailer
 log = logging.getLogger('scraping.scheduled')
 
 
-@task
+@shared_task
 def run_scraper():
     main()
 
 
-@task
+@shared_task
 def scrape_tmdb_movies():
     if config.TMDB_SCRAPING_ENABLED:
         now_year = datetime.year
@@ -28,7 +28,7 @@ def scrape_tmdb_movies():
             save_movie_to_db(movie)
 
 
-@task
+@shared_task
 def delete_oldest():
     """
     Scheduled task for deleting records 24 hours old
@@ -43,7 +43,7 @@ def delete_oldest():
     log.debug('deleted {} records'.format(number_of_records))
 
 
-@task
+@shared_task
 def delete_old_horoscope_records():
     hours = config.OLD_HOROSCOPES_HOURS
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
@@ -53,7 +53,7 @@ def delete_old_horoscope_records():
     log.debug('deleted {} records'.format(number_of_records))
 
 
-@task
+@shared_task
 def download_youtube_trailers():
     log.debug('download_youtube_trailers start analyzing')
 
@@ -92,7 +92,7 @@ def download_youtube_trailers():
         log.debug('finish downloading trailers')
 
 
-@task
+@shared_task
 def scrap_new_movies():
     log.debug('scrap_new_movies called')
 
