@@ -124,10 +124,5 @@ def get_music_compilation_genre(audios):
         return ''
 
 
-def find_next_background_abstraction(last_user_abstraction_id):
-    background_abstractions = BackgroundAbstraction.objects.all().order_by('id')
-    background_abstraction = next(
-        (image for image in background_abstractions if image.id > last_user_abstraction_id),
-        background_abstractions[0]
-    )
-    return background_abstraction
+def find_next_element_by_last_used_id(objects, last_used_object_id):
+    return next((object for object in objects if object.id > last_used_object_id), objects[0])

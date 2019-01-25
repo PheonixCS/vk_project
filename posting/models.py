@@ -74,6 +74,9 @@ class Group(models.Model):
     is_background_abstraction_enabled = models.BooleanField(default=False,
                                                             verbose_name='Переносить картинку в шаблон CD-диска?')
     last_used_background_abstraction_id = models.IntegerField(null=True, default=0)
+    is_music_genre_epithet_enabled = models.BooleanField(default=False,
+                                                         verbose_name='Добавлять эпитет перед музыкальным жанром?')
+    last_used_music_genre_epithet_id = models.IntegerField(null=True, default=0)
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
@@ -104,6 +107,18 @@ class Group(models.Model):
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'
+
+
+class MusicGenreEpithet(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='music_genre_epithets')
+    text_for_male = models.TextField(max_length=256, default='',
+                                     verbose_name='Эпитет для музыкального жанра мужского рода')
+    text_for_female = models.TextField(max_length=256, default='',
+                                     verbose_name='Эпитет для музыкального жанра женского рода')
+
+    class Meta:
+        verbose_name = 'Эпитет'
+        verbose_name_plural = 'Эпитеты'
 
 
 class AdditionalText(models.Model):

@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from constance import config
 
-from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, MusicGenreEpithet
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -18,7 +18,7 @@ from posting.core.poster import (
     get_country_name_by_code,
     get_next_interval_by_movie_rating,
     get_movies_rating_intervals,
-    find_next_background_abstraction,
+    find_next_element_by_last_used_id
 )
 from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
     is_text_on_image
@@ -81,9 +81,18 @@ def examine_groups():
         music_condition = ()
 
         if music_condition:
-            background_abstraction = find_next_background_abstraction(group.last_used_background_abstraction_id)
-            group.last_used_background_abstraction_id = background_abstraction.id
-            group.save(update_fields=['last_used_background_abstraction_id'])
+            abstractions = BackgroundAbstraction.objects.all().order_by('id')
+            if group.is_background_abstraction_enabled and abstractions:
+                abstraction = find_next_element_by_last_used_id(abstractions,
+                                                                group.last_used_background_abstraction_id)
+                group.last_used_background_abstraction_id = abstraction.id
+                group.save(update_fields=['last_used_background_abstraction_id'])
+
+            epithets = MusicGenreEpithet.objects.all().order_by('id')
+            if group.is_music_genre_epithet_enabled and epithets:
+                epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
+                group.last_used_music_genre_epithet_id = epithet.id
+                group.save(update_fields=['last_used_music_genre_epithet_id'])
 
         movies_condition = (
             group.is_movies
@@ -500,8 +509,8 @@ def post_record(login, password, app_id, group_id, record_id):
 
         additional_texts = group.additional_texts.all().order_by('id')
         if group.is_additional_text_enabled and additional_texts:
-            additional_text = next((text for text in additional_texts if text.id > group.last_used_additional_text_id),
-                                   additional_texts[0])
+            additional_text = find_next_element_by_last_used_id(group.additional_texts.all().order_by('id'),
+                                                                group.last_used_additional_text_id)
             log.debug(f'Found additional texts for group {group.domain_or_id}. '
                       f'Last used text id: {group.last_used_additional_text_id}, '
                       f'new text id: {additional_text.id}, new text: {additional_text.text},'
