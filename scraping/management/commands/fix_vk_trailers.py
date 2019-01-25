@@ -43,7 +43,9 @@ class Command(BaseCommand):
 
             # TODO find in db these movies
             results = videos.get_all_group_videos(api, group_id)
+            log.debug(f'got {len(results)} videos')
             for video in results:
+                log.debug(f'working wit {video.get("title")}')
                 try:
                     vk_title, vk_rating = re.findall(pattern, video.get('title', '')).pop()
                 except IndexError:
