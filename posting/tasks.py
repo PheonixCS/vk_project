@@ -627,16 +627,11 @@ def pin_best_post():
 
 @task
 def delete_old_ads():
-    """
-
-    :return:
-    """
     log.info('delete_old_ads called')
 
     active_groups = Group.objects.filter(
         user__isnull=False,
-        is_posting_active=True,
-        is_pin_enabled=True).distinct()
+        is_posting_active=True).distinct()
 
     for group in active_groups:
 
@@ -646,7 +641,7 @@ def delete_old_ads():
         ads = AdRecord.objects.filter(group=group, post_in_group_date__lt=time_threshold)
         log.debug('got {} ads in last 30 hours in group {}'.format(len(ads), group.group_id))
 
-        if len(ads):
+        if ads.exists():
 
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
             if not session:
@@ -671,7 +666,8 @@ def delete_old_ads():
             ads = ads.exclude(pk__in=ignore_ad_ids)
             number_of_records, extended = ads.delete()
             log.debug('delete {} ads out of db'.format(number_of_records))
-        log.info('finish deleting old ads')
+
+    log.info('finish deleting old ads')
 
 
 @task
