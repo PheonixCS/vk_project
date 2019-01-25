@@ -291,10 +291,13 @@ def post_movie(group_id, movie_id):
         elif downloaded_trailers.exists():
             trailer = downloaded_trailers.first()
             uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
-            delete_files(trailer.file_path)
 
-            trailer.vk_url = uploaded_trailer
-            trailer.status = Trailer.UPLOADED_STATUS
+            if uploaded_trailer:
+                delete_files(trailer.file_path)
+                trailer.vk_url = uploaded_trailer
+                trailer.status = Trailer.UPLOADED_STATUS
+            else:
+                log.warning('failed to upload trailer')
         else:
             log.error(f'movie {movie.title} got no trailer!')
             uploaded_trailer = None
