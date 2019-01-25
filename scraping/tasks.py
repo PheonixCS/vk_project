@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from celery import task, shared_task
+from celery import shared_task
 from constance import config
 from django.utils import timezone
 
