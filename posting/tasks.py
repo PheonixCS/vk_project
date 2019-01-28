@@ -10,21 +10,17 @@ from django.db.models import Q
 from constance import config
 
 from posting.models import Group, ServiceToken, AdRecord
-from posting.poster import (
-    delete_hashtags_from_text,
-    delete_emoji_from_text,
+from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
-    merge_six_images_into_one,
-    is_text_on_image,
-    is_all_images_not_horizontal,
     delete_files,
     find_the_best_post,
     get_country_name_by_code,
-    merge_poster_and_three_images,
     get_next_interval_by_movie_rating,
     get_movies_rating_intervals
 )
+from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
+    is_text_on_image
 from services.vk.stat import get_group_week_statistics
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
@@ -32,7 +28,8 @@ from posting.core.horoscopes import generate_special_group_reference
 from services.vk.wall import get_wall
 from scraping.models import Record, Horoscope, Movie, Trailer
 from scraping.core.horoscopes import fetch_zodiac_sign
-from posting.text_utilities import replace_russian_with_english_letters
+from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
+    delete_emoji_from_text
 from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.vk_helper import is_ads_posted_recently
 
@@ -48,16 +45,28 @@ def examine_groups():
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-    now_time = datetime.now(tz=timezone.utc)
-    now_minute = now_time.minute
+    now_time_utc = datetime.now(tz=timezone.utc)
+    now_minute = now_time_utc.minute
 
-    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
+    ads_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
     allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
     week_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
-    today_start = now_time.replace(hour=0, minute=0, second=0)
+    today_start = now_time_utc.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
+
+        last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
+        if last_hour_ads.exists():
+            last_hour_ads_count = last_hour_ads.count()
+        else:
+            last_hour_ads_count = 0
+
+        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
+
+        if (last_hour_ads_count or is_ads_posted_recently(group)) and not config.IS_DEV:
+            log.info(f'pass group {group.domain_or_id} because ad post was published recently')
+            continue
 
         # TODO it is not part of examine, need to move it to task or something
         if not group.group_id:
@@ -70,49 +79,61 @@ def examine_groups():
             group.save(update_fields=['group_id'])
 
         if group.is_movies:
-            last_hour_posts_count = Movie.objects.filter(post_in_group_date__gt=time_threshold).count()
+            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=ads_time_threshold)
         else:
-            last_hour_posts_count = Record.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
+            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
 
-        log.debug(f'got {last_hour_posts_count} posts in last hour and 5 minutes for group {group.domain_or_id}')
+        last_hour_posts_exist = last_hour_posts.exists()
 
-        last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
-        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
+        log.debug(f'got {last_hour_posts_exist} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
         movies_condition = (
             group.is_movies
-            and (group.posting_time.minute == now_minute or not last_hour_posts_count or config.FORCE_MOVIE_POST)
+            and (group.posting_time.minute == now_minute or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
             and not last_hour_ads_count
         )
-
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
-            if is_ads_posted_recently(group) and not config.IS_DEV:
-                continue
 
-            last_posted_movie = Movie.objects.filter(post_in_group_date__isnull=False).latest('post_in_group_date')
-            next_movie_rating = last_posted_movie.rating
-            log.debug(f'last posted movie id: {last_posted_movie.id or None}')
+            posted_movies = Movie.objects.filter(post_in_group_date__isnull=False)
+            if posted_movies:
+                last_posted_movie = posted_movies.latest('post_in_group_date')
+                last_movie_rating = last_posted_movie.rating
+                log.debug(f'last posted movie id: {last_posted_movie.id or None}')
+            else:
+                log.warning('got no posted movies')
+                last_movie_rating = None
 
             for _ in range(len(get_movies_rating_intervals())):
-                next_rating_interval = get_next_interval_by_movie_rating(next_movie_rating)
+                next_rating_interval = get_next_interval_by_movie_rating(last_movie_rating)
                 log.debug(f'next rating interval {next_rating_interval}')
 
-                movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
-                                             rating__in=next_rating_interval).last()
-                if movie:
+                new_movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
+                                                 rating__in=next_rating_interval,
+                                                 post_in_group_date__isnull=True).last()
+                if not new_movie:
+                    old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
+                    old_movie = Movie.objects.filter(trailers__vk_url__isnull=False,
+                                                     post_in_group_date__lte=old_movie_threshold).last()
+
+                    if not old_movie:
+                        log.error('Got no movies!')
+                    else:
+                        log.debug('Found old movie')
+                        movie = old_movie
+                        break
+                else:
+                    log.debug('Found new movie')
+                    movie = new_movie
                     break
 
-                next_movie_rating = next_rating_interval[0]
+                last_movie_rating = next_rating_interval[0]
+
+            else:
+                movie = None
 
             if movie:
-                post_movie.delay(
-                    group.user.login,
-                    group.user.password,
-                    group.user.app_id,
-                    group.group_id,
-                    movie.id
-                )
+                post_movie.delay(group.group_id, movie.id)
             else:
                 log.warning('got no movie')
 
@@ -120,12 +141,10 @@ def examine_groups():
             group.is_horoscopes
             and group.horoscopes.filter(post_in_group_date__isnull=True)
             and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            and not last_hour_ads_count)
-
+            and not last_hour_ads_count
+        )
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horosopes condition')
-            if is_ads_posted_recently(group):
-                continue
 
             horoscope_record = group.horoscopes.filter(post_in_group_date__isnull=True,
                                                        post_in_donor_date__gt=today_start).last()
@@ -139,12 +158,13 @@ def examine_groups():
             else:
                 log.warning('got no horoscopes records')
 
-        if (group.posting_time.minute == now_minute or not last_hour_posts_count) and not last_hour_ads_count\
-                and not group.is_movies:
+        common_condition = (
+            (group.posting_time.minute == now_minute or not last_hour_posts_exist)
+            and not last_hour_ads_count
+            and not group.is_movies
+        )
+        if common_condition:
             log.debug(f'{group.domain_or_id} in common condition')
-
-            if is_ads_posted_recently(group):
-                continue
 
             donors = group.donors.all()
 
@@ -199,21 +219,24 @@ def examine_groups():
 
 
 @task
-def post_movie(login, password, app_id, group_id, movie_id):
+def post_movie(group_id, movie_id):
     log.debug(f'start posting movies in {group_id} group')
 
-    session = create_vk_session_using_login_password(login, password, app_id)
-    api = session.get_api()
+    group = Group.objects.get(group_id=group_id)
+    login = group.user.login
+    password = group.user.password
+    app_id = group.user.app_id
 
+    session = create_vk_session_using_login_password(login, password, app_id)
     if not session:
         log.error(f'session not created in group {group_id}')
         return
 
+    api = session.get_api()
     if not api:
         log.error(f'no api was created in group {group_id}')
         return
 
-    # group = Group.objects.get(group_id=group_id)
     movie = Movie.objects.get(pk=movie_id)
 
     attachments = []
@@ -234,69 +257,78 @@ def post_movie(login, password, app_id, group_id, movie_id):
 
     try:
         assert len(image_files) == 3
-    except AssertionError as error:
-        log.error('Number of images is not equal 3' + repr(error))
+    except AssertionError:
+        log.error('Number of images is not equal 3', exc_info=True)
 
-    if config.ENABLE_MERGE_IMAGES_MOVIES:
-        poster_file = download_file(movie.poster)
-        poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+    try:
+        if config.ENABLE_MERGE_IMAGES_MOVIES:
+            poster_file = download_file(movie.poster)
+            poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+
+            attachments.append(upload_photo(
+                session,
+                poster_and_three_images,
+                group_id)
+            )
+
+            delete_files(poster_file)
+            delete_files(poster_and_three_images)
+        else:
+            attachments.append(upload_photo(session, download_file(movie.poster), group_id))
+            for image in image_files[:2]:
+                attachments.append(upload_photo(session, image, group_id))
+
         delete_files(image_files)
-        delete_files(poster_file)
-        
-        attachments.append(upload_photo(
-            session,
-            poster_and_three_images,
-            group_id)
-        )
-        delete_files(poster_and_three_images)
-    else:
-        attachments.append(upload_photo(session, download_file(movie.poster), group_id))
-        for image in image_files[:2]:
-            attachments.append(upload_photo(session, image, group_id))
-        delete_files(image_files)
 
-    log.debug(f'movie {movie.title} post: got attachments {attachments}')
+        log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
-    trailer = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS).first()
-    if trailer:
-        uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
-        log.debug('delete trailer file')
-        delete_files(trailer.file_path)
-    else:
-        log.error(f'movie {movie.title} got no trailer!')
-        uploaded_trailer = None
+        uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
+        downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
 
-    if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
-        attachments.append(uploaded_trailer)
-        trailer_link = ''
-    else:
-        trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+        if uploaded_trailers.exists():
+            trailer = uploaded_trailers.first()
+            uploaded_trailer = trailer.vk_url
+        elif downloaded_trailers.exists():
+            trailer = downloaded_trailers.first()
+            uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
 
-    record_text = f'{trailer_name}\n\n' \
-                  f'{trailer_information}\n\n' \
-                  f'{trailer_link if uploaded_trailer else ""}\n\n' \
-                  f'{movie.overview}'
+            if uploaded_trailer:
+                delete_files(trailer.file_path)
+                trailer.vk_url = uploaded_trailer
+                trailer.status = Trailer.UPLOADED_STATUS
+            else:
+                log.warning('failed to upload trailer')
+        else:
+            log.error(f'movie {movie.title} got no trailer!')
+            uploaded_trailer = None
+            trailer = None
 
-    if uploaded_trailer:
-        trailer.status = Trailer.UPLOADED_STATUS
-    else:
-        trailer.status = Trailer.FAILED_STATUS
+        if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
+            attachments.append(uploaded_trailer)
+            trailer_link = ''
+        else:
+            trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
-    trailer.save(update_fields=['status'])
+        if uploaded_trailer and trailer:
+            trailer.save(update_fields=['status', 'vk_url'])
 
-    post_response = api.wall.post(owner_id=f'-{group_id}',
-                                  from_group=1,
-                                  message=record_text,
-                                  attachments=','.join(attachments))
+        record_text = f'{trailer_name}\n\n' \
+                      f'{trailer_information}\n\n' \
+                      f'{trailer_link if uploaded_trailer else ""}\n\n' \
+                      f'{movie.overview}'
 
-    movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    movie.group = Group.objects.get(group_id=group_id)
-    movie.save(update_fields=['post_in_group_date', 'group'])
+        post_response = api.wall.post(owner_id=f'-{group_id}',
+                                      from_group=1,
+                                      message=record_text,
+                                      attachments=','.join(attachments))
 
-    trailer.status = Trailer.POSTED_STATUS
-    trailer.save(update_fields=['status'])
+        movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        movie.group = Group.objects.get(group_id=group_id)
+        movie.save(update_fields=['post_in_group_date', 'group'])
 
-    log.debug(f'{post_response} in group {group_id}')
+        log.debug(f'{post_response} in group {group_id}')
+    except:
+        log.error('error in movie posting', exc_info=True)
 
 
 @task

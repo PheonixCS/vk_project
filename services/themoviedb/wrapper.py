@@ -39,14 +39,19 @@ def find_suitable_images(images):
     return [f'{IMAGE_URL}{image["file_path"]}' for image in suitable_images[:3]]
 
 
-def discover_movies():
+def discover_movies(end_year, years_offset=None):
     log.debug('discover_movies called')
 
-    start_year = config.TMDB_SEARCH_START_YEAR
     min_average_rating = 6.0
     min_runtime = 60
 
-    for year in range(start_year, datetime.now().year+1):
+    if years_offset:
+        start_year = end_year - years_offset
+        end_year += years_offset
+    else:
+        start_year = config.TMDB_SEARCH_START_YEAR
+
+    for year in range(start_year, end_year+1):
         total_pages = send_request_to_api(path='/discover/movie',
                                           **{'page': 1,
                                              'primary_release_year': year,

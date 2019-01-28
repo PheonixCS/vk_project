@@ -1,7 +1,7 @@
 #
 from django.test import TestCase
 
-from posting.text_utilities import replace_russian_with_english_letters
+from posting.core.text_utilities import replace_russian_with_english_letters
 
 
 class TestTextReplacement(TestCase):

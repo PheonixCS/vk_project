@@ -72,9 +72,9 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'scraping.tasks.download_youtube_trailers',
         'schedule': crontab(minute='10, 40')
     },
-    'scrape_tmdb_movies': {
-        'task': 'scraping.tasks.scrape_tmdb_movies',
-        'schedule': crontab(minute=25)  # TODO just for test
+    'scrap_new_movies': {
+        'task': 'scraping.tasks.scrap_new_movies',
+        'schedule': crontab(minute=30, hour=0, day_of_week=0)  # at 0:30 am UTC every sunday (3:30 am by MSK)
     }
 }
 
@@ -196,6 +196,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 sentry_logging = LoggingIntegration(
     level=logging.INFO,  # Capture info and above as breadcrumbs

@@ -1,7 +1,8 @@
 #
 
 from django.test import TestCase
-from posting import poster
+
+import posting.core.images
 from posting.core import horoscopes_images
 
 
@@ -17,21 +18,21 @@ class ImagesTests(TestCase):
     def test_merging_horoscopes(self):
         files = ['film{}.jpg'.format(num) for num in range(1, 4)]
         poster_file = 'poster.jpg'
-        result = poster.merge_poster_and_three_images(poster_file, files)
+        result = posting.core.images.merge_poster_and_three_images(poster_file, files)
 
         self.assertEqual(result, 'temp_poster.jpg')
 
     def test_size_calculation_width(self):
         origin_size = (1920, 1080)
 
-        new_size = poster.calculate_size_from_one_side(*origin_size, width=1280)
+        new_size = posting.core.images.calculate_size_from_one_side(*origin_size, width=1280)
 
         self.assertEqual(new_size, (1280, 720))
 
     def test_size_calculation_height(self):
         origin_size = (1920, 1080)
 
-        new_size = poster.calculate_size_from_one_side(*origin_size, height=720)
+        new_size = posting.core.images.calculate_size_from_one_side(*origin_size, height=720)
 
         self.assertEqual(new_size, (1280, 720))
 

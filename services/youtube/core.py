@@ -19,11 +19,13 @@ def download_trailer(url):
         try:
             path = pytube.YouTube(url).streams.first().download()
         except:
+            log.warning('failed to download trailer from youtube', exc_info=True)
             return ''
 
     # TODO check how catch VideoUnavailable
     # except pytube.__main__.VideoUnavailable:
     except:
+        log.warning('failed to download trailer from youtube', exc_info=True)
         return ''
 
     log.debug('finished downloading trailer')
