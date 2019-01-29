@@ -39,5 +39,6 @@ CONSTANCE_CONFIG = {
     'TMDB_MOVIE_INTERVALS': ('[(60, 65), (65, 70), (70, 75), (75, 80), (80, 101)]',
                              'Intervals for posting. Note that values must be integers',
                              str),
-    'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int)
+    'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int),
+    'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int)
 }
