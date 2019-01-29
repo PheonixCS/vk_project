@@ -354,3 +354,20 @@ def mirror_image(filepath):
         return False
     log.debug('image {} mirrored'.format(filepath))
     return True
+
+
+def paste_abstraction_on_template(template, abstraction):
+    log.debug('paste_abstraction_on_template called')
+
+    template = Image.open(template).convert('RGBA')
+    abstraction = Image.open(abstraction).convert('RGBA')
+
+    template = template.resize(abstraction.size)
+
+    resulting_image = Image.alpha_composite(template, abstraction)
+
+    resulting_name = f'result_{hash(template + abstraction)}.jpg'
+    resulting_image.save(resulting_name, 'JPEG', quality=95, progressive=True)
+
+    log.debug('paste_abstraction_on_template finished')
+
