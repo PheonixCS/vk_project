@@ -18,7 +18,9 @@ from posting.core.poster import (
     get_country_name_by_code,
     get_next_interval_by_movie_rating,
     get_movies_rating_intervals,
-    find_next_element_by_last_used_id
+    find_next_element_by_last_used_id,
+    get_music_compilation_genre,
+    get_music_compilation_artist,
 )
 from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
     is_text_on_image
@@ -76,23 +78,6 @@ def examine_groups():
 
         last_hour_ads_count = AdRecord.objects.filter(group=group, post_in_group_date__gt=time_threshold).count()
         log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
-
-        # TODO не брать record'ы с музыкой с 'banned' жанром
-        music_condition = ()
-
-        if music_condition:
-            abstractions = BackgroundAbstraction.objects.all().order_by('id')
-            if group.is_background_abstraction_enabled and abstractions:
-                abstraction = find_next_element_by_last_used_id(abstractions,
-                                                                group.last_used_background_abstraction_id)
-                group.last_used_background_abstraction_id = abstraction.id
-                group.save(update_fields=['last_used_background_abstraction_id'])
-
-            epithets = MusicGenreEpithet.objects.all().order_by('id')
-            if group.is_music_genre_epithet_enabled and epithets:
-                epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
-                group.last_used_music_genre_epithet_id = epithet.id
-                group.save(update_fields=['last_used_music_genre_epithet_id'])
 
         movies_condition = (
             group.is_movies
@@ -202,15 +187,62 @@ def examine_groups():
             log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
 
             try:
-                post_record.delay(group.user.login,
-                                  group.user.password,
-                                  group.user.app_id,
-                                  group.group_id,
-                                  the_best_record.id)
+                if group.is_background_abstraction_enabled:
+                    post_music.delay(group.user.login,
+                                      group.user.password,
+                                      group.user.app_id,
+                                      group.group_id,
+                                      the_best_record.id)
+                else:
+                    post_record.delay(group.user.login,
+                                      group.user.password,
+                                      group.user.app_id,
+                                      group.group_id,
+                                      the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
                 the_best_record.is_involved_now = False
                 the_best_record.save(update_fields=['is_involved_now'])
+
+
+@task
+def post_music(login, password, app_id, group_id, record_id):
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
+
+    group = Group.objects.get(group_id=group_id)
+    record = Record.objects.get(pk=record_id)
+    audios = list(record.audios.all())
+
+    record_text = delete_emoji_from_text(record.text)
+    text_to_image = record_text if len(record_text) <= 50 else ''
+
+    artist_text = get_music_compilation_artist(audios)
+    text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
+
+    genre = get_music_compilation_genre(audios)
+    if genre and genre['name'] is not 'banned':
+        genre_text = genre['name']
+
+        epithets = MusicGenreEpithet.objects.all().order_by('id')
+        if group.is_music_genre_epithet_enabled and epithets:
+            epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
+            group.last_used_music_genre_epithet_id = epithet.id
+            group.save(update_fields=['last_used_music_genre_epithet_id'])
+
+            if genre['gender'] == 'М':
+                genre_text = f'{epithet.text_for_male} {genre_text}'
+            elif genre['gender'] == 'Ж':
+                genre_text = f'{epithet.text_for_female} {genre_text}'
+
+        text_to_image = f'{text_to_image}\n{genre_text}'
+
+    abstractions = BackgroundAbstraction.objects.all().order_by('id')
+    if group.is_background_abstraction_enabled and abstractions:
+        abstraction = find_next_element_by_last_used_id(abstractions,
+                                                        group.last_used_background_abstraction_id)
+        group.last_used_background_abstraction_id = abstraction.id
+        group.save(update_fields=['last_used_background_abstraction_id'])
 
 
 @task

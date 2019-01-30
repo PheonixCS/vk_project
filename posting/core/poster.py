@@ -107,21 +107,20 @@ def get_next_interval_by_movie_rating(rating):
 
 def get_music_compilation_artist(audios):
     artists = [delete_emoji_from_text(audio.artist) for audio in audios]
-    artist, _ = Counter(artists).most_common(1)
-    return artist
-
-
-def get_music_genre_by_number(number):
-    return {genre['id']: genre['genre'] for genre in genres}.get(number, '')
+    artist, count = Counter(artists).most_common(1)[0]
+    if float(count) >= float(audios / 2):
+        return artist
+    else:
+        return ''
 
 
 def get_music_compilation_genre(audios):
-    genres = [get_music_genre_by_number(audio.genre) for audio in audios]
-    if len(genres) > 1:
-        genre, _ = Counter(genres).most_common(1)
-        return genre
-    else:
-        return ''
+    genre_ids = [audio.genre for audio in audios]
+    if len(genre_ids) > 1:
+        genre_id, count = Counter(genre_ids).most_common(1)[0]
+        if float(count) >= float(audios / 2):
+            return next(genre for genre in genres if genre['id'] == genre_id)
+    return ''
 
 
 def find_next_element_by_last_used_id(objects, last_used_object_id):
