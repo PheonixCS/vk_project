@@ -43,6 +43,16 @@ class Filter(models.Model):
         return 'Фильтр #{} для группы {}'.format(self.id, self.donor)
 
 
+class RecordManager(models.Manager):
+    def get_attachments_count(self):
+        gif_count = self.gifs.count()
+        image_count = self.images.count()
+        video_count = self.videos.count()
+        audio_count = self.audio.count()
+
+        return sum([gif_count, image_count, video_count, audio_count])
+
+
 class Record(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records', verbose_name='Источник')
     group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='records', null=True,
@@ -80,6 +90,8 @@ class Record(models.Model):
     class Meta:
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
+
+    objects = RecordManager()
 
 
 class Image(models.Model):
