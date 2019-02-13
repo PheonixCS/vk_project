@@ -113,8 +113,12 @@ def examine_groups():
                                                  post_in_group_date__isnull=True).last()
                 if not new_movie:
                     old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
-                    old_movie = Movie.objects.filter(trailers__vk_url__isnull=False,
-                                                     post_in_group_date__lte=old_movie_threshold).last()
+                    old_movies_ids = list(Movie.objects.filter(
+                        trailers__vk_url__isnull=False,
+                        post_in_group_date__lte=old_movie_threshold
+                    ).values_list('id', flat=True))
+
+                    old_movie = choice(old_movies_ids)
 
                     if not old_movie:
                         log.error('Got no movies!')
@@ -124,7 +128,7 @@ def examine_groups():
                         break
                 else:
                     log.debug('Found new movie')
-                    movie = new_movie
+                    movie = new_movie.id
                     break
 
                 last_movie_rating = next_rating_interval[0]
@@ -133,7 +137,7 @@ def examine_groups():
                 movie = None
 
             if movie:
-                post_movie.delay(group.group_id, movie.id)
+                post_movie.delay(group.group_id, movie)
             else:
                 log.warning('got no movie')
 
