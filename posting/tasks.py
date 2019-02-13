@@ -115,13 +115,14 @@ def examine_groups():
                     old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
                     old_movies_ids = list(Movie.objects.filter(
                         trailers__vk_url__isnull=False,
-                        post_in_group_date__lte=old_movie_threshold
+                        post_in_group_date__lte=old_movie_threshold,
+                        rating__in=next_rating_interval
                     ).values_list('id', flat=True))
 
                     old_movie = choice(old_movies_ids)
 
                     if not old_movie:
-                        log.error('Got no movies!')
+                        log.warning('Got no movies in last interval!')
                     else:
                         log.debug('Found old movie')
                         movie = old_movie
