@@ -34,5 +34,6 @@ CONSTANCE_CONFIG = {
     'FORCE_MOVIE_POST': (False, 'Just for dev. Forcing movie posting', bool),
     'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool),
     'ENABLE_MERGE_IMAGES_MOVIES': (True, 'Enable merging images in movies to one', bool),
-    'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool)
+    'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool),
+    'IMAGE_SIDE_OFFSET_ABS': (10, 'Absolute offset of text and image boarders (all sides)', int)
 }
