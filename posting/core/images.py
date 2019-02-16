@@ -372,8 +372,8 @@ def paste_abstraction_on_template(template, abstraction):
     log.debug('paste_abstraction_on_template finished')
 
 
-def paste_text_on_image(image, text, font_name=config.FONT_NAME, position='top'):
-    image = Image.open(os.path.join(settings.BASE_DIR, image))
+def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='top'):
+    image = Image.open(os.path.join(settings.BASE_DIR, image_name))
     draw = ImageDraw.Draw(image)
 
     image_width, image_height = image.width, image.height
@@ -385,19 +385,21 @@ def paste_text_on_image(image, text, font_name=config.FONT_NAME, position='top')
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
-    text_width, text_height = draw.multiline_textsize(text)
+    text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
 
     position = calculate_text_position_on_image(
         image_box=(image_width, image_height),
         text_box=(text_width, text_height),
         anchor=position)
 
-    draw.multiline_text(position, text, (0, 0, 0), font=font)
+    draw.multiline_text(position, text, (0, 0, 0), font=font, spacing=config.IMAGE_SPACING_ABS, align='center')
 
-    if image.endswith('.jpg'):
-        image.save(image, 'JPEG', quality=95, progressive=True)
+    new_name = 'pasted.jpg'
+
+    if new_name.endswith('.jpg'):
+        image.save(new_name, 'JPEG', quality=95, progressive=True)
     else:
-        image.save(image)
+        image.save(new_name)
 
 
 def calculate_text_size_on_image(box, percent=config.FONT_SIZE_PERCENT):
@@ -420,11 +422,11 @@ def calculate_text_position_on_image(image_box, text_box, anchor):
     text_width, text_height = text_box
 
     if anchor == 'top':
-        x = image_width - text_width
+        x = (image_width - text_width) // 2
         y = side_offest
         return x, y
 
     elif anchor == 'bottom':
-        x = image_width - text_width
+        x = (image_width - text_width) // 2
         y = image_height - text_height - side_offest
         return x, y
