@@ -39,14 +39,19 @@ def find_suitable_images(images):
     return [f'{IMAGE_URL}{image["file_path"]}' for image in suitable_images[:3]]
 
 
-def discover_movies():
+def discover_movies(end_year, years_offset=None):
     log.debug('discover_movies called')
 
-    start_year = config.TMDB_SEARCH_START_YEAR
     min_average_rating = 6.0
     min_runtime = 60
 
-    for year in range(start_year, datetime.now().year+1):
+    if years_offset:
+        start_year = end_year - years_offset
+        end_year += years_offset
+    else:
+        start_year = config.TMDB_SEARCH_START_YEAR
+
+    for year in range(start_year, end_year+1):
         total_pages = send_request_to_api(path='/discover/movie',
                                           **{'page': 1,
                                              'primary_release_year': year,
@@ -97,6 +102,8 @@ def discover_movies():
                 trailers = [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
                             for video in details.get('videos', {}).get('results', [])
                             if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube']
+                shuffle(trailers)
+                trailers = trailers[:config.TMDB_NUMBER_OF_STORED_TRAILERS]
                 if not trailers:
                     continue
 
@@ -107,7 +114,7 @@ def discover_movies():
                     'country': countries[0] if countries else '',
                     'genres': [genre.get('name') for genre in details.get('genres', [])],
                     'runtime': details.get('runtime', 120),
-                    'trailer': choice(trailers),
+                    'trailers': trailers,
                     'overview': details.get('overview', ''),
                     'poster': f'{IMAGE_URL}{details.get("poster_path")}',
                     'images': images,

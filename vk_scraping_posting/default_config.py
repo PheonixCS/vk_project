@@ -30,11 +30,17 @@ CONSTANCE_CONFIG = {
     
     'TMDB_API_KEY': ('', 'The movie db api key', str),
     'TMDB_SEARCH_START_YEAR': (1998, 'Discover movies starts with given year', int),
+    'TMDB_NEW_MOVIES_OFFSET': (2, 'Number of years for searching new movies', int),
     'TMDB_MIN_TRAILERS_COUNT': (4, 'Minimum count of downloaded youtube trailers', int),
     'FORCE_MOVIE_POST': (False, 'Just for dev. Forcing movie posting', bool),
     'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool),
     'ENABLE_MERGE_IMAGES_MOVIES': (True, 'Enable merging images in movies to one', bool),
     'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool),
     'IMAGE_SIDE_OFFSET_ABS': (10, 'Absolute offset of text and image boarders (all sides)', int),
-    'IMAGE_SPACING_ABS': (10, 'Absolute spacing between lines of text', int)
+    'IMAGE_SPACING_ABS': (10, 'Absolute spacing between lines of text', int),
+    'TMDB_MOVIE_INTERVALS': ('[(60, 65), (65, 70), (70, 75), (75, 80), (80, 101)]',
+                             'Intervals for posting. Note that values must be integers',
+                             str),
+    'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int),
+    'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int)
 }

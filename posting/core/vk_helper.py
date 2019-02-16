@@ -21,7 +21,6 @@ def is_ads_posted_recently(group):
                                            group=group,
                                            post_in_group_date=datetime.fromtimestamp(ad_record['date'],
                                                                                      tz=timezone.utc))
-            log.info('pass group {} due to ad in last hour'.format(group.domain_or_id))
             return True
     if not api:
         # if we got no api here, we still can continue posting
