@@ -185,6 +185,11 @@ def examine_groups():
                                             post_in_group_date__isnull=True,
                                             failed_date__isnull=True,
                                             post_in_donor_date__gt=allowed_time_threshold)]
+
+            if group.is_delete_audio_enabled:
+                records = [record for record in records if
+                           record.get_attachments_count() - record.audios.count() > 1]
+
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
