@@ -1,15 +1,20 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
 
 import vk_api
 from celery import task
-from django.utils import timezone
+from constance import config
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from constance import config
+from django.utils import timezone
 
-from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, MusicGenreEpithet
+from posting.core.horoscopes import generate_special_group_reference
+from posting.core.horoscopes_images import transfer_horoscope_to_image
+from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
+    is_text_on_image, paste_abstraction_on_template, paste_text_on_image
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -22,19 +27,16 @@ from posting.core.poster import (
     get_music_compilation_genre,
     get_music_compilation_artist,
 )
-from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
-    is_text_on_image
-from services.vk.stat import get_group_week_statistics
-from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
-from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
-from posting.core.horoscopes import generate_special_group_reference
-from services.vk.wall import get_wall
-from scraping.models import Record, Horoscope, Movie, Trailer
-from scraping.core.horoscopes import fetch_zodiac_sign
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
-from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.vk_helper import is_ads_posted_recently
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, MusicGenreEpithet
+from scraping.core.horoscopes import fetch_zodiac_sign
+from scraping.models import Record, Horoscope, Movie, Trailer
+from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
+from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
+from services.vk.stat import get_group_week_statistics
+from services.vk.wall import get_wall
 
 log = logging.getLogger('posting.scheduled')
 
@@ -214,8 +216,14 @@ def post_music(login, password, app_id, group_id, record_id):
     record = Record.objects.get(pk=record_id)
     audios = list(record.audios.all())
 
+    attachments = []
+    attachments.extend(audios)
+
+    template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
+
     record_text = delete_emoji_from_text(record.text)
     text_to_image = record_text if len(record_text) <= 50 else ''
+    record_original_image = download_file(record.images.first())
 
     artist_text = get_music_compilation_artist(audios)
     text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
@@ -234,15 +242,39 @@ def post_music(login, password, app_id, group_id, record_id):
                 genre_text = f'{epithet.text_for_male} {genre_text}'
             elif genre['gender'] == 'Ж':
                 genre_text = f'{epithet.text_for_female} {genre_text}'
+    else:
+        genre_text = None
 
-        text_to_image = f'{text_to_image}\n{genre_text}'
+    is_record_image_fit = not is_text_on_image(record_original_image)
 
     abstractions = BackgroundAbstraction.objects.all().order_by('id')
-    if group.is_background_abstraction_enabled and abstractions:
+    if not is_record_image_fit and abstractions:
         abstraction = find_next_element_by_last_used_id(abstractions,
                                                         group.last_used_background_abstraction_id)
         group.last_used_background_abstraction_id = abstraction.id
         group.save(update_fields=['last_used_background_abstraction_id'])
+
+    else:  # we need to post record anyway
+        abstraction = record_original_image
+
+    result_image_name = paste_abstraction_on_template(template_image, abstraction)
+
+    paste_text_on_image(result_image_name, text_to_image, position='top')
+    if genre_text:
+        paste_text_on_image(result_image_name, genre_text, position='bottom')
+
+    attachments.append(upload_photo(session, result_image_name, group_id))
+
+    post_response = api.wall.post(owner_id=f'-{group_id}',
+                                  from_group=1,
+                                  attachments=','.join(attachments))
+
+    record.post_in_group_id = post_response.get('post_id', 0)
+    record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    record.group = group
+    record.is_involved_now = False
+    record.save()
+    log.debug('post in group {} finished'.format(group_id))
 
 
 @task

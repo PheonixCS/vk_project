@@ -370,6 +370,7 @@ def paste_abstraction_on_template(template, abstraction):
     resulting_image.save(resulting_name, 'JPEG', quality=95, progressive=True)
 
     log.debug('paste_abstraction_on_template finished')
+    return resulting_name
 
 
 def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='top'):
