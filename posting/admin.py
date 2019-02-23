@@ -4,7 +4,7 @@ from django.db.models import Sum, TextField
 from django.forms import Textarea
 from django.utils.html import format_html
 
-from .models import User, ServiceToken, Group, AdditionalText
+from .models import User, ServiceToken, Group, AdditionalText, BackgroundAbstraction, MusicGenreEpithet
 
 
 class MembershipInline(admin.TabularInline):
@@ -20,6 +20,15 @@ class DonorAdmin(admin.ModelAdmin):
 
 class AdditionalTextInline(admin.TabularInline):
     model = AdditionalText
+    extra = 1
+
+    formfield_overrides = {
+        TextField: {'widget': Textarea(attrs={'rows': 2, 'cols': 60})},
+    }
+
+
+class MusicGenreEpithetInline(admin.TabularInline):
+    model = MusicGenreEpithet
     extra = 1
 
     formfield_overrides = {
@@ -80,7 +89,8 @@ class GroupAdmin(admin.ModelAdmin):
             'fields': ('is_text_delete_enabled', 'is_delete_audio_enabled', 'is_text_filling_enabled',
                        'is_image_mirror_enabled', 'is_changing_image_to_square_enabled', 'RGB_image_tone',
                        'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled', 'is_merge_images_enabled',
-                       'is_replace_russian_with_english', 'is_additional_text_enabled')
+                       'is_replace_russian_with_english', 'is_additional_text_enabled',
+                       'is_background_abstraction_enabled', 'is_music_genre_epithet_enabled')
         }),
         ('Статистика', {
             'classes': ('collapse',),
@@ -90,7 +100,7 @@ class GroupAdmin(admin.ModelAdmin):
     )
 
     inlines = [
-        MembershipInline, AdditionalTextInline,
+        MembershipInline, AdditionalTextInline, MusicGenreEpithetInline
     ]
 
     def vk_url_field(self, obj):
@@ -139,6 +149,14 @@ class UserAdmin(admin.ModelAdmin):
     vk_url_field.short_description = 'Ссылка'
 
 
+class BackgroundAbstractionAdmin(admin.ModelAdmin):
+    readonly_fields = ('image_tag',)
+
+    def image_tag(self, obj):
+        return format_html(f'<img src="{obj.picture.url}" width="{obj.picture.width}" height={obj.picture.height} />')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(ServiceToken)
 admin.site.register(Group, GroupAdmin)
+admin.site.register(BackgroundAbstraction, BackgroundAbstractionAdmin)

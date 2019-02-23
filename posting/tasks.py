@@ -1,10 +1,12 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
 
 import vk_api
 from celery import shared_task
 from constance import config
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.utils import timezone
@@ -12,7 +14,7 @@ from django.utils import timezone
 from posting.core.horoscopes import generate_special_group_reference
 from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
-    is_text_on_image
+    is_text_on_image, paste_abstraction_on_template, paste_text_on_image
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -20,12 +22,15 @@ from posting.core.poster import (
     find_the_best_post,
     get_country_name_by_code,
     get_next_interval_by_movie_rating,
-    get_movies_rating_intervals
+    get_movies_rating_intervals,
+    find_next_element_by_last_used_id,
+    get_music_compilation_genre,
+    get_music_compilation_artist,
 )
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
 from posting.core.vk_helper import is_ads_posted_recently
-from posting.models import Group, ServiceToken, AdRecord
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, MusicGenreEpithet
 from scraping.core.horoscopes import fetch_zodiac_sign
 from scraping.models import Record, Horoscope, Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
@@ -212,15 +217,92 @@ def examine_groups():
             log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
 
             try:
-                post_record.delay(group.user.login,
-                                  group.user.password,
-                                  group.user.app_id,
-                                  group.group_id,
-                                  the_best_record.id)
+                if group.is_background_abstraction_enabled:
+                    post_music.delay(group.user.login,
+                                      group.user.password,
+                                      group.user.app_id,
+                                      group.group_id,
+                                      the_best_record.id)
+                else:
+                    post_record.delay(group.user.login,
+                                      group.user.password,
+                                      group.user.app_id,
+                                      group.group_id,
+                                      the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
                 the_best_record.is_involved_now = False
                 the_best_record.save(update_fields=['is_involved_now'])
+
+
+@task
+def post_music(login, password, app_id, group_id, record_id):
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
+
+    group = Group.objects.get(group_id=group_id)
+    record = Record.objects.get(pk=record_id)
+    audios = list(record.audios.all())
+
+    attachments = []
+    attachments.extend(audios)
+
+    template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
+
+    record_text = delete_emoji_from_text(record.text)
+    text_to_image = record_text if len(record_text) <= 50 else ''
+    record_original_image = download_file(record.images.first())
+
+    artist_text = get_music_compilation_artist(audios)
+    text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
+
+    genre = get_music_compilation_genre(audios)
+    if genre and genre['name'] is not 'banned':
+        genre_text = genre['name']
+
+        epithets = MusicGenreEpithet.objects.all().order_by('id')
+        if group.is_music_genre_epithet_enabled and epithets:
+            epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
+            group.last_used_music_genre_epithet_id = epithet.id
+            group.save(update_fields=['last_used_music_genre_epithet_id'])
+
+            if genre['gender'] == 'М':
+                genre_text = f'{epithet.text_for_male} {genre_text}'
+            elif genre['gender'] == 'Ж':
+                genre_text = f'{epithet.text_for_female} {genre_text}'
+    else:
+        genre_text = None
+
+    is_record_image_fit = not is_text_on_image(record_original_image)
+
+    abstractions = BackgroundAbstraction.objects.all().order_by('id')
+    if not is_record_image_fit and abstractions:
+        abstraction = find_next_element_by_last_used_id(abstractions,
+                                                        group.last_used_background_abstraction_id)
+        group.last_used_background_abstraction_id = abstraction.id
+        group.save(update_fields=['last_used_background_abstraction_id'])
+
+    else:  # we need to post record anyway
+        abstraction = record_original_image
+
+    result_image_name = paste_abstraction_on_template(template_image, abstraction)
+
+    paste_text_on_image(result_image_name, text_to_image, position='top')
+    if genre_text:
+        paste_text_on_image(result_image_name, genre_text, position='bottom')
+
+    attachments.append(upload_photo(session, result_image_name, group_id))
+
+    post_response = api.wall.post(owner_id=f'-{group_id}',
+                                  from_group=1,
+                                  attachments=','.join(attachments))
+
+    record.post_in_group_id = post_response.get('post_id', 0)
+    record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    record.group = group
+    record.is_involved_now = False
+    record.save()
+    log.debug('post in group {} finished'.format(group_id))
 
 
 @shared_task
@@ -283,6 +365,22 @@ def post_movie(group_id, movie_id):
             for image in image_files[:2]:
                 attachments.append(upload_photo(session, image, group_id))
 
+    if config.ENABLE_MERGE_IMAGES_MOVIES:
+        poster_file = download_file(movie.poster)
+        poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+        delete_files(image_files)
+        delete_files(poster_file)
+
+        attachments.append(upload_photo(
+            session,
+            poster_and_three_images,
+            group_id)
+        )
+        delete_files(poster_and_three_images)
+    else:
+        attachments.append(upload_photo(session, download_file(movie.poster), group_id))
+        for image in image_files[:2]:
+            attachments.append(upload_photo(session, image, group_id))
         delete_files(image_files)
 
         log.debug(f'movie {movie.title} post: got attachments {attachments}')
@@ -531,8 +629,8 @@ def post_record(login, password, app_id, group_id, record_id):
 
         additional_texts = group.additional_texts.all().order_by('id')
         if group.is_additional_text_enabled and additional_texts:
-            additional_text = next((text for text in additional_texts if text.id > group.last_used_additional_text_id),
-                                   additional_texts[0])
+            additional_text = find_next_element_by_last_used_id(group.additional_texts.all().order_by('id'),
+                                                                group.last_used_additional_text_id)
             log.debug(f'Found additional texts for group {group.domain_or_id}. '
                       f'Last used text id: {group.last_used_additional_text_id}, '
                       f'new text id: {additional_text.id}, new text: {additional_text.text},'
@@ -780,7 +878,7 @@ def sex_statistics_weekly():
                 male_average_count = sum(male_count_list)//len(male_count_list)
             else:
                 male_average_count = 0
-                
+
             if female_count_list:
                 female_average_count = sum(female_count_list)//len(female_count_list)
             else:

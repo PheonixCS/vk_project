@@ -116,7 +116,7 @@ def expand_image_with_white_color(filepath, pixels):
     return filepath
 
 
-def fill_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_name=config.FONT_NAME):
+def fill_image_with_text(filepath, text, font_name=config.FONT_NAME):
     log.debug('fill_image_with_text called')
     if not text:
         log.debug('got no text in fill_image_with_text')
@@ -128,7 +128,7 @@ def fill_image_with_text(filepath, text, percent=config.FONT_SIZE_PERCENT, font_
         image_width, image_height = temp.width, temp.height
 
     # size in pixels
-    size = ceil(image_height * percent / 100)
+    size = calculate_text_size_on_image(box=(image_width, image_height))
 
     font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
@@ -375,3 +375,80 @@ def mirror_image(filepath):
         return False
     log.debug('image {} mirrored'.format(filepath))
     return True
+
+
+def paste_abstraction_on_template(template, abstraction):
+    log.debug('paste_abstraction_on_template called')
+
+    template = Image.open(template).convert('RGBA')
+    abstraction = Image.open(abstraction).convert('RGBA')
+
+    template = template.resize(abstraction.size)
+
+    resulting_image = Image.alpha_composite(template, abstraction)
+
+    resulting_name = f'result_{hash(template + abstraction)}.jpg'
+    resulting_image.save(resulting_name, 'JPEG', quality=95, progressive=True)
+
+    log.debug('paste_abstraction_on_template finished')
+    return resulting_name
+
+
+def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='top'):
+    image = Image.open(os.path.join(settings.BASE_DIR, image_name))
+    draw = ImageDraw.Draw(image)
+
+    image_width, image_height = image.width, image.height
+
+    size = calculate_text_size_on_image(box=(image_width, image_height))
+    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
+
+    if not is_text_fit_to_width(text, len(text), image_width - 10, font):
+        text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
+        text = '\n'.join(wrap(text, text_max_width_in_chars))
+
+    text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
+
+    position = calculate_text_position_on_image(
+        image_box=(image_width, image_height),
+        text_box=(text_width, text_height),
+        anchor=position)
+
+    draw.multiline_text(position, text, (0, 0, 0), font=font, spacing=config.IMAGE_SPACING_ABS, align='center')
+
+    new_name = 'pasted.jpg'
+
+    if new_name.endswith('.jpg'):
+        image.save(new_name, 'JPEG', quality=95, progressive=True)
+    else:
+        image.save(new_name)
+
+
+def calculate_text_size_on_image(box, percent=config.FONT_SIZE_PERCENT):
+    image_width, image_height = box
+
+    # size in pixels
+    size = ceil(image_height * percent / 100)
+
+    return size
+
+
+def calculate_text_position_on_image(image_box, text_box, anchor):
+    anchors = ('top', 'bottom')
+    if anchor not in anchors:
+        raise ValueError('Anchor parameter invalid. Must be in {}'.format(anchors))
+
+    side_offest = config.IMAGE_SIDE_OFFSET_ABS
+
+    image_width, image_height = image_box
+    text_width, text_height = text_box
+
+    if anchor == 'top':
+        x = (image_width - text_width) // 2
+        y = side_offest
+        return x, y
+
+    elif anchor == 'bottom':
+        x = (image_width - text_width) // 2
+        y = image_height - text_height - side_offest
+        return x, y

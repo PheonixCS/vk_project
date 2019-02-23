@@ -66,16 +66,23 @@ class Group(models.Model):
     is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
     is_replace_russian_with_english = models.BooleanField(default=False,
                                                           verbose_name='Заменять русские буквы английскими?')
+
     is_additional_text_enabled = models.BooleanField(default=False,
                                                      verbose_name='Добавлять к записи дополнительный текст?')
+    last_used_additional_text_id = models.IntegerField(null=True, default=0)
+
+    is_background_abstraction_enabled = models.BooleanField(default=False,
+                                                            verbose_name='Переносить картинку в шаблон CD-диска?')
+    last_used_background_abstraction_id = models.IntegerField(null=True, default=0)
+    is_music_genre_epithet_enabled = models.BooleanField(default=False,
+                                                         verbose_name='Добавлять эпитет перед музыкальным жанром?')
+    last_used_music_genre_epithet_id = models.IntegerField(null=True, default=0)
 
     members_count = models.IntegerField(null=True, verbose_name='Участники')
     members_growth = models.IntegerField(null=True, verbose_name='Прирост')
     number_of_posts_yesterday = models.IntegerField(null=True, verbose_name='Посты за вчера')
     number_of_ad_posts_yesterday = models.IntegerField(null=True, verbose_name='Реклама за вчера')
     statistics_last_update_date = models.DateTimeField(null=True)
-
-    last_used_additional_text_id = models.IntegerField(null=True, default=0)
 
     male_weekly_average_count = models.IntegerField(default=0,
                                                     verbose_name='Среднее количество мужчин за неделю')
@@ -102,6 +109,18 @@ class Group(models.Model):
         verbose_name_plural = 'Сообщества'
 
 
+class MusicGenreEpithet(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='music_genre_epithets')
+    text_for_male = models.TextField(max_length=256, default='',
+                                     verbose_name='Эпитет для музыкального жанра мужского рода')
+    text_for_female = models.TextField(max_length=256, default='',
+                                     verbose_name='Эпитет для музыкального жанра женского рода')
+
+    class Meta:
+        verbose_name = 'Эпитет'
+        verbose_name_plural = 'Эпитеты'
+
+
 class AdditionalText(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='additional_texts')
     text = models.TextField(max_length=1024, default='',
@@ -118,3 +137,13 @@ class AdRecord(models.Model):
     ad_record_id = models.IntegerField()
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ad_records')
     post_in_group_date = models.DateTimeField()
+
+
+class BackgroundAbstraction(models.Model):
+    picture = models.ImageField(upload_to='backgrounds')
+
+    def __str__(self):
+        return f'{self.id}'
+
+    class Meta:
+        app_label = 'posting'

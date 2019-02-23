@@ -106,6 +106,8 @@ class Audio(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='audios')
     owner_id = models.IntegerField(null=True)
     audio_id = models.IntegerField(null=True)
+    artist = models.CharField(max_length=128, null=True)
+    genre = models.CharField(max_length=128, null=True)
 
 
 class Video(models.Model):
