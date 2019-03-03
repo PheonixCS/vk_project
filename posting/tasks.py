@@ -254,7 +254,7 @@ def post_music(login, password, app_id, group_id, record_id):
 
         record_text = delete_emoji_from_text(record.text)
         text_to_image = record_text if len(record_text) <= 50 else ''
-        record_original_image = download_file(record.images.first())
+        record_original_image = download_file(record.images.first().url)
 
         artist_text = get_music_compilation_artist(audios)
         text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
