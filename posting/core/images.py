@@ -408,7 +408,9 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
         text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
         text = '\n'.join(wrap(text, text_max_width_in_chars))
 
-    text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
+    # TODO check tests with multiline
+    text_width, text_height = font.getsize(text, spacing=config.IMAGE_SPACING_ABS)
+    # text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
 
     position = calculate_text_position_on_image(
         image_box=(image_width, image_height),
