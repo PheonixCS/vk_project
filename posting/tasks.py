@@ -248,7 +248,8 @@ def post_music(login, password, app_id, group_id, record_id):
         audios = list(record.audios.all())
 
         attachments = []
-        attachments.extend(audios)
+        for audio in audios:
+            attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
