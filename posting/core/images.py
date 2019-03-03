@@ -417,7 +417,7 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
 
     draw.multiline_text(position, text, (0, 0, 0), font=font, spacing=config.IMAGE_SPACING_ABS, align='center')
 
-    new_name = 'pasted.jpg'
+    new_name = image_name
 
     if new_name.endswith('.jpg'):
         image.save(new_name, 'JPEG', quality=95, progressive=True)
