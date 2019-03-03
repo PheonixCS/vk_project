@@ -237,71 +237,76 @@ def examine_groups():
 
 @shared_task
 def post_music(login, password, app_id, group_id, record_id):
+    log.debug(f'start posting music in group {group_id}')
+
     session = create_vk_session_using_login_password(login, password, app_id)
     api = session.get_api()
 
-    group = Group.objects.get(group_id=group_id)
-    record = Record.objects.get(pk=record_id)
-    audios = list(record.audios.all())
+    try:
+        group = Group.objects.get(group_id=group_id)
+        record = Record.objects.get(pk=record_id)
+        audios = list(record.audios.all())
 
-    attachments = []
-    attachments.extend(audios)
+        attachments = []
+        attachments.extend(audios)
 
-    template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
+        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
-    record_text = delete_emoji_from_text(record.text)
-    text_to_image = record_text if len(record_text) <= 50 else ''
-    record_original_image = download_file(record.images.first())
+        record_text = delete_emoji_from_text(record.text)
+        text_to_image = record_text if len(record_text) <= 50 else ''
+        record_original_image = download_file(record.images.first())
 
-    artist_text = get_music_compilation_artist(audios)
-    text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
+        artist_text = get_music_compilation_artist(audios)
+        text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
 
-    genre = get_music_compilation_genre(audios)
-    if genre and genre['name'] is not 'banned':
-        genre_text = genre['name']
+        genre = get_music_compilation_genre(audios)
+        if genre and genre['name'] is not 'banned':
+            genre_text = genre['name']
 
-        epithets = MusicGenreEpithet.objects.all().order_by('id')
-        if group.is_music_genre_epithet_enabled and epithets:
-            epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
-            group.last_used_music_genre_epithet_id = epithet.id
-            group.save(update_fields=['last_used_music_genre_epithet_id'])
+            epithets = MusicGenreEpithet.objects.all().order_by('id')
+            if group.is_music_genre_epithet_enabled and epithets:
+                epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
+                group.last_used_music_genre_epithet_id = epithet.id
+                group.save(update_fields=['last_used_music_genre_epithet_id'])
 
-            if genre['gender'] == 'М':
-                genre_text = f'{epithet.text_for_male} {genre_text}'
-            elif genre['gender'] == 'Ж':
-                genre_text = f'{epithet.text_for_female} {genre_text}'
-    else:
-        genre_text = None
+                if genre['gender'] == 'М':
+                    genre_text = f'{epithet.text_for_male} {genre_text}'
+                elif genre['gender'] == 'Ж':
+                    genre_text = f'{epithet.text_for_female} {genre_text}'
+        else:
+            genre_text = None
 
-    is_record_image_fit = not is_text_on_image(record_original_image)
+        is_record_image_fit = not is_text_on_image(record_original_image)
 
-    abstractions = BackgroundAbstraction.objects.all().order_by('id')
-    if not is_record_image_fit and abstractions:
-        abstraction = find_next_element_by_last_used_id(abstractions,
-                                                        group.last_used_background_abstraction_id)
-        group.last_used_background_abstraction_id = abstraction.id
-        group.save(update_fields=['last_used_background_abstraction_id'])
+        abstractions = BackgroundAbstraction.objects.all().order_by('id')
+        if not is_record_image_fit and abstractions:
+            abstraction = find_next_element_by_last_used_id(abstractions,
+                                                            group.last_used_background_abstraction_id)
+            group.last_used_background_abstraction_id = abstraction.id
+            group.save(update_fields=['last_used_background_abstraction_id'])
 
-    else:  # we need to post record anyway
-        abstraction = record_original_image
+        else:  # we need to post record anyway
+            abstraction = record_original_image
 
-    result_image_name = paste_abstraction_on_template(template_image, abstraction)
+        result_image_name = paste_abstraction_on_template(template_image, abstraction)
 
-    paste_text_on_image(result_image_name, text_to_image, position='top')
-    if genre_text:
-        paste_text_on_image(result_image_name, genre_text, position='bottom')
+        paste_text_on_image(result_image_name, text_to_image, position='top')
+        if genre_text:
+            paste_text_on_image(result_image_name, genre_text, position='bottom')
 
-    attachments.append(upload_photo(session, result_image_name, group_id))
+        attachments.append(upload_photo(session, result_image_name, group_id))
 
-    post_response = api.wall.post(owner_id=f'-{group_id}',
-                                  from_group=1,
-                                  attachments=','.join(attachments))
+        post_response = api.wall.post(owner_id=f'-{group_id}',
+                                      from_group=1,
+                                      attachments=','.join(attachments))
 
-    record.post_in_group_id = post_response.get('post_id', 0)
-    record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    record.group = group
-    record.is_involved_now = False
-    record.save()
+        record.post_in_group_id = post_response.get('post_id', 0)
+        record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.group = group
+        record.is_involved_now = False
+        record.save()
+    except:
+        log.error('got unexpected error in post music', exc_info=True)
     log.debug('post in group {} finished'.format(group_id))
 
 
