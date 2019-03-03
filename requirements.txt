@@ -18,7 +18,7 @@ more-itertools==4.3.0
 numpy==1.14.5
 opencv-python-headless==3.4.1.15
 phonenumbers==8.9.5
-Pillow==5.1.0
+Pillow==5.4.1
 pluggy==0.7.1
 psycopg2==2.7.4
 psycopg2-binary==2.7.4
