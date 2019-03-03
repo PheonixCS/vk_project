@@ -386,6 +386,7 @@ def paste_abstraction_on_template(template, abstraction):
     template = template.resize(abstraction.size)
 
     resulting_image = Image.alpha_composite(template, abstraction)
+    resulting_image.convert('RGB')
 
     resulting_name = f'result_{hash(time.process_time())}.jpg'
     resulting_image.save(resulting_name, 'JPEG', quality=95, progressive=True)
