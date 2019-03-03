@@ -108,7 +108,7 @@ def get_next_interval_by_movie_rating(rating):
 def get_music_compilation_artist(audios):
     artists = [delete_emoji_from_text(audio.artist) for audio in audios]
     artist, count = Counter(artists).most_common(1)[0]
-    if float(count) >= float(audios / 2):
+    if float(count) >= float(len(audios) / 2):
         return artist
     else:
         return ''
