@@ -1,8 +1,8 @@
-import ast
 import logging
 import os
 from math import ceil
 from textwrap import wrap
+import time
 
 import pytesseract
 from PIL import Image, ImageFont, ImageDraw, ImageFile
@@ -387,7 +387,7 @@ def paste_abstraction_on_template(template, abstraction):
 
     resulting_image = Image.alpha_composite(template, abstraction)
 
-    resulting_name = f'result_{hash(template + abstraction)}.jpg'
+    resulting_name = f'result_{hash(time.process_time())}.jpg'
     resulting_image.save(resulting_name, 'JPEG', quality=95, progressive=True)
 
     log.debug('paste_abstraction_on_template finished')
