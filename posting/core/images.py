@@ -398,6 +398,8 @@ def paste_abstraction_on_template(template, abstraction):
 def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='top'):
     image = Image.open(os.path.join(settings.BASE_DIR, image_name))
     draw = ImageDraw.Draw(image)
+    # TODO make it as setting
+    white_color = (255, 255, 255)
 
     image_width, image_height = image.width, image.height
 
@@ -415,7 +417,11 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
         text_box=(text_width, text_height),
         anchor=position)
 
-    draw.multiline_text(position, text, (0, 0, 0), font=font, spacing=config.IMAGE_SPACING_ABS, align='center')
+    draw.multiline_text(position, text, (0, 0, 0),
+                        font=font,
+                        spacing=config.IMAGE_SPACING_ABS,
+                        align='center',
+                        fill=white_color)
 
     new_name = image_name
 
