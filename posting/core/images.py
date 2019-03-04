@@ -421,7 +421,8 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
                         font=font,
                         spacing=config.IMAGE_SPACING_ABS,
                         align='center',
-                        fill=white_color)
+                        # fill=white_color,
+                        )
 
     new_name = image_name
 
