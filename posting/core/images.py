@@ -401,7 +401,7 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
 
     size = calculate_text_size_on_image(box=(image_width, image_height))
 
-    expand_image_with_white_color(image_name, size*(text.count('\n')+1))
+    expand_image_with_white_color(image_name, size*(text.count('\n')+1)*2)
     image = Image.open(os.path.join(settings.BASE_DIR, image_name))
     draw = ImageDraw.Draw(image)
     image_width, image_height = image.width, image.height
