@@ -412,6 +412,8 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
     # Normalize text
     normalized_text = []
     for paragraph in text.split('\n'):
+        if not paragraph:
+            continue
         if not is_text_fit_to_width(paragraph, len(paragraph), image_width - config.IMAGE_SIDE_OFFSET_ABS, font):
             text_max_width_in_chars = calculate_max_len_in_chars(paragraph,
                                                                  image_width-config.IMAGE_SIDE_OFFSET_ABS,
