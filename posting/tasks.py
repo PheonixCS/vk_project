@@ -301,8 +301,13 @@ def post_music(login, password, app_id, group_id, record_id):
                 text_to_image = genre_text
 
         # image
-        record_original_image = download_file(record.images.first().url)
-        is_record_image_fit = not is_text_on_image(record_original_image)
+        record_original_image = record.images.first()
+
+        if record_original_image:
+            record_original_image = download_file(record_original_image.url)
+            is_record_image_fit = not is_text_on_image(record_original_image)
+        else:
+            is_record_image_fit = False
 
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
         if (not is_record_image_fit and abstractions) or config.FORCE_USE_ABSTRACTION:
@@ -311,9 +316,14 @@ def post_music(login, password, app_id, group_id, record_id):
             group.last_used_background_abstraction_id = abstraction.id
             group.save(update_fields=['last_used_background_abstraction_id'])
             abstraction = abstraction.picture
-
         else:  # we need to post record anyway
-            abstraction = record_original_image
+            if record_original_image:
+                abstraction = record_original_image
+            else:
+                record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                record.is_involved_now = False
+                record.save(update_fields=['failed_date', 'is_involved_now'])
+                return
 
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
