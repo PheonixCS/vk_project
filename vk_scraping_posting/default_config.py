@@ -42,5 +42,6 @@ CONSTANCE_CONFIG = {
                              'Intervals for posting. Note that values must be integers',
                              str),
     'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int),
-    'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int)
+    'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int),
+    'FORCE_USE_ABSTRACTION': (True, 'Forcing using of abstraction in music', bool)
 }

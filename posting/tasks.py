@@ -305,11 +305,12 @@ def post_music(login, password, app_id, group_id, record_id):
         is_record_image_fit = not is_text_on_image(record_original_image)
 
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
-        if not is_record_image_fit and abstractions:
+        if (not is_record_image_fit and abstractions) or config.FORCE_USE_ABSTRACTION:
             abstraction = find_next_element_by_last_used_id(abstractions,
                                                             group.last_used_background_abstraction_id)
             group.last_used_background_abstraction_id = abstraction.id
             group.save(update_fields=['last_used_background_abstraction_id'])
+            abstraction = abstraction.picture
 
         else:  # we need to post record anyway
             abstraction = record_original_image

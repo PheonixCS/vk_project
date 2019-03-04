@@ -383,7 +383,13 @@ def paste_abstraction_on_template(template, abstraction):
     template = Image.open(template).convert('RGBA')
     abstraction = Image.open(abstraction).convert('RGBA')
 
-    abstraction = abstraction.resize(template.size)
+    if abstraction.size[1] > abstraction.size[0]:
+        abstraction = resize_image_aspect_ratio_by_one_side(abstraction, width=template.size[0])
+    else:
+        abstraction = resize_image_aspect_ratio_by_one_side(abstraction, height=template.size[0])
+
+    box = 0, 0, template.size[0], template.size[1]
+    abstraction = abstraction.crop(box)
 
     resulting_image = Image.alpha_composite(abstraction, template)
     resulting_image = resulting_image.convert('RGB')
@@ -408,6 +414,17 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
 
     font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
+    # Normalize text
+    normalized_text = []
+    for paragraph in text.split('\n'):
+        if not is_text_fit_to_width(paragraph, len(paragraph), image_width - config.IMAGE_SIDE_OFFSET_ABS, font):
+            text_max_width_in_chars = calculate_max_len_in_chars(paragraph,
+                                                                 image_width-config.IMAGE_SIDE_OFFSET_ABS,
+                                                                 font)
+            paragraph = '\n'.join(wrap(paragraph, text_max_width_in_chars))
+        normalized_text.append(paragraph)
+
+    text = '\n'.join(normalized_text)
     text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
 
     position = calculate_text_position_on_image(
