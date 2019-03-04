@@ -119,7 +119,7 @@ def get_music_compilation_genre(audios):
     if len(genre_ids) > 1:
         genre_id, count = Counter(genre_ids).most_common(1)[0]
         if float(count) >= float(len(audios) / 2):
-            return next(genre for genre in genres if genre['id'] == genre_id)
+            return next((genre for genre in genres if genre['id'] == genre_id), '')
     return ''
 
 
