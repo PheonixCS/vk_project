@@ -383,7 +383,13 @@ def paste_abstraction_on_template(template, abstraction):
     template = Image.open(template).convert('RGBA')
     abstraction = Image.open(abstraction).convert('RGBA')
 
-    abstraction = abstraction.resize(template.size)
+    if abstraction.size[1] > abstraction.size[0]:
+        abstraction = resize_image_aspect_ratio_by_one_side(abstraction, width=template.size[0])
+    else:
+        abstraction = resize_image_aspect_ratio_by_one_side(abstraction, height=template.size[0])
+
+    box = 0, 0, template.size[0], template.size[1]
+    abstraction = abstraction.crop(box)
 
     resulting_image = Image.alpha_composite(abstraction, template)
     resulting_image = resulting_image.convert('RGB')
