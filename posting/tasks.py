@@ -90,7 +90,7 @@ def examine_groups():
 
         last_hour_posts_exist = last_hour_posts.exists()
 
-        log.debug(f'got {last_hour_posts_exist} posts in last hour and 5 minutes for group {group.domain_or_id}')
+        log.debug(f'got {len(last_hour_posts)} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
         movies_condition = (
             group.is_movies
