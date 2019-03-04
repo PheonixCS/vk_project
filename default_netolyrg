@@ -1,0 +1,5 @@
+export DB_NAME='vk_sp'
+export DB_PASSWORD='Zer0Grav1ty'
+export DB_LOGIN='vk_bot'
+export DB_HOST='localhost'
+export DB_PORT='5432'
