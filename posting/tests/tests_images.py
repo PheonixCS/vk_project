@@ -1,6 +1,7 @@
 #
 
 from django.test import TestCase
+from PIL import Image
 
 import posting.core.images as images
 
@@ -24,7 +25,11 @@ class ImagesTests(TestCase):
 
     def test_text_on_images(self):
         image_name = 'test.jpg'
-        text = '20 of september, Text'
+
+        img = Image.new('RGB', (500, 500), color='white')
+        img.save(image_name)
+
+        text = '20 of september, Text\nLol kek\nCheburek'
 
         images.paste_text_on_image(image_name, text, position='top')
 

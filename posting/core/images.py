@@ -397,18 +397,16 @@ def paste_abstraction_on_template(template, abstraction):
 
 def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='top'):
     image = Image.open(os.path.join(settings.BASE_DIR, image_name))
-    draw = ImageDraw.Draw(image)
-    # TODO make it as setting
-    white_color = (255, 255, 255)
-
     image_width, image_height = image.width, image.height
 
     size = calculate_text_size_on_image(box=(image_width, image_height))
-    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
-    if not is_text_fit_to_width(text, len(text), image_width - 10, font):
-        text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
-        text = '\n'.join(wrap(text, text_max_width_in_chars))
+    expand_image_with_white_color(image_name, size*(text.count('\n')+1))
+    image = Image.open(os.path.join(settings.BASE_DIR, image_name))
+    draw = ImageDraw.Draw(image)
+    image_width, image_height = image.width, image.height
+
+    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
     text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
 
@@ -417,11 +415,11 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
         text_box=(text_width, text_height),
         anchor=position)
 
-    draw.multiline_text(position, text, (0, 0, 0),
+    draw.multiline_text(position, text,
                         font=font,
                         spacing=config.IMAGE_SPACING_ABS,
                         align='center',
-                        # fill=white_color,
+                        fill=(0, 0, 0),
                         )
 
     new_name = image_name

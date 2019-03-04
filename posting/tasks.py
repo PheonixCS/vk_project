@@ -293,6 +293,9 @@ def post_music(login, password, app_id, group_id, record_id):
         else:
             genre_text = None
 
+        if genre_text:
+            text_to_image += '\n' + genre_text
+
         is_record_image_fit = not is_text_on_image(record_original_image)
 
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
@@ -308,8 +311,6 @@ def post_music(login, password, app_id, group_id, record_id):
         result_image_name = paste_abstraction_on_template(template_image, abstraction)
 
         paste_text_on_image(result_image_name, text_to_image, position='top')
-        if genre_text:
-            paste_text_on_image(result_image_name, genre_text, position='bottom')
 
         attachments.append(upload_photo(session, result_image_name, group_id))
 
