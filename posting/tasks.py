@@ -262,8 +262,16 @@ def post_music(login, password, app_id, group_id, record_id):
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
         record_text = delete_emoji_from_text(record.text)
-        text_to_image = record_text if len(record_text) <= 50 else ''
+        if group.is_text_delete_enabled:
+            record_text = ''
+
         record_original_image = download_file(record.images.first().url)
+
+        if len(record_text) <= 50:
+            text_to_image = record_text
+            record_text = ''
+        else:
+            text_to_image = ''
 
         artist_text = get_music_compilation_artist(audios)
         text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
@@ -307,6 +315,7 @@ def post_music(login, password, app_id, group_id, record_id):
 
         post_response = api.wall.post(owner_id=f'-{group_id}',
                                       from_group=1,
+                                      message=record_text,
                                       attachments=','.join(attachments))
 
         record.post_in_group_id = post_response.get('post_id', 0)
