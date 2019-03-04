@@ -249,6 +249,7 @@ def post_music(login, password, app_id, group_id, record_id):
 
         attachments = []
 
+        # audios
         if group.is_delete_audio_enabled:
             audios = []
 
@@ -259,22 +260,8 @@ def post_music(login, password, app_id, group_id, record_id):
         for audio in audios:
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
-        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
-
-        record_text = delete_emoji_from_text(record.text)
-        if group.is_text_delete_enabled:
-            record_text = ''
-
-        record_original_image = download_file(record.images.first().url)
-
-        if len(record_text) <= 50:
-            text_to_image = record_text
-            record_text = ''
-        else:
-            text_to_image = ''
-
+        # text
         artist_text = get_music_compilation_artist(audios)
-        text_to_image = f'{text_to_image}\n{artist_text}' if artist_text else text_to_image
 
         genre = get_music_compilation_genre(audios)
         if genre and genre['name'] is not 'banned':
@@ -293,9 +280,28 @@ def post_music(login, password, app_id, group_id, record_id):
         else:
             genre_text = None
 
-        if genre_text:
-            text_to_image += '\n' + genre_text
+        record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
 
+        if len(record_text) <= 50:
+            text_to_image = record_text.replace('\n', ' ')
+            record_text = ''
+        else:
+            text_to_image = ''
+
+        if artist_text:
+            if text_to_image:
+                text_to_image = f'{text_to_image}\n{artist_text}'
+            else:
+                text_to_image = artist_text
+
+        if genre_text:
+            if text_to_image:
+                text_to_image = f'{text_to_image}\n{genre_text}'
+            else:
+                text_to_image = genre_text
+
+        # image
+        record_original_image = download_file(record.images.first().url)
         is_record_image_fit = not is_text_on_image(record_original_image)
 
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
@@ -307,6 +313,8 @@ def post_music(login, password, app_id, group_id, record_id):
 
         else:  # we need to post record anyway
             abstraction = record_original_image
+
+        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
         result_image_name = paste_abstraction_on_template(template_image, abstraction)
 
