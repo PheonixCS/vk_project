@@ -30,7 +30,7 @@ from posting.core.poster import (
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
 from posting.core.vk_helper import is_ads_posted_recently
-from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, MusicGenreEpithet
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
 from scraping.core.horoscopes import fetch_zodiac_sign
 from scraping.models import Record, Horoscope, Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
@@ -267,7 +267,7 @@ def post_music(login, password, app_id, group_id, record_id):
         if genre and genre['name'] is not 'banned':
             genre_text = genre['name']
 
-            epithets = MusicGenreEpithet.objects.all().order_by('id')
+            epithets = group.music_genre_epithets.all().order_by('id')
             if group.is_music_genre_epithet_enabled and epithets:
                 epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
                 group.last_used_music_genre_epithet_id = epithet.id
