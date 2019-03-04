@@ -407,11 +407,6 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
 
     size = calculate_text_size_on_image(box=(image_width, image_height))
 
-    expand_image_with_white_color(image_name, size*(text.count('\n')+1)*2)
-    image = Image.open(os.path.join(settings.BASE_DIR, image_name))
-    draw = ImageDraw.Draw(image)
-    image_width, image_height = image.width, image.height
-
     font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
     # Normalize text
@@ -426,6 +421,11 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
 
     text = '\n'.join(normalized_text)
     text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
+
+    expand_image_with_white_color(image_name, text_height+config.IMAGE_SPACING_ABS)
+    image = Image.open(os.path.join(settings.BASE_DIR, image_name))
+    draw = ImageDraw.Draw(image)
+    image_width, image_height = image.width, image.height
 
     position = calculate_text_position_on_image(
         image_box=(image_width, image_height),
