@@ -29,7 +29,7 @@ class ImagesTests(TestCase):
         img = Image.new('RGB', (500, 500), color='white')
         img.save(image_name)
 
-        text = '20 of september, Text\nLol kek\nCheburek'
+        text = '20 of seasdfasdfasdfasdfasdfasdfasdfasdfasdfaptember, Text\nLol kek\nCheburek'
 
         images.paste_text_on_image(image_name, text, position='top')
 

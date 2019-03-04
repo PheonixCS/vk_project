@@ -408,6 +408,17 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
 
     font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
 
+    # Normalize text
+    normalized_text = []
+    for paragraph in text.split('\n'):
+        if not is_text_fit_to_width(paragraph, len(paragraph), image_width - config.IMAGE_SIDE_OFFSET_ABS, font):
+            text_max_width_in_chars = calculate_max_len_in_chars(paragraph,
+                                                                 image_width-config.IMAGE_SIDE_OFFSET_ABS,
+                                                                 font)
+            paragraph = '\n'.join(wrap(paragraph, text_max_width_in_chars))
+        normalized_text.append(paragraph)
+
+    text = '\n'.join(normalized_text)
     text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
 
     position = calculate_text_position_on_image(
