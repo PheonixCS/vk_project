@@ -1,4 +1,4 @@
-countries_map = {
+countries = {
     'AD': 'Андорра',
     'AE': 'ОАЭ',
     'AF': 'Афганистан',
@@ -250,3 +250,27 @@ countries_map = {
     'ZM': 'Замбия',
     'ZW': 'Зимбабве'
 }
+
+genres = [
+    {'id': '1', 'name': 'Рок', 'gender': 'М'},
+    {'id': '2', 'name': 'Популярная музыка', 'gender': 'Ж'},
+    {'id': '3', 'name': 'Rap & Hip-Hop', 'gender': 'М'},
+    {'id': '4', 'name': 'Фоновая музыка', 'gender': 'Ж'},
+    {'id': '5', 'name': 'House & Dance', 'gender': 'М'},
+    {'id': '6', 'name': 'Инструментальная музыка', 'gender': 'Ж'},
+    {'id': '7', 'name': 'Металл', 'gender': 'М'},
+    {'id': '21', 'name': 'Альтернатива', 'gender': 'Ж'},
+    {'id': '8', 'name': 'Dubstep', 'gender': 'М'},
+    {'id': '1001', 'name': 'Jazz & Blues', 'gender': 'М'},
+    {'id': '10', 'name': 'Drum & Bass', 'gender': 'М'},
+    {'id': '11', 'name': 'Trance', 'gender': 'М'},
+    {'id': '12', 'name': 'Шансон', 'gender': 'М'},
+    {'id': '13', 'name': 'Этническая музыка', 'gender': 'Ж'},
+    {'id': '14', 'name': 'Acoustic & Vocal', 'gender': 'Ж'},
+    {'id': '15', 'name': 'Регги', 'gender': 'М'},
+    {'id': '16', 'name': 'Классическая музыка', 'gender': 'Ж'},
+    {'id': '17', 'name': 'Indie Pop', 'gender': 'М'},
+    {'id': '19', 'name': 'banned', 'gender': ''},
+    {'id': '22', 'name': 'Electropop & Disco', 'gender': 'М'},
+    {'id': '18', 'name': 'banned', 'gender': ''}
+]

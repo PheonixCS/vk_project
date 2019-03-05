@@ -1,9 +1,12 @@
 import logging
 import os
+from collections import Counter
 
 import requests
 
-from posting.core.countries import countries_map
+from posting.models import BackgroundAbstraction
+from posting.core.mapping import countries, genres
+from posting.core.text_utilities import delete_emoji_from_text
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
 
@@ -85,7 +88,7 @@ def find_the_best_post(records, best_ratio, percent=20):
 
 
 def get_country_name_by_code(code):
-    return countries_map.get(code, '')
+    return countries.get(code, '')
 
 
 def get_movies_rating_intervals():
@@ -100,3 +103,25 @@ def get_next_interval_by_movie_rating(rating):
     for interval in rating_intervals:
         if rating in interval:
             return rating_intervals[(rating_intervals.index(interval) + 1) % len(rating_intervals)]
+
+
+def get_music_compilation_artist(audios):
+    artists = [delete_emoji_from_text(audio.artist) for audio in audios]
+    artist, count = Counter(artists).most_common(1)[0]
+    if float(count) >= float(len(audios) / 2):
+        return artist
+    else:
+        return None
+
+
+def get_music_compilation_genre(audios):
+    genre_ids = [audio.genre for audio in audios]
+    if len(genre_ids) > 1:
+        genre_id, count = Counter(genre_ids).most_common(1)[0]
+        if float(count) >= float(len(audios) / 2):
+            return next((genre for genre in genres if genre['id'] == genre_id), None)
+    return None
+
+
+def find_next_element_by_last_used_id(objects, last_used_object_id):
+    return next((object for object in objects if object.id > last_used_object_id), objects[0])

@@ -102,6 +102,8 @@ def discover_movies(end_year, years_offset=None):
                 trailers = [(video.get('size'), f'{YOUTUBE_URL}{video.get("key")}')
                             for video in details.get('videos', {}).get('results', [])
                             if video.get('type', '') == 'Trailer' and video.get('site', '') == 'YouTube']
+                shuffle(trailers)
+                trailers = trailers[:config.TMDB_NUMBER_OF_STORED_TRAILERS]
                 if not trailers:
                     continue
 
@@ -112,7 +114,7 @@ def discover_movies(end_year, years_offset=None):
                     'country': countries[0] if countries else '',
                     'genres': [genre.get('name') for genre in details.get('genres', [])],
                     'runtime': details.get('runtime', 120),
-                    'trailer': choice(trailers),
+                    'trailers': trailers,
                     'overview': details.get('overview', ''),
                     'poster': f'{IMAGE_URL}{details.get("poster_path")}',
                     'images': images,

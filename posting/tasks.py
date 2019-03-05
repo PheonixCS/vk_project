@@ -1,15 +1,20 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
 
 import vk_api
-from celery import task
-from django.utils import timezone
+from celery import shared_task
+from constance import config
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from constance import config
+from django.utils import timezone
 
-from posting.models import Group, ServiceToken, AdRecord
+from posting.core.horoscopes import generate_special_group_reference
+from posting.core.horoscopes_images import transfer_horoscope_to_image
+from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
+    is_text_on_image, paste_abstraction_on_template, paste_text_on_music_image
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -17,26 +22,26 @@ from posting.core.poster import (
     find_the_best_post,
     get_country_name_by_code,
     get_next_interval_by_movie_rating,
-    get_movies_rating_intervals
+    get_movies_rating_intervals,
+    find_next_element_by_last_used_id,
+    get_music_compilation_genre,
+    get_music_compilation_artist,
 )
-from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
-    is_text_on_image
-from services.vk.stat import get_group_week_statistics
-from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
-from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
-from posting.core.horoscopes import generate_special_group_reference
-from services.vk.wall import get_wall
-from scraping.models import Record, Horoscope, Movie, Trailer
-from scraping.core.horoscopes import fetch_zodiac_sign
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
-from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.vk_helper import is_ads_posted_recently
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
+from scraping.core.horoscopes import fetch_zodiac_sign
+from scraping.models import Record, Horoscope, Movie, Trailer
+from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
+from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
+from services.vk.stat import get_group_week_statistics
+from services.vk.wall import get_wall
 
 log = logging.getLogger('posting.scheduled')
 
 
-@task
+@shared_task(time_limit=55)
 def examine_groups():
     log.debug('start group examination')
     groups_to_post_in = Group.objects.filter(user__isnull=False,
@@ -85,7 +90,7 @@ def examine_groups():
 
         last_hour_posts_exist = last_hour_posts.exists()
 
-        log.debug(f'got {last_hour_posts_exist} posts in last hour and 5 minutes for group {group.domain_or_id}')
+        log.debug(f'got {len(last_hour_posts)} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
         movies_condition = (
             group.is_movies
@@ -185,6 +190,11 @@ def examine_groups():
                                             post_in_group_date__isnull=True,
                                             failed_date__isnull=True,
                                             post_in_donor_date__gt=allowed_time_threshold)]
+
+            if group.is_delete_audio_enabled:
+                records = [record for record in records if
+                           record.get_attachments_count() - record.audios.count() > 1]
+
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
@@ -212,18 +222,138 @@ def examine_groups():
             log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
 
             try:
-                post_record.delay(group.user.login,
-                                  group.user.password,
-                                  group.user.app_id,
-                                  group.group_id,
-                                  the_best_record.id)
+                if group.is_background_abstraction_enabled:
+                    post_music.delay(group.user.login,
+                                      group.user.password,
+                                      group.user.app_id,
+                                      group.group_id,
+                                      the_best_record.id)
+                else:
+                    post_record.delay(group.user.login,
+                                      group.user.password,
+                                      group.user.app_id,
+                                      group.group_id,
+                                      the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
                 the_best_record.is_involved_now = False
                 the_best_record.save(update_fields=['is_involved_now'])
 
 
-@task
+@shared_task
+def post_music(login, password, app_id, group_id, record_id):
+    log.debug(f'start posting music in group {group_id}')
+
+    session = create_vk_session_using_login_password(login, password, app_id)
+    api = session.get_api()
+
+    try:
+        group = Group.objects.get(group_id=group_id)
+        record = Record.objects.get(pk=record_id)
+        audios = list(record.audios.all())
+
+        attachments = []
+
+        # audios
+        if group.is_delete_audio_enabled:
+            audios = []
+
+        if group.is_audios_shuffle_enabled and len(audios) > 1:
+            shuffle(audios)
+            log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
+
+        for audio in audios:
+            attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
+
+        # text
+        artist_text = get_music_compilation_artist(audios)
+
+        genre = get_music_compilation_genre(audios)
+        if genre and genre['name'] is not 'banned':
+            genre_text = genre['name']
+
+            epithets = group.music_genre_epithets.all().order_by('id')
+            if group.is_music_genre_epithet_enabled and epithets:
+                epithet = find_next_element_by_last_used_id(epithets, group.last_used_music_genre_epithet_id)
+                group.last_used_music_genre_epithet_id = epithet.id
+                group.save(update_fields=['last_used_music_genre_epithet_id'])
+
+                if genre['gender'] == 'М':
+                    genre_text = f'{epithet.text_for_male} {genre_text}'
+                elif genre['gender'] == 'Ж':
+                    genre_text = f'{epithet.text_for_female} {genre_text}'
+        else:
+            genre_text = None
+
+        record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
+
+        if len(record_text) <= 50:
+            text_to_image = record_text.replace('\n', ' ')
+            record_text = ''
+        else:
+            text_to_image = ''
+
+        if artist_text:
+            if text_to_image:
+                text_to_image = f'{text_to_image}\n{artist_text}'
+            else:
+                text_to_image = artist_text
+
+        if genre_text:
+            if text_to_image:
+                text_to_image = f'{text_to_image}\n{genre_text}'
+            else:
+                text_to_image = genre_text
+
+        # image
+        record_original_image = record.images.first()
+
+        if record_original_image:
+            record_original_image = download_file(record_original_image.url)
+            is_record_image_fit = not is_text_on_image(record_original_image)
+        else:
+            is_record_image_fit = False
+
+        abstractions = BackgroundAbstraction.objects.all().order_by('id')
+        if (not is_record_image_fit and abstractions) or config.FORCE_USE_ABSTRACTION:
+            abstraction = find_next_element_by_last_used_id(abstractions,
+                                                            group.last_used_background_abstraction_id)
+            group.last_used_background_abstraction_id = abstraction.id
+            group.save(update_fields=['last_used_background_abstraction_id'])
+            abstraction = abstraction.picture
+        else:  # we need to post record anyway
+            if record_original_image:
+                abstraction = record_original_image
+            else:
+                record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                record.is_involved_now = False
+                record.save(update_fields=['failed_date', 'is_involved_now'])
+                return
+
+        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
+
+        result_image_name = paste_abstraction_on_template(template_image, abstraction)
+
+        paste_text_on_music_image(result_image_name, text_to_image)
+
+        attachments.append(upload_photo(session, result_image_name, group_id))
+
+        post_response = api.wall.post(owner_id=f'-{group_id}',
+                                      from_group=1,
+                                      message=record_text,
+                                      attachments=','.join(attachments))
+
+        record.post_in_group_id = post_response.get('post_id', 0)
+        record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.group = group
+        record.is_involved_now = False
+        record.save()
+    except:
+        log.error('got unexpected error in post music', exc_info=True)
+    log.debug('post in group {} finished'.format(group_id))
+
+
+@shared_task
 def post_movie(group_id, movie_id):
     log.debug(f'start posting movies in {group_id} group')
 
@@ -266,77 +396,77 @@ def post_movie(group_id, movie_id):
         log.error('Number of images is not equal 3', exc_info=True)
 
     try:
+
         if config.ENABLE_MERGE_IMAGES_MOVIES:
             poster_file = download_file(movie.poster)
             poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
+            delete_files(image_files)
+            delete_files(poster_file)
 
             attachments.append(upload_photo(
                 session,
                 poster_and_three_images,
                 group_id)
             )
-
-            delete_files(poster_file)
             delete_files(poster_and_three_images)
         else:
             attachments.append(upload_photo(session, download_file(movie.poster), group_id))
             for image in image_files[:2]:
                 attachments.append(upload_photo(session, image, group_id))
+            delete_files(image_files)
 
-        delete_files(image_files)
+            log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
-        log.debug(f'movie {movie.title} post: got attachments {attachments}')
+            uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
+            downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
 
-        uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
-        downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
+            if uploaded_trailers.exists():
+                trailer = uploaded_trailers.first()
+                uploaded_trailer = trailer.vk_url
+            elif downloaded_trailers.exists():
+                trailer = downloaded_trailers.first()
+                uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
 
-        if uploaded_trailers.exists():
-            trailer = uploaded_trailers.first()
-            uploaded_trailer = trailer.vk_url
-        elif downloaded_trailers.exists():
-            trailer = downloaded_trailers.first()
-            uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
-
-            if uploaded_trailer:
-                delete_files(trailer.file_path)
-                trailer.vk_url = uploaded_trailer
-                trailer.status = Trailer.UPLOADED_STATUS
+                if uploaded_trailer:
+                    delete_files(trailer.file_path)
+                    trailer.vk_url = uploaded_trailer
+                    trailer.status = Trailer.UPLOADED_STATUS
+                else:
+                    log.warning('failed to upload trailer')
             else:
-                log.warning('failed to upload trailer')
-        else:
-            log.error(f'movie {movie.title} got no trailer!')
-            uploaded_trailer = None
-            trailer = None
+                log.error(f'movie {movie.title} got no trailer!')
+                uploaded_trailer = None
+                trailer = None
 
-        if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
-            attachments.append(uploaded_trailer)
-            trailer_link = ''
-        else:
-            trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+            if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
+                attachments.append(uploaded_trailer)
+                trailer_link = ''
+            else:
+                trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
-        if uploaded_trailer and trailer:
-            trailer.save(update_fields=['status', 'vk_url'])
+            if uploaded_trailer and trailer:
+                trailer.save(update_fields=['status', 'vk_url'])
 
-        record_text = f'{trailer_name}\n\n' \
-                      f'{trailer_information}\n\n' \
-                      f'{trailer_link if uploaded_trailer else ""}\n\n' \
-                      f'{movie.overview}'
+            record_text = f'{trailer_name}\n\n' \
+                          f'{trailer_information}\n\n' \
+                          f'{trailer_link if uploaded_trailer else ""}\n\n' \
+                          f'{movie.overview}'
 
-        post_response = api.wall.post(owner_id=f'-{group_id}',
-                                      from_group=1,
-                                      message=record_text,
-                                      attachments=','.join(attachments))
+            post_response = api.wall.post(owner_id=f'-{group_id}',
+                                          from_group=1,
+                                          message=record_text,
+                                          attachments=','.join(attachments))
 
-        movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        movie.group = Group.objects.get(group_id=group_id)
-        movie.save(update_fields=['post_in_group_date', 'group'])
+            movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+            movie.group = Group.objects.get(group_id=group_id)
+            movie.save(update_fields=['post_in_group_date', 'group'])
 
-        log.debug(f'{post_response} in group {group_id}')
+            log.debug(f'{post_response} in group {group_id}')
     except:
         log.error('error in movie posting', exc_info=True)
 
 
-@task
+@shared_task
 def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('start posting horoscopes in {} group'.format(group_id))
 
@@ -399,7 +529,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('post horoscopes in group {} finished'.format(group_id))
 
 
-@task
+@shared_task
 def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
@@ -531,8 +661,8 @@ def post_record(login, password, app_id, group_id, record_id):
 
         additional_texts = group.additional_texts.all().order_by('id')
         if group.is_additional_text_enabled and additional_texts:
-            additional_text = next((text for text in additional_texts if text.id > group.last_used_additional_text_id),
-                                   additional_texts[0])
+            additional_text = find_next_element_by_last_used_id(group.additional_texts.all().order_by('id'),
+                                                                group.last_used_additional_text_id)
             log.debug(f'Found additional texts for group {group.domain_or_id}. '
                       f'Last used text id: {group.last_used_additional_text_id}, '
                       f'new text id: {additional_text.id}, new text: {additional_text.text},'
@@ -571,7 +701,7 @@ def post_record(login, password, app_id, group_id, record_id):
     log.debug('post in group {} finished'.format(group_id))
 
 
-@task
+@shared_task
 def pin_best_post():
     """
 
@@ -630,18 +760,13 @@ def pin_best_post():
             continue
 
 
-@task
+@shared_task
 def delete_old_ads():
-    """
-
-    :return:
-    """
     log.info('delete_old_ads called')
 
     active_groups = Group.objects.filter(
         user__isnull=False,
-        is_posting_active=True,
-        is_pin_enabled=True).distinct()
+        is_posting_active=True).distinct()
 
     for group in active_groups:
 
@@ -651,7 +776,7 @@ def delete_old_ads():
         ads = AdRecord.objects.filter(group=group, post_in_group_date__lt=time_threshold)
         log.debug('got {} ads in last 30 hours in group {}'.format(len(ads), group.group_id))
 
-        if len(ads):
+        if ads.exists():
 
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
             if not session:
@@ -676,10 +801,11 @@ def delete_old_ads():
             ads = ads.exclude(pk__in=ignore_ad_ids)
             number_of_records, extended = ads.delete()
             log.debug('delete {} ads out of db'.format(number_of_records))
-        log.info('finish deleting old ads')
+
+    log.info('finish deleting old ads')
 
 
-@task
+@shared_task
 def update_statistics():
     log.debug('update_statistics called')
 
@@ -748,7 +874,7 @@ def update_statistics():
     log.debug('update_statistics finished successfully')
 
 
-@task
+@shared_task
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
@@ -784,7 +910,7 @@ def sex_statistics_weekly():
                 male_average_count = sum(male_count_list)//len(male_count_list)
             else:
                 male_average_count = 0
-                
+
             if female_count_list:
                 female_average_count = sum(female_count_list)//len(female_count_list)
             else:

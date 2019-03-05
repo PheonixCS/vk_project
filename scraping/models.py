@@ -74,6 +74,14 @@ class Record(models.Model):
 
         super(Record, self).save(*args, **kwargs)
 
+    def get_attachments_count(self):
+        gif_count = self.gifs.count()
+        image_count = self.images.count()
+        video_count = self.videos.count()
+        audio_count = self.audios.count()
+
+        return sum([gif_count, image_count, video_count, audio_count])
+
     def __str__(self):
         return '{}'.format(self.record_id)
 
@@ -98,6 +106,8 @@ class Audio(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='audios')
     owner_id = models.IntegerField(null=True)
     audio_id = models.IntegerField(null=True)
+    artist = models.CharField(max_length=128, null=True)
+    genre = models.CharField(max_length=128, null=True)
 
 
 class Video(models.Model):
