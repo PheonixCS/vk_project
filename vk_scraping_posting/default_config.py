@@ -36,8 +36,12 @@ CONSTANCE_CONFIG = {
     'TMDB_SCRAPING_ENABLED': (False, 'Just for dev. Is TMDB scraping enabled', bool),
     'ENABLE_MERGE_IMAGES_MOVIES': (True, 'Enable merging images in movies to one', bool),
     'PUT_TRAILERS_TO_ATTACHMENTS': (True, 'Put trailers to attachments. Otherwise, put link in desc', bool),
+    'IMAGE_SIDE_OFFSET_ABS': (10, 'Absolute offset of text and image boarders (all sides)', int),
+    'IMAGE_SPACING_ABS': (5, 'Absolute spacing between lines of text', int),
     'TMDB_MOVIE_INTERVALS': ('[(60, 65), (65, 70), (70, 75), (75, 80), (80, 101)]',
                              'Intervals for posting. Note that values must be integers',
                              str),
-    'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int)
+    'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int),
+    'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int),
+    'FORCE_USE_ABSTRACTION': (True, 'Forcing using of abstraction in music', bool)
 }
