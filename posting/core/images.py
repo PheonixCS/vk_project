@@ -530,11 +530,9 @@ def paste_text_on_music_image(image_name, music_text):
     secondary_color = 'grey'
 
     music_text_list = music_text.split('\n')
-
-    primary_text = music_text_list[0]
-    first_position = paste_text_on_image(image_name, primary_text, size=primary_size, color=primary_color)
-
     if len(music_text_list) > 1:
         secondary_text = '\n'.join(music_text_list[1:])
-        paste_text_on_image(image_name, secondary_text, size=secondary_size, color=secondary_color,
-                            pos_offset=first_position[1])
+        paste_text_on_image(image_name, secondary_text, size=secondary_size, color=secondary_color)
+
+    primary_text = music_text_list[0]
+    paste_text_on_image(image_name, primary_text, size=primary_size, color=primary_color)
