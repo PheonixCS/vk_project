@@ -118,18 +118,23 @@ def examine_groups():
                                                  post_in_group_date__isnull=True).last()
                 if not new_movie:
                     old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
-                    old_movie = Movie.objects.filter(trailers__vk_url__isnull=False,
-                                                     post_in_group_date__lte=old_movie_threshold).last()
+                    old_movies_ids = list(Movie.objects.filter(
+                        trailers__vk_url__isnull=False,
+                        post_in_group_date__lte=old_movie_threshold,
+                        rating__in=next_rating_interval
+                    ).values_list('id', flat=True))
+
+                    old_movie = choice(old_movies_ids)
 
                     if not old_movie:
-                        log.error('Got no movies!')
+                        log.warning('Got no movies in last interval!')
                     else:
                         log.debug('Found old movie')
                         movie = old_movie
                         break
                 else:
                     log.debug('Found new movie')
-                    movie = new_movie
+                    movie = new_movie.id
                     break
 
                 last_movie_rating = next_rating_interval[0]
@@ -138,7 +143,7 @@ def examine_groups():
                 movie = None
 
             if movie:
-                post_movie.delay(group.group_id, movie.id)
+                post_movie.delay(group.group_id, movie)
             else:
                 log.warning('got no movie')
 
@@ -410,53 +415,53 @@ def post_movie(group_id, movie_id):
                 attachments.append(upload_photo(session, image, group_id))
             delete_files(image_files)
 
-            log.debug(f'movie {movie.title} post: got attachments {attachments}')
+        log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
-            uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
-            downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
+        uploaded_trailers = movie.trailers.filter(vk_url__isnull=False)
+        downloaded_trailers = movie.trailers.filter(status=Trailer.DOWNLOADED_STATUS)
 
-            if uploaded_trailers.exists():
-                trailer = uploaded_trailers.first()
-                uploaded_trailer = trailer.vk_url
-            elif downloaded_trailers.exists():
-                trailer = downloaded_trailers.first()
-                uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
+        if uploaded_trailers.exists():
+            trailer = uploaded_trailers.first()
+            uploaded_trailer = trailer.vk_url
+        elif downloaded_trailers.exists():
+            trailer = downloaded_trailers.first()
+            uploaded_trailer = upload_video(session, trailer.file_path, group_id, trailer_name, video_description)
 
-                if uploaded_trailer:
-                    delete_files(trailer.file_path)
-                    trailer.vk_url = uploaded_trailer
-                    trailer.status = Trailer.UPLOADED_STATUS
-                else:
-                    log.warning('failed to upload trailer')
+            if uploaded_trailer:
+                delete_files(trailer.file_path)
+                trailer.vk_url = uploaded_trailer
+                trailer.status = Trailer.UPLOADED_STATUS
             else:
-                log.error(f'movie {movie.title} got no trailer!')
-                uploaded_trailer = None
-                trailer = None
+                log.warning('failed to upload trailer')
+        else:
+            log.error(f'movie {movie.title} got no trailer!')
+            uploaded_trailer = None
+            trailer = None
 
-            if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
-                attachments.append(uploaded_trailer)
-                trailer_link = ''
-            else:
-                trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
+        if config.PUT_TRAILERS_TO_ATTACHMENTS and uploaded_trailer:
+            attachments.append(uploaded_trailer)
+            trailer_link = ''
+        else:
+            trailer_link = f'Трейлер: vk.com/{uploaded_trailer}'
 
-            if uploaded_trailer and trailer:
-                trailer.save(update_fields=['status', 'vk_url'])
+        if uploaded_trailer and trailer:
+            trailer.save(update_fields=['status', 'vk_url'])
 
-            record_text = f'{trailer_name}\n\n' \
-                          f'{trailer_information}\n\n' \
-                          f'{trailer_link if uploaded_trailer else ""}\n\n' \
-                          f'{movie.overview}'
+        record_text = f'{trailer_name}\n\n' \
+                      f'{trailer_information}\n\n' \
+                      f'{trailer_link if uploaded_trailer else ""}\n\n' \
+                      f'{movie.overview}'
 
-            post_response = api.wall.post(owner_id=f'-{group_id}',
-                                          from_group=1,
-                                          message=record_text,
-                                          attachments=','.join(attachments))
+        post_response = api.wall.post(owner_id=f'-{group_id}',
+                                      from_group=1,
+                                      message=record_text,
+                                      attachments=','.join(attachments))
 
-            movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-            movie.group = Group.objects.get(group_id=group_id)
-            movie.save(update_fields=['post_in_group_date', 'group'])
+        movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        movie.group = Group.objects.get(group_id=group_id)
+        movie.save(update_fields=['post_in_group_date', 'group'])
 
-            log.debug(f'{post_response} in group {group_id}')
+        log.debug(f'{post_response} in group {group_id}')
     except:
         log.error('error in movie posting', exc_info=True)
 
