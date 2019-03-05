@@ -1,8 +1,8 @@
 import logging
 import os
+import time
 from math import ceil
 from textwrap import wrap
-import time
 
 import pytesseract
 from PIL import Image, ImageFont, ImageDraw, ImageFile
@@ -38,8 +38,8 @@ def calculate_max_len_in_chars(text, width_in_pixels, font_object):
     temp_text = wrap(text, max_width_in_chars)
 
     while (
-        max_width_in_chars
-        and not is_text_fit_to_width(' '.join(temp_text), max_width_in_chars, width_in_pixels, font_object)
+            max_width_in_chars
+            and not is_text_fit_to_width(' '.join(temp_text), max_width_in_chars, width_in_pixels, font_object)
     ):
         max_width_in_chars -= 1
         temp_text = wrap(text, max_width_in_chars)
@@ -164,7 +164,7 @@ def fill_image_with_text(filepath, text, font_name=config.FONT_NAME):
 
 
 def divergence(one, two):
-    return abs(one-two)/max(one, two)
+    return abs(one - two) / max(one, two)
 
 
 def is_images_size_nearly_the_same(files, max_divergence):
@@ -196,7 +196,7 @@ def is_all_images_not_horizontal(files):
 
 
 def get_smallest_image_size(sizes):
-    min_size = min(sizes, key=lambda size: size[0]*size[1])
+    min_size = min(sizes, key=lambda size: size[0] * size[1])
     return min_size
 
 
@@ -204,10 +204,10 @@ def calculate_size_from_one_side(origin_width, origin_height, width=None, height
     r_width, r_height = origin_width, origin_height
 
     if width:
-        r_width, r_height = int(width), int(width/origin_width*origin_height)
+        r_width, r_height = int(width), int(width / origin_width * origin_height)
 
     if height:
-        r_width, r_height = int(origin_width/origin_height*height), int(height)
+        r_width, r_height = int(origin_width / origin_height * height), int(height)
 
     log.debug('calculate_size_from_one_side finished with sizes orig - {}:{}, new - {}:{}'.format(
         origin_width, origin_height, r_width, r_height
@@ -225,7 +225,7 @@ def resize_image_aspect_ratio_by_two_sides(image_object, width, height):
     orig_width = image_object.size[0]
     orig_height = image_object.size[1]
 
-    if orig_width/orig_height >= width/height:
+    if orig_width / orig_height >= width / height:
         new_size = calculate_size_from_one_side(orig_width, orig_height, height=height)
     else:
         new_size = calculate_size_from_one_side(orig_width, orig_height, width=width)
@@ -261,7 +261,7 @@ def resize_image_aspect_ratio_by_one_side(image_object, width=None, height=None)
 def merge_poster_and_three_images(poster, images):
     log.debug('merge_poster_and_three_images called')
 
-    offset = 3*config.SIX_IMAGES_OFFSET
+    offset = 3 * config.SIX_IMAGES_OFFSET
     filepath = f'temp_{poster}'
 
     if len(images) != 3:
@@ -296,13 +296,13 @@ def merge_poster_and_three_images(poster, images):
     log.debug('for starts in merge_poster_and_three_images')
     for index, image in enumerate(images):
         x = poster_width + offset
-        y = index*(required_height + offset)
+        y = index * (required_height + offset)
 
         img_object = Image.open(os.path.join(settings.BASE_DIR, image))
         img_object = resize_image_aspect_ratio_by_two_sides(img_object, width=required_width, height=required_height)
         log.debug('cropping in loop')
         cropped = img_object.crop((0, 0, required_width, required_height))
-        result.paste(cropped, (x, y, x+required_width, y+required_height))
+        result.paste(cropped, (x, y, x + required_width, y + required_height))
         log.debug('for loop body end')
     log.debug('for end and resize result')
     result = resize_image_aspect_ratio_by_one_side(result, width=1920)
@@ -322,10 +322,9 @@ def merge_six_images_into_one(files):
     images_sizes = [Image.open(os.path.join(settings.BASE_DIR, image)).size for image in files]
     min_width, min_height = get_smallest_image_size(images_sizes)
 
-    result = Image.new('RGB', (min_width * 3 + offset*2, min_height * 2 + offset), 'White')
+    result = Image.new('RGB', (min_width * 3 + offset * 2, min_height * 2 + offset), 'White')
 
     for index, img_file_name in enumerate(files):
-
         x = index % 3 * (min_width + offset)
         y = index // 3 * (min_height + offset)
 
@@ -388,8 +387,7 @@ def paste_abstraction_on_template(template, abstraction):
     else:
         abstraction = resize_image_aspect_ratio_by_one_side(abstraction, height=template.size[0])
 
-    box = 0, 0, template.size[0], template.size[1]
-    abstraction = abstraction.crop(box)
+    abstraction = crop_center(abstraction, template.size)
 
     resulting_image = Image.alpha_composite(abstraction, template)
     resulting_image = resulting_image.convert('RGB')
@@ -401,13 +399,14 @@ def paste_abstraction_on_template(template, abstraction):
     return resulting_name
 
 
-def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='top'):
+def paste_text_on_image(image_name, text, position='top', color='black', size=None, pos_offset=0):
     image = Image.open(os.path.join(settings.BASE_DIR, image_name))
     image_width, image_height = image.width, image.height
 
-    size = calculate_text_size_on_image(box=(image_width, image_height))
+    if not size:
+        size = calculate_text_size_on_image(box=(image_width, image_height))
 
-    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
+    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', config.FONT_NAME), size)
 
     # Normalize text
     normalized_text = []
@@ -416,7 +415,7 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
             continue
         if not is_text_fit_to_width(paragraph, len(paragraph), image_width - config.IMAGE_SIDE_OFFSET_ABS, font):
             text_max_width_in_chars = calculate_max_len_in_chars(paragraph,
-                                                                 image_width-config.IMAGE_SIDE_OFFSET_ABS,
+                                                                 image_width - config.IMAGE_SIDE_OFFSET_ABS,
                                                                  font)
             paragraph = '\n'.join(wrap(paragraph, text_max_width_in_chars))
         normalized_text.append(paragraph)
@@ -424,7 +423,8 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
     text = '\n'.join(normalized_text)
     text_width, text_height = font.getsize_multiline(text, spacing=config.IMAGE_SPACING_ABS)
 
-    expand_image_with_white_color(image_name, text_height+config.IMAGE_SIDE_OFFSET_ABS*2)
+    if text:
+        expand_image_with_white_color(image_name, text_height + config.IMAGE_SIDE_OFFSET_ABS * 3)
     image = Image.open(os.path.join(settings.BASE_DIR, image_name))
     draw = ImageDraw.Draw(image)
     image_width, image_height = image.width, image.height
@@ -432,13 +432,14 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
     position = calculate_text_position_on_image(
         image_box=(image_width, image_height),
         text_box=(text_width, text_height),
-        anchor=position)
+        anchor=position,
+        offset=pos_offset)
 
     draw.multiline_text(position, text,
                         font=font,
                         spacing=config.IMAGE_SPACING_ABS,
                         align='center',
-                        fill=(0, 0, 0),
+                        fill=color,
                         )
 
     new_name = image_name
@@ -448,9 +449,14 @@ def paste_text_on_image(image_name, text, font_name=config.FONT_NAME, position='
     else:
         image.save(new_name)
 
+    return position
+
 
 def calculate_text_size_on_image(box, percent=config.FONT_SIZE_PERCENT):
     image_width, image_height = box
+
+    if percent < 1:
+        percent = 1
 
     # size in pixels
     size = ceil(image_height * percent / 100)
@@ -458,7 +464,7 @@ def calculate_text_size_on_image(box, percent=config.FONT_SIZE_PERCENT):
     return size
 
 
-def calculate_text_position_on_image(image_box, text_box, anchor):
+def calculate_text_position_on_image(image_box, text_box, anchor, offset=0):
     anchors = ('top', 'bottom')
     if anchor not in anchors:
         raise ValueError('Anchor parameter invalid. Must be in {}'.format(anchors))
@@ -470,10 +476,65 @@ def calculate_text_position_on_image(image_box, text_box, anchor):
 
     if anchor == 'top':
         x = (image_width - text_width) // 2
-        y = side_offest
+        y = side_offest + offset
         return x, y
 
     elif anchor == 'bottom':
         x = (image_width - text_width) // 2
-        y = image_height - text_height - side_offest
+        y = image_height - text_height - side_offest - offset
         return x, y
+
+
+def crop_center(image, size):
+    """
+
+    :type image: PIL.Image.Image
+    :type size: tuple
+    :rtype: PIL.Image.Image
+    """
+
+    orig_size = image.width, image.height
+
+    if size[0] > orig_size[0] or size[1] > orig_size[1]:
+        raise ValueError('Input size cannot be bigger than original image size!')
+
+    centered_box = calculate_centered_box(size, orig_size)
+
+    result = image.crop(centered_box)
+
+    return result
+
+
+def calculate_centered_box(required_size, orig_size):
+    delta_x = (orig_size[0] - required_size[0]) // 2
+    delta_y = (orig_size[1] - required_size[1]) // 2
+
+    left = delta_x
+    upper = delta_y
+    right = delta_x + required_size[0]
+    bottom = delta_y + required_size[1]
+
+    box = left, upper, right, bottom
+
+    return box
+
+
+def paste_text_on_music_image(image_name, music_text):
+    image = Image.open(os.path.join(settings.BASE_DIR, image_name))
+    image_width, image_height = image.width, image.height
+
+    primary_size = calculate_text_size_on_image(box=(image_width, image_height))
+    secondary_size = calculate_text_size_on_image(box=(image_width, image_height), percent=config.FONT_SIZE_PERCENT - 2)
+
+    primary_color = 'black'
+    secondary_color = 'grey'
+
+    music_text_list = music_text.split('\n')
+
+    primary_text = music_text_list[0]
+    first_position = paste_text_on_image(image_name, primary_text, size=primary_size, color=primary_color)
+
+    if len(music_text_list) > 1:
+        secondary_text = '\n'.join(music_text_list[1:])
+        paste_text_on_image(image_name, secondary_text, size=secondary_size, color=secondary_color,
+                            pos_offset=first_position[1])

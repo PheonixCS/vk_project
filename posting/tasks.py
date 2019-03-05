@@ -14,7 +14,7 @@ from django.utils import timezone
 from posting.core.horoscopes import generate_special_group_reference
 from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
-    is_text_on_image, paste_abstraction_on_template, paste_text_on_image
+    is_text_on_image, paste_abstraction_on_template, paste_text_on_music_image
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -329,7 +329,7 @@ def post_music(login, password, app_id, group_id, record_id):
 
         result_image_name = paste_abstraction_on_template(template_image, abstraction)
 
-        paste_text_on_image(result_image_name, text_to_image, position='top')
+        paste_text_on_music_image(result_image_name, text_to_image)
 
         attachments.append(upload_photo(session, result_image_name, group_id))
 

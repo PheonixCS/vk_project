@@ -1,11 +1,12 @@
 #
 
-from django.test import TestCase
+import os
+
 from PIL import Image
+from django.conf import settings
+from django.test import TestCase
 
 import posting.core.images as images
-from django.conf import settings
-import os
 
 
 # Create your tests here.
@@ -57,3 +58,44 @@ class ImagesTests(TestCase):
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
         result = images.paste_abstraction_on_template(template_image, 'pic.jpg')
         self.assertIsNotNone(result)
+
+    def test_calculate_box(self):
+        size = (800, 600)
+        size_two = (300, 300)
+        expected_box = (250, 150, 550, 450)
+
+        result_box = images.calculate_centered_box(size_two, size)
+
+        self.assertEqual(result_box, expected_box)
+
+    def test_calculate_box_equal_size(self):
+        size = (800, 600)
+        size_two = (600, 600)
+        expected_box = (100, 0, 700, 600)
+
+        result_box = images.calculate_centered_box(size_two, size)
+
+        self.assertEqual(result_box, expected_box)
+
+    def test_center_box(self):
+        img = Image.new('RGB', (500, 500), color='white')
+
+        result = images.crop_center(img, (300, 300))
+
+        self.assertEqual(result.size, (300, 300))
+
+    def test_position_calculation_with_offset_bottom(self):
+        image_size = (100, 100)
+        text_size = (20, 5)
+
+        position = images.calculate_text_position_on_image(image_size, text_size, 'bottom', offset=10)
+
+        self.assertEqual(position, (40, 75))
+
+    def test_position_calculation_with_offset_top(self):
+        image_size = (100, 100)
+        text_size = (20, 5)
+
+        position = images.calculate_text_position_on_image(image_size, text_size, 'top', offset=10)
+
+        self.assertEqual(position, (40, 20))
