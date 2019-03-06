@@ -261,7 +261,7 @@ genres = [
     {'id': '7', 'name': 'Металл', 'gender': 'М'},
     {'id': '21', 'name': 'Альтернатива', 'gender': 'Ж'},
     {'id': '8', 'name': 'Dubstep', 'gender': 'М'},
-    {'id': '1001', 'name': 'Jazz & Blues', 'gender': 'М'},
+    {'id': '1001', 'name': 'banned', 'gender': ''},
     {'id': '10', 'name': 'Drum & Bass', 'gender': 'М'},
     {'id': '11', 'name': 'Trance', 'gender': 'М'},
     {'id': '12', 'name': 'Шансон', 'gender': 'М'},
