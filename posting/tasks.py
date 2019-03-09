@@ -117,6 +117,7 @@ def examine_groups():
                                                  rating__in=next_rating_interval,
                                                  post_in_group_date__isnull=True).last()
                 if not new_movie:
+                    log.debug('Got no new movie')
                     old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
                     old_movies_ids = list(Movie.objects.filter(
                         trailers__vk_url__isnull=False,
@@ -124,7 +125,11 @@ def examine_groups():
                         rating__in=next_rating_interval
                     ).values_list('id', flat=True))
 
-                    old_movie = choice(old_movies_ids)
+                    try:
+                        old_movie = choice(old_movies_ids)
+                    except IndexError:
+                        log.debug('old_movies_ids is empty')
+                        old_movie = None
 
                     if not old_movie:
                         log.warning('Got no movies in last interval!')
