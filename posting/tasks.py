@@ -183,7 +183,7 @@ def examine_groups():
 
             donors = group.donors.all()
 
-            if len(donors) > 1:
+            if len(donors) > 1 and not group.is_background_abstraction_enabled:
                 # find last record id and its donor id
                 last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
                 if last_record:
@@ -229,10 +229,10 @@ def examine_groups():
             try:
                 if group.is_background_abstraction_enabled:
                     post_music.delay(group.user.login,
-                                      group.user.password,
-                                      group.user.app_id,
-                                      group.group_id,
-                                      the_best_record.id)
+                                     group.user.password,
+                                     group.user.app_id,
+                                     group.group_id,
+                                     the_best_record.id)
                 else:
                     post_record.delay(group.user.login,
                                       group.user.password,
