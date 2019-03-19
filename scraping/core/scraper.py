@@ -19,6 +19,7 @@ from services.vk.wall import get_wall, get_wall_by_post_id
 from services.vk.core import create_vk_api_using_service_token
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
     Movie, Genre, Trailer, Frame
+from services.vk.vars import GROUP_IS_BANNED
 
 log = logging.getLogger('scraping.scraper')
 
@@ -198,7 +199,7 @@ def main():
     tokens = [token.app_service_token for token in ServiceToken.objects.all()]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
-    donors = Donor.objects.filter(is_involved=True)
+    donors = Donor.objects.filter(is_involved=True, is_banned=False)
     log.info('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
@@ -216,8 +217,10 @@ def main():
         for donor in account['donors']:
             # Scraping part
 
-            wall = get_wall(api, donor.id)
+            wall, error_reason = get_wall(api, donor.id)
             if not wall:
+                if error_reason == GROUP_IS_BANNED:
+                    donor.ban()
                 continue
 
             # Fetch 20 records from donor wall.
