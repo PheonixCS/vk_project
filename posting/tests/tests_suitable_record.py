@@ -25,7 +25,6 @@ class SuitableRecordTest(TestCase):
         best_record = poster.find_suitable_record(records, 40/60)
 
         self.assertEqual(best_record.rate, 900)
-        self.assertEqual(best_record.males_females_ratio, 40/60)
 
     def test_no_suitable(self):
         records = [
@@ -60,9 +59,9 @@ class SuitableRecordTest(TestCase):
     def test_custom_range_suitable(self):
         records = [
             Record(500, 70/30),
-            Record(600, 49/51),
-            Record(700, 70/30),
+            Record(600, 70/30),
+            Record(700, 49/51),
         ]
         best_record = poster.find_suitable_record(records, 40/60, 10)
 
-        self.assertEqual(best_record.rate, 600)
+        self.assertEqual(best_record.rate, 700)
