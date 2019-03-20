@@ -1,14 +1,15 @@
+import ast
 import logging
 import os
 from collections import Counter
 
 import requests
+from constance import config
 
-from posting.models import BackgroundAbstraction
-from posting.core.mapping import countries, genres
-from posting.core.text_utilities import delete_emoji_from_text
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
+from posting.core.mapping import countries, genres
+from posting.core.text_utilities import delete_emoji_from_text
 
 log = logging.getLogger('posting.poster')
 
@@ -92,7 +93,11 @@ def get_country_name_by_code(code):
 
 
 def get_movies_rating_intervals():
-    intervals_borders = [(65, 70), (70, 75), (75, 80), (80, 101)]
+    try:
+        intervals_borders = ast.literal_eval(config.TMDB_MOVIE_INTERVALS)
+    except SyntaxError:
+        intervals_borders = ast.literal_eval(settings.CONFIG['TMDB_MOVIE_INTERVALS'][0])
+        log.warning('get_movies_rating_intervals got wrong format from config, return default', exc_info=True)
 
     return [[value / 10 for value in range(interval[0], interval[1])] for interval in intervals_borders]
 
