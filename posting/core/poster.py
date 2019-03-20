@@ -125,3 +125,25 @@ def get_music_compilation_genre(audios):
 
 def find_next_element_by_last_used_id(objects, last_used_object_id):
     return next((object for object in objects if object.id > last_used_object_id), objects[0])
+
+
+def find_suitable_record(records, best_ratio, divergence=20):
+    divergence = divergence/100
+    records.sort(key=lambda x: x.rate, reverse=True)
+    max_male_percent = from_ratio_to_percent(best_ratio) + divergence
+    min_male_percent = from_ratio_to_percent(best_ratio) - divergence
+
+    for record in records:
+        male_percent = from_ratio_to_percent(record.males_females_ratio)
+        if min_male_percent < male_percent < max_male_percent:
+            best_record = record
+            break
+    else:
+        best_record = records[0]
+
+    return best_record
+
+
+def from_ratio_to_percent(ratio):
+    result = 1 / (1+ratio)
+    return result
