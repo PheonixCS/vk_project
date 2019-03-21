@@ -183,7 +183,7 @@ def examine_groups():
 
             donors = group.donors.all()
 
-            if len(donors) > 1 and not group.is_background_abstraction_enabled:
+            if len(donors) > 1:
                 # find last record id and its donor id
                 last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
                 if last_record:
