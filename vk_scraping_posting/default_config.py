@@ -42,7 +42,8 @@ CONSTANCE_CONFIG = {
                              str),
     'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int),
     'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int),
-    'FORCE_USE_ABSTRACTION': (False, 'Forcing using of abstraction in music', bool)
+    'FORCE_USE_ABSTRACTION': (False, 'Forcing using of abstraction in music', bool),
+    'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int)
 }
 
 
@@ -51,7 +52,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'VK_API_VERSION', 'WALL_RECORD_COUNT_TO_PIN', 'OLD_RECORDS_HOURS',
         'OLD_AD_RECORDS_HOURS', 'OLD_HOROSCOPES_HOURS', 'OLD_MODERATION_TRANSACTIONS_HOURS',
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
-        'MIN_STRING_MATCH_RATIO'
+        'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR'
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',

@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from posting.core.poster import get_movies_rating_intervals
 from scraping.core.scraper import main, save_movie_to_db
-from scraping.models import Record, Horoscope, Trailer, Movie
+from scraping.models import Record, Horoscope, Trailer, Movie, Donor
 from services.themoviedb.wrapper import discover_movies
 from services.youtube.core import download_trailer
 
@@ -30,17 +30,27 @@ def scrape_tmdb_movies():
 
 @shared_task
 def delete_oldest():
-    """
-    Scheduled task for deleting records 24 hours old
+    log.debug('start deleting records')
 
-    :return:
-    """
-    hours = config.OLD_RECORDS_HOURS
-    time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
-    log.debug('start deleting records older than {}'.format(time_threshold))
+    max_count = config.COMMON_RECORDS_COUNT_FOR_DONOR
 
-    number_of_records, extended = Record.objects.filter(add_to_db_date__lt=time_threshold).delete()
-    log.debug('deleted {} records'.format(number_of_records))
+    donors = Donor.objects.filter(
+        is_involved=True
+    )
+
+    for donor in donors.iterator():
+        records_number = Record.objects.filter(donor=donor).count()
+
+        if records_number > max_count:
+            records_to_delete_number = records_number - max_count
+
+            all_records = Record.objects.filter(donor=donor).order_by('post_in_donor_date')
+            records_to_delete = all_records[:records_to_delete_number]
+
+            number_of_records, extended = records_to_delete.delete()
+            log.debug(f'deleted {number_of_records} records for group {donor.id}')
+
+    log.debug('finish deleting records')
 
 
 @shared_task
