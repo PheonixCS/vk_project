@@ -271,6 +271,6 @@ genres = [
     {'id': '16', 'name': 'Классическая музыка', 'gender': 'Ж'},
     {'id': '17', 'name': 'Indie Pop', 'gender': 'М'},
     {'id': '19', 'name': 'banned', 'gender': ''},
-    {'id': '22', 'name': 'Electropop & Disco', 'gender': 'М'},
+    {'id': '22', 'name': 'banned', 'gender': ''}, #Electropop & Disco
     {'id': '18', 'name': 'banned', 'gender': ''}
 ]
