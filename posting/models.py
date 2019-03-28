@@ -1,6 +1,8 @@
 import datetime
 
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
+from scraping.models import Attachment
 
 
 class User(models.Model):
@@ -89,6 +91,16 @@ class Group(models.Model):
     female_weekly_average_count = models.IntegerField(default=0,
                                                       verbose_name='Среднее количество женщин за неделю')
     sex_last_update_date = models.DateTimeField(null=True)
+    # banned_origin_attachment_types = models.IntegerField(
+    #     choices=Attachment.TYPE_CHOICES, blank=True, null=True)
+    banned_origin_attachment_types = ArrayField(
+        models.CharField(choices=Attachment.TYPE_CHOICES, blank=True, null=True, max_length=16),
+        blank=True,
+        null=True,
+        verbose_name='Недопустимые вложения для записей',
+        help_text=f'Типы вложений записей, которые не нужны в этой группе. '
+                  f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
+    )
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
@@ -114,7 +126,7 @@ class MusicGenreEpithet(models.Model):
     text_for_male = models.TextField(max_length=256, default='',
                                      verbose_name='Эпитет для музыкального жанра мужского рода')
     text_for_female = models.TextField(max_length=256, default='',
-                                     verbose_name='Эпитет для музыкального жанра женского рода')
+                                       verbose_name='Эпитет для музыкального жанра женского рода')
 
     class Meta:
         verbose_name = 'Эпитет'
