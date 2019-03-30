@@ -55,7 +55,6 @@ class Group(models.Model):
     donors = models.ManyToManyField('scraping.Donor', blank=True)
 
     is_text_delete_enabled = models.BooleanField(default=False, verbose_name='Убирать текст из постов?')
-    is_delete_audio_enabled = models.BooleanField(default=False, verbose_name='Убирать аудио из постов?')
     is_text_filling_enabled = models.BooleanField(default=False, verbose_name='Переносить текст на изображение?')
     is_image_mirror_enabled = models.BooleanField(default=False, verbose_name='Отзеркаливать изображения без текста?')
     is_changing_image_to_square_enabled = models.BooleanField(default=False,

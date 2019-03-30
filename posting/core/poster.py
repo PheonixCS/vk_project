@@ -3,12 +3,13 @@ import os
 from collections import Counter
 
 import requests
-
-from posting.models import BackgroundAbstraction
 from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
+from django.db.models.query import QuerySet
+from django.db.models import Count
+from scraping.models import Attachment
 
 log = logging.getLogger('posting.poster')
 
@@ -125,3 +126,27 @@ def get_music_compilation_genre(audios):
 
 def find_next_element_by_last_used_id(objects, last_used_object_id):
     return next((object for object in objects if object.id > last_used_object_id), objects[0])
+
+
+def filter_banned_records(records: QuerySet, banned_types: list) -> QuerySet:
+    available_choices = [c[0] for c in Attachment.TYPE_CHOICES]
+    for t in banned_types:
+        if t not in available_choices:
+            raise TypeError(f'attachment {t} is not in available {available_choices}')
+
+    attachment_types = []
+
+    if 'video' in banned_types:
+        attachment_types.append('videos')
+    if 'picture' in banned_types:
+        attachment_types.append('images')
+    if 'gif' in banned_types:
+        attachment_types.append('gifs')
+    if 'audio' in banned_types:
+        attachment_types.append('audios')
+
+    for attachment_type in attachment_types:
+        annotated = records.annotate(attachments_count=Count(attachment_type))
+        records = annotated.exclude(attachments_count__gt=0)
+
+    return records
