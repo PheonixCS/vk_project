@@ -8,7 +8,9 @@ class Donor(models.Model):
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
+    is_banned = models.BooleanField(default=False, verbose_name='Донор забанен')
 
+    # Standard
     def save(self, *args, **kwargs):
         self.url = 'https://vk.com/club{}'.format(self.id)
         return super(Donor, self).save(*args, **kwargs)
@@ -19,6 +21,11 @@ class Donor(models.Model):
     class Meta:
         verbose_name = 'Источник'
         verbose_name_plural = 'Источники'
+
+    # Custom
+    def ban(self):
+        self.is_banned = True
+        self.save(update_fields=['is_banned'])
 
 
 class Filter(models.Model):

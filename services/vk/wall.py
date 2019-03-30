@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from constance import config
 from django.utils import timezone
 from vk_requests.exceptions import VkAPIError
+from .vars import *
 
 log = logging.getLogger('services.vk.wall')
 
@@ -31,10 +32,13 @@ def get_wall(api, group_id, count=20):
                 count=count
             )
     except VkAPIError as error_msg:
+        reason = None
+        if error_msg == BANNED_GROUP_ERROR_MESSAGE:
+            reason = GROUP_IS_BANNED
         log.error('group {} got api error: {}'.format(group_id, error_msg))
-        return None
+        return None, reason
 
-    return wall
+    return wall, None
 
 
 def get_wall_by_post_id(api, group_id, posts_ids):
@@ -58,13 +62,14 @@ def get_ad_in_last_hour(api, group_id):
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1)
 
     try:
-        wall = [record for record in get_wall(api, group_id)['items']
-                if record.get('marked_as_ads', False) and
-                datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
+        wall, error = get_wall(api, group_id)
+        records = [record for record in wall['items']
+                   if record.get('marked_as_ads', False) and
+                   datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
-        if wall and wall[0].get('id', None) and wall[0].get('date', None):
-            ad = {'id': wall[0].get('id'),
-                  'date': wall[0].get('date')}
+        if records and records[0].get('id', None) and records[0].get('date', None):
+            ad = {'id': records[0].get('id'),
+                  'date': records[0].get('date')}
             log.debug('got ad with id {} in group {}'.format(ad['id'], group_id))
             return ad
     except:

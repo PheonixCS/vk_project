@@ -742,14 +742,15 @@ def pin_best_post():
         log.debug('search for posts from {} to now'.format(time_threshold))
 
         records_count = config.WALL_RECORD_COUNT_TO_PIN
-        wall = [record for record in get_wall(search_api, group.domain_or_id, count=records_count)['items']
-                if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
+        wall, error = get_wall(search_api, group.domain_or_id, count=records_count)
+        records = [record for record in wall['items']
+                   if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
-        if wall:
-            log.debug('got {} wall records in last 24 hours'.format(len(wall)))
+        if records:
+            log.debug('got {} wall records in last 24 hours'.format(len(records)))
 
             try:
-                best = max(wall, key=lambda item: item['likes']['count'])
+                best = max(records, key=lambda item: item['likes']['count'])
             except KeyError:
                 log.error('failed to fetch best record', exc_info=True)
                 continue
