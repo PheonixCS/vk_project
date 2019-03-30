@@ -187,3 +187,20 @@ class Trailer(models.Model):
 class Frame(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='frames')
     url = models.CharField(max_length=256)
+
+
+class Attachment(models.Model):
+    AUDIO = 'audio'
+    VIDEO = 'video'
+    GIF = 'gif'
+    PICTURE = 'picture'
+
+    TYPE_CHOICES = (
+        (AUDIO, 'audio'),
+        (VIDEO, 'video'),
+        (GIF, 'gif'),
+        (PICTURE, 'picture')
+    )
+
+    data_type = models.CharField(choices=TYPE_CHOICES, max_length=16)
+
