@@ -190,12 +190,14 @@ def examine_groups():
                 if last_record:
                     donors = donors.exclude(pk=last_record.donor_id)
 
-            records = [record for donor in donors for record in
-                       donor.records.filter(rate__isnull=False,
-                                            is_involved_now=False,
-                                            post_in_group_date__isnull=True,
-                                            failed_date__isnull=True,
-                                            post_in_donor_date__gt=allowed_time_threshold)]
+            records = Record.objects.filter(
+                rate__isnull=False,
+                is_involved_now=False,
+                post_in_group_date__isnull=True,
+                failed_date__isnull=True,
+                post_in_donor_date__gt=allowed_time_threshold,
+                donor__in=donors
+            )
 
             if group.banned_origin_attachment_types:
                 records = filter_banned_records(records, group.banned_origin_attachment_types)
