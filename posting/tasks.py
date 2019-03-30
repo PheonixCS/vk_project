@@ -1,3 +1,4 @@
+import ast
 import logging
 import os
 from datetime import datetime, timedelta
@@ -26,6 +27,7 @@ from posting.core.poster import (
     find_next_element_by_last_used_id,
     get_music_compilation_genre,
     get_music_compilation_artist,
+    find_suitable_record
 )
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
@@ -214,11 +216,18 @@ def examine_groups():
                 else:
                     group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
 
-                the_best_record = find_the_best_post(
-                    records,
-                    group_male_female_ratio,
-                    config.RECORDS_SELECTION_PERCENT
-                )
+                if group.group_id in ast.literal_eval(config.GROUPS_ID_TMP):
+                    the_best_record = find_suitable_record(
+                        records,
+                        group_male_female_ratio,
+                        config.RECORDS_SELECTION_PERCENT
+                    )
+                else:
+                    the_best_record = find_the_best_post(
+                        records,
+                        group_male_female_ratio,
+                        config.RECORDS_SELECTION_PERCENT
+                    )
             else:
                 the_best_record = max(records, key=lambda x: x.rate)
 
