@@ -1,9 +1,6 @@
 #
 
-import os
-
 from PIL import Image
-from django.conf import settings
 from django.test import TestCase
 
 import posting.core.images as images

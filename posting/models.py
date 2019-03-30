@@ -1,7 +1,8 @@
 import datetime
 
-from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
+
 from scraping.models import Attachment
 
 

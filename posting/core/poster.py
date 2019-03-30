@@ -3,12 +3,13 @@ import os
 from collections import Counter
 
 import requests
-from posting.core.mapping import countries, genres
-from posting.core.text_utilities import delete_emoji_from_text
+from django.db.models import Count
+from django.db.models.query import QuerySet
+
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
-from django.db.models.query import QuerySet
-from django.db.models import Count
+from posting.core.mapping import countries, genres
+from posting.core.text_utilities import delete_emoji_from_text
 from scraping.models import Attachment
 
 log = logging.getLogger('posting.poster')

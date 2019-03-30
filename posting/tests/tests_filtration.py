@@ -1,8 +1,9 @@
 # test for records filtration
 from django.test import TestCase
+
 from posting.core import poster
-from scraping.models import Record, Gif, Image, Video, Audio, Donor
 from posting.models import Group
+from scraping.models import Record, Gif, Image, Video, Audio, Donor
 
 
 class FiltrationTests(TestCase):
