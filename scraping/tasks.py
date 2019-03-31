@@ -4,14 +4,17 @@ from datetime import datetime, timedelta
 
 from celery import shared_task
 from constance import config
-from django.utils import timezone
 from django.db.models import Sum
+from django.utils import timezone
 
 from posting.core.poster import get_movies_rating_intervals
-from scraping.core.scraper import main, save_movie_to_db
+from scraping.core.scraper import main, save_movie_to_db, save_structured_records
+from scraping.core.vk_helper import get_records_info
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
 from services.themoviedb.wrapper import discover_movies
 from services.youtube.core import download_trailer
+from scraping.core.helpers import extract_records_per_donor
+
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -135,3 +138,19 @@ def set_donors_average_view():
             donor.save(update_fields=['average_views_number'])
 
     log.debug('set_donors_average_view finished')
+
+
+@shared_task
+def rate_new_posts() -> None:
+    log.debug('rating started')
+    # TODO timedelta to config
+    threshold = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+
+    new_records = Record.objects.filter(status=Record.NEW, post_in_donor_date__lte=threshold)
+
+    if new_records:
+        records_info = get_records_info(new_records)
+        structured_records = extract_records_per_donor(records_info)
+        save_structured_records(structured_records)
+
+    log.debug('rating finished')

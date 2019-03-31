@@ -346,3 +346,7 @@ def extract_records_sex(api, donor_id, records):
         record_obj.save(update_fields=['females_count', 'males_count', 'unknown_count', 'males_females_ratio'])
 
     log.debug('extract_records_sex finished')
+
+
+def save_structured_records(records: dict) -> None:
+    pass
