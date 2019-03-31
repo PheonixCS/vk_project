@@ -45,7 +45,8 @@ def delete_oldest():
             records_to_delete_number = records_number - max_count
 
             all_records = Record.objects.filter(donor=donor).order_by('post_in_donor_date')
-            records_to_delete = all_records[:records_to_delete_number]
+            ids_to_delete = all_records[:records_to_delete_number].values_list('id', flat=True)
+            records_to_delete = all_records.filter(pk__in=ids_to_delete)
 
             number_of_records, extended = records_to_delete.delete()
             log.debug(f'deleted {number_of_records} records for group {donor.id}')
