@@ -8,12 +8,14 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from posting.core.poster import get_movies_rating_intervals
-from scraping.core.scraper import main, save_movie_to_db, save_structured_records
+from scraping.core.scraper import main, save_movie_to_db, update_structured_records
 from scraping.core.vk_helper import get_records_info
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
+from posting.models import ServiceToken
 from services.themoviedb.wrapper import discover_movies
 from services.youtube.core import download_trailer
 from scraping.core.helpers import extract_records_per_donor
+from services.vk.core import create_vk_api_using_service_token
 
 
 log = logging.getLogger('scraping.scheduled')
@@ -146,11 +148,26 @@ def rate_new_posts() -> None:
     # TODO timedelta to config
     threshold = datetime.now(tz=timezone.utc) - timedelta(hours=2)
 
+    new_token = ServiceToken.objects.filter(last_used__isnull=True)
+    if new_token:
+        token = new_token.first()
+    else:
+        token = ServiceToken.objects.order_by('last_used').first()
+
+    token.last_used = timezone.now()
+    token.save(update_fields='last_used')
+    log.debug(f'Using {token} token for rate_new_posts')
+
+    api = create_vk_api_using_service_token(token)
+    if not api:
+        log.error('cannot rate new posts')
+        return
+
     new_records = Record.objects.filter(status=Record.NEW, post_in_donor_date__lte=threshold)
 
     if new_records:
-        records_info = get_records_info(new_records)
+        records_info = get_records_info(api, new_records)
         structured_records = extract_records_per_donor(records_info)
-        save_structured_records(structured_records)
+        update_structured_records(structured_records)
 
     log.debug('rating finished')

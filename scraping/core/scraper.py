@@ -348,5 +348,28 @@ def extract_records_sex(api, donor_id, records):
     log.debug('extract_records_sex finished')
 
 
-def save_structured_records(records: dict) -> None:
-    pass
+def update_structured_records(records: dict) -> None:
+    log.debug('update_structured_records called')
+    fields = ['rate', 'views_count', 'likes_count', 'reposts_count']
+
+    for donor_id in records.keys():
+        fresh_records = records[donor_id]
+        donor_records_ids = [record['id'] for record in fresh_records]
+
+        donor = Donor.objects.get(id=str(donor_id))
+        records_in_db = Record.objects.filter(record_id__in=donor_records_ids, donor=donor)
+
+        for record in records_in_db:
+            fresh_record = [item for item in fresh_records if item['id'] == record.record_id].pop()
+
+            record.views_count = fresh_record.get('views', {}).get('count', 0)
+            record.likes_count = fresh_record.get('likes', {}).get('count', 0)
+            record.reposts_count = fresh_record.get('reposts', {}).get('count', 0)
+
+            if donor.average_views_number is None:  # I don't know why without "is None" it doesn't work as I want
+                log.info(f'Donor {donor_id},{donor.name} has not average views number, fallback')
+                record.rate = (record.reposts_count / record.likes_count
+                               + record.likes_count / record.views_count) * 900
+            else:
+                record.rate = record.views_count/donor.average_views_number * 1000
+            record.save(update_fields=fields)

@@ -29,12 +29,11 @@ def extract_records_per_donor(vk_response: dict) -> dict:
     """
     group_records_map = dict()
 
-    group_ids = [group_id.get('id') * -1 for group_id in vk_response.get('groups', [])]
+    group_ids = [group_id.get('id') for group_id in vk_response.get('groups', [])]
 
     for group_id in group_ids:
         current_group = {group_id: [record for record in vk_response.get('items')
-                                    if record.get('owner_id') == group_id]}
+                                    if record.get('owner_id') == -group_id]}
         group_records_map.update(current_group)
-
 
     return group_records_map

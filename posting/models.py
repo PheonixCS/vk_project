@@ -31,6 +31,7 @@ class User(models.Model):
 
 class ServiceToken(models.Model):
     app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', primary_key=True)
+    last_used = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.app_service_token

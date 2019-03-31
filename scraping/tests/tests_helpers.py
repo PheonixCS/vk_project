@@ -13,7 +13,7 @@ class ExtractionTest(TestCase):
         result = extract_records_per_donor(response)
 
         expected = {
-            -1: [{'owner_id': -1}, {'owner_id': -1}, {'owner_id': -1}]
+            1: [{'owner_id': -1}, {'owner_id': -1}, {'owner_id': -1}]
         }
 
         self.assertDictEqual(result, expected)
@@ -28,8 +28,8 @@ class ExtractionTest(TestCase):
         result = extract_records_per_donor(response)
 
         expected = {
-            -1: [{'owner_id': -1}, {'owner_id': -1}, {'owner_id': -1}],
-            -2: [{'owner_id': -2}, {'owner_id': -2}, {'owner_id': -2}]
+            1: [{'owner_id': -1}, {'owner_id': -1}, {'owner_id': -1}],
+            2: [{'owner_id': -2}, {'owner_id': -2}, {'owner_id': -2}]
         }
 
         self.assertDictEqual(result, expected)

@@ -5,6 +5,7 @@ from constance import config
 from django.utils import timezone
 from vk_requests.exceptions import VkAPIError
 from .vars import *
+from vk_requests.api import API
 
 log = logging.getLogger('services.vk.wall')
 
@@ -74,3 +75,19 @@ def get_ad_in_last_hour(api, group_id):
             return ad
     except:
         log.error('got unexpected error in get_ad_in_last_hour', exc_info=True)
+
+
+def get_records_info_from_groups(api: API, posts: list) -> dict:
+    log.debug('get_records_info_from_groups called')
+    try:
+        all_non_rated = api.wall.getById(
+            posts=posts,
+            extended=1,
+            copy_history_depth=0,
+            api_version=config.VK_API_VERSION
+        )
+    except VkAPIError:
+        log.error(f'error in get_records_info_from_groups', exc_info=True)
+        return {}
+
+    return all_non_rated
