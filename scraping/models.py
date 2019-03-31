@@ -9,6 +9,7 @@ class Donor(models.Model):
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
     is_banned = models.BooleanField(default=False, verbose_name='Донор забанен')
+    average_views_number = models.IntegerField(null=True, verbose_name='Среднее количество просмотров поста')
 
     # Standard
     def save(self, *args, **kwargs):
@@ -51,6 +52,20 @@ class Filter(models.Model):
 
 
 class Record(models.Model):
+    NEW = 1
+    READY = 2
+    POSTING = 3
+    POSTED = 4
+    FAILED = 5
+
+    STATUS_CHOICES = (
+        (NEW, 'new'),
+        (READY, 'ready'),
+        (POSTING, 'posting'),
+        (POSTED, 'posted'),
+        (FAILED, 'failed'),
+    )
+
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records', verbose_name='Источник')
     group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='records', null=True,
                               verbose_name='Сообщество')
@@ -72,6 +87,7 @@ class Record(models.Model):
     males_count = models.IntegerField(default=0, verbose_name='Лайков от мужчин')
     males_females_ratio = models.FloatField(default=1.0, verbose_name='Соотношение мужчин к женщинам в лайках')
     unknown_count = models.IntegerField(default=0, verbose_name='Лайков от неопределенного пола')
+    status = models.IntegerField(choices=STATUS_CHOICES, default=NEW, verbose_name='Статус записи')
 
     def save(self, *args, **kwargs):
         if self.record_id:

@@ -75,6 +75,10 @@ CELERY_BEAT_SCHEDULE = {
     'scrap_new_movies': {
         'task': 'scraping.tasks.scrap_new_movies',
         'schedule': crontab(minute=30, hour=0, day_of_week=0)  # at 0:30 am UTC every sunday (3:30 am by MSK)
+    },
+    'set_donors_average_view': {
+        'task': 'scraping.tasks.set_donors_average_view',
+        'schedule': crontab(minute=30, hour=1)  # at 1:30 am UTC every day
     }
 }
 
