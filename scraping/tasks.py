@@ -11,7 +11,7 @@ from posting.core.poster import get_movies_rating_intervals
 from posting.models import ServiceToken
 from scraping.core.helpers import extract_records_per_donor
 from scraping.core.scraper import main, save_movie_to_db, update_structured_records
-from scraping.core.vk_helper import get_records_info
+from scraping.core.vk_helper import get_records_info, extract_records_sex
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
 from services.themoviedb.wrapper import discover_movies
 from services.vk.core import create_vk_api_using_service_token
@@ -170,6 +170,7 @@ def rate_new_posts() -> None:
         while i < new_records.count():
             records_info = get_records_info(api, new_records[i: i + 100])
             structured_records = extract_records_per_donor(records_info)
+            extract_records_sex(api, structured_records)
             update_structured_records(structured_records)
             i += 100
 
