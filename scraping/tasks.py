@@ -166,8 +166,11 @@ def rate_new_posts() -> None:
     new_records = Record.objects.filter(status=Record.NEW, post_in_donor_date__lte=threshold)
 
     if new_records:
-        records_info = get_records_info(api, new_records)
-        structured_records = extract_records_per_donor(records_info)
-        update_structured_records(structured_records)
+        i = 0
+        while i < new_records.count():
+            records_info = get_records_info(api, new_records[i: i+100])
+            structured_records = extract_records_per_donor(records_info)
+            update_structured_records(structured_records)
+            i += 100
 
     log.debug('rating finished')
