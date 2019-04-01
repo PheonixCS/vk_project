@@ -79,6 +79,10 @@ CELERY_BEAT_SCHEDULE = {
     'set_donors_average_view': {
         'task': 'scraping.tasks.set_donors_average_view',
         'schedule': crontab(minute=30, hour=1)  # at 1:30 am UTC every day
+    },
+    'rate_new_posts': {
+        'task': 'scraping.tasks.rate_new_posts',
+        'schedule': crontab(minute='15, 45')
     }
 }
 

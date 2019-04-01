@@ -162,6 +162,7 @@ def rate_new_posts() -> None:
         return
 
     new_records = Record.objects.filter(status=Record.NEW, post_in_donor_date__lte=threshold)
+    log.info(f'got {new_records.count()} new records')
 
     if new_records:
         i = 0

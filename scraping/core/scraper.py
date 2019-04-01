@@ -17,7 +17,6 @@ from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
     Movie, Genre, Trailer, Frame
 from services.vk.core import create_vk_api_using_service_token
-from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
 from services.vk.vars import GROUP_IS_BANNED
 from services.vk.wall import get_wall
 
