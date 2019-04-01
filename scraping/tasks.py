@@ -154,9 +154,9 @@ def rate_new_posts() -> None:
 
     token.last_used = timezone.now()
     token.save(update_fields=['last_used'])
-    log.debug(f'Using {token} token for rate_new_posts')
+    log.debug(f'Using {token.app_service_token} token for rate_new_posts')
 
-    api = create_vk_api_using_service_token(token)
+    api = create_vk_api_using_service_token(token.app_service_token)
     if not api:
         log.error('cannot rate new posts')
         return
