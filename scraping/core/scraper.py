@@ -14,11 +14,11 @@ from scraping.core.filters import (
 )
 from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
 from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
-from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
-from services.vk.wall import get_wall, get_wall_by_post_id
-from services.vk.core import create_vk_api_using_service_token
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
     Movie, Genre, Trailer, Frame
+from services.vk.core import create_vk_api_using_service_token
+from services.vk.vars import GROUP_IS_BANNED
+from services.vk.wall import get_wall
 
 log = logging.getLogger('scraping.scraper')
 
@@ -29,16 +29,13 @@ def save_record_to_db(donor, record):
         donor=donor,
         record_id=record['id'],
         defaults={
-            'likes_count': record['likes']['count'],
-            'reposts_count': record['reposts']['count'],
-            'views_count': record.get('views', dict()).get('count', 0),
             'text': record['text'],
             'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
                 '%Y-%m-%d %H:%M:%S')
         }
     )
     if created:
-        log.info('record {} was in db, modifying'.format(record['id']))
+        log.info('record {} created'.format(record['id']))
         if 'attachments' in record:
             if any('video' in d for d in record['attachments']):
                 videos = [item for item in record['attachments'] if item['type'] == 'video']
@@ -138,67 +135,13 @@ def save_horoscope_record_to_db(group, record, zodiac_sign):
     return created
 
 
-def rate_records(donor_id, records):
-    """
-
-    :param donor_id:
-    :param records:
-    :type donor_id: int
-    :type records: list
-    :return: None
-    """
-    log.info('start rating {} records'.format(len(records)))
-
-    default_timedelta = 3600
-    factor = 0.5
-
-    for record in records:
-        # TODO make one query with all records instead of one call each record
-        log.debug('rating {}'.format(record['id']))
-        try:
-            record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
-        except:
-            log.error('handling record error', exc_info=True)
-
-        delta_likes = record['likes']['count'] - record_obj.likes_count
-        delta_reposts = record['reposts']['count'] - record_obj.reposts_count
-        delta_views = record.get('views', dict()).get('count', 0) - record_obj.views_count
-
-        if delta_likes == 0 or delta_views == 0:
-            log.info('record {} in group {} NOT rated with deltas likes: {}, reposts: {}, views:{}'.format(
-                record['id'],
-                donor_id,
-                delta_likes,
-                delta_reposts,
-                delta_views
-            ))
-            continue
-
-        if delta_likes == 0 or delta_reposts == 0 or delta_views == 0:
-            resulting_rate = 1  # consider that this is right minimum
-        else:
-            resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
-        record_obj.rate = int(resulting_rate)
-
-        log.info('record {} in group {} rated {} with deltas likes: {}, reposts: {}, views:{}'.format(
-            record['id'],
-            donor_id,
-            resulting_rate,
-            delta_likes,
-            delta_reposts,
-            delta_views
-        ))
-
-        record_obj.save()
-
-
 def main():
     log.info('start main scrapper')
 
     tokens = [token.app_service_token for token in ServiceToken.objects.all()]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
-    donors = Donor.objects.filter(is_involved=True)
+    donors = Donor.objects.filter(is_involved=True, is_banned=False)
     log.info('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
@@ -216,8 +159,10 @@ def main():
         for donor in account['donors']:
             # Scraping part
 
-            wall = get_wall(api, donor.id)
+            wall, error_reason = get_wall(api, donor.id)
             if not wall:
+                if error_reason == GROUP_IS_BANNED:
+                    donor.ban()
                 continue
 
             # Fetch 20 records from donor wall.
@@ -285,61 +230,41 @@ def main():
                 save_record_to_db(donor, record)
             log.info('saved {} records in group {}'.format(len(new_records), donor.id))
 
-            # Rating part
-            # Get all non rated records from this api call
-            non_rated_records = [record for record in all_records
-                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True, donor_id=donor.id)]
 
-            if non_rated_records:
-                try:
-                    rate_records(donor.id, non_rated_records)
-                    extract_records_sex(api, donor.id, non_rated_records)
-                except:
-                    log.error('error while rating', exc_info=True)
+def update_structured_records(records: dict) -> None:
+    log.debug('update_structured_records called')
+    fields = ['rate', 'views_count', 'likes_count', 'reposts_count', 'females_count',
+              'males_count', 'unknown_count', 'males_females_ratio', 'status']
 
-            all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
+    for donor_id in records.keys():
+        fresh_records = records[donor_id]
+        donor_records_ids = [record['id'] for record in fresh_records]
 
-            if all_non_rated:
-                if len(all_non_rated) > 100:
-                    log.warning('too many non rated records!')
-                    # TODO sort it by date, delete oldest
-                    all_non_rated = all_non_rated[:100]
+        try:
+            donor = Donor.objects.get(id=str(donor_id))
+        except Donor.DoesNotExist:
+            log.info(f'not existing donor {donor_id} with {len(fresh_records)} records', exc_info=True)
+            continue
 
-                if donor.id.isdigit():
-                    digit_id = donor.id
-                else:
-                    # TODO fix this
-                    # digit_id = fetch_group_id(api, donor.id)
-                    digit_id = donor.id
+        records_in_db = Record.objects.filter(record_id__in=donor_records_ids, donor=donor)
 
-                all_non_rated = [record.record_id for record in all_non_rated]
+        for record in records_in_db:
+            fresh_record = [item for item in fresh_records if item['id'] == record.record_id].pop()
 
-                all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
+            record.views_count = fresh_record.get('views', {}).get('count', 0)
+            record.likes_count = fresh_record.get('likes', {}).get('count', 0)
+            record.reposts_count = fresh_record.get('reposts', {}).get('count', 0)
+            record.unknown_count = fresh_record.get('unknown_count', 0)
+            record.males_count = fresh_record.get('males_count', 1)
+            record.females_count = fresh_record.get('females_count', 1)
+            record.males_females_ratio = fresh_record.get('males_females_ratio', 1)
 
-                if not all_non_rated:
-                    log.warning('got 0 unrated records from api')
-                    continue
+            if donor.average_views_number is None:  # I don't know why without "is None" it doesn't work as I want
+                log.info(f'Donor {donor_id},{donor.name} has not average views number, fallback')
+                record.rate = (record.reposts_count / record.likes_count
+                               + record.likes_count / record.views_count) * 900
+            else:
+                record.rate = record.views_count / donor.average_views_number * 1000
 
-                rate_records(donor.id, all_non_rated)
-
-
-def extract_records_sex(api, donor_id, records):
-    log.debug('extract_records_sex called')
-    for record in records:
-        record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
-        user_ids = fetch_liked_user_ids(api, donor_id, record['id'])
-        sex_list = get_users_sex_by_ids(api, user_ids)
-
-        females_count = sex_list.count(1)
-        males_count = sex_list.count(2)
-
-        males_females_ratio = males_count/(females_count or 1)
-
-        record_obj.females_count = females_count
-        record_obj.males_count = males_count
-        record_obj.unknown_count = sex_list.count(0)
-        record_obj.males_females_ratio = males_females_ratio
-
-        record_obj.save(update_fields=['females_count', 'males_count', 'unknown_count', 'males_females_ratio'])
-
-    log.debug('extract_records_sex finished')
+            record.status = Record.READY
+            record.save(update_fields=fields)

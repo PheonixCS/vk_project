@@ -75,6 +75,14 @@ CELERY_BEAT_SCHEDULE = {
     'scrap_new_movies': {
         'task': 'scraping.tasks.scrap_new_movies',
         'schedule': crontab(minute=30, hour=0, day_of_week=0)  # at 0:30 am UTC every sunday (3:30 am by MSK)
+    },
+    'set_donors_average_view': {
+        'task': 'scraping.tasks.set_donors_average_view',
+        'schedule': crontab(minute=30, hour=1)  # at 1:30 am UTC every day
+    },
+    'rate_new_posts': {
+        'task': 'scraping.tasks.rate_new_posts',
+        'schedule': crontab(minute='15, 45')
     }
 }
 
@@ -86,7 +94,7 @@ CELERY_BEAT_SCHEDULE = {
 SECRET_KEY = '3(p-@#k$mrd0_*lw=u%kh7%oh!vp9iv@anxxk)-bcbbvup4^^0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81']
 

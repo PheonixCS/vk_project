@@ -27,7 +27,8 @@ from posting.core.poster import (
     find_next_element_by_last_used_id,
     get_music_compilation_genre,
     get_music_compilation_artist,
-    find_suitable_record
+    find_suitable_record,
+    filter_banned_records
 )
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
@@ -95,9 +96,9 @@ def examine_groups():
         log.debug(f'got {len(last_hour_posts)} posts in last hour and 5 minutes for group {group.domain_or_id}')
 
         movies_condition = (
-            group.is_movies
-            and (group.posting_time.minute == now_minute or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
-            and not last_hour_ads_count
+                group.is_movies
+                and (group.posting_time.minute == now_minute or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
+                and not last_hour_ads_count
         )
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
@@ -155,10 +156,10 @@ def examine_groups():
                 log.warning('got no movie')
 
         horoscope_condition = (
-            group.is_horoscopes
-            and group.horoscopes.filter(post_in_group_date__isnull=True)
-            and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            and not last_hour_ads_count
+                group.is_horoscopes
+                and group.horoscopes.filter(post_in_group_date__isnull=True)
+                and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+                and not last_hour_ads_count
         )
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horosopes condition')
@@ -176,9 +177,9 @@ def examine_groups():
                 log.warning('got no horoscopes records')
 
         common_condition = (
-            (group.posting_time.minute == now_minute or not last_hour_posts_exist)
-            and not last_hour_ads_count
-            and not group.is_movies
+                (group.posting_time.minute == now_minute or not last_hour_posts_exist)
+                and not last_hour_ads_count
+                and not group.is_movies
         )
         if common_condition:
             log.debug(f'{group.domain_or_id} in common condition')
@@ -191,16 +192,17 @@ def examine_groups():
                 if last_record:
                     donors = donors.exclude(pk=last_record.donor_id)
 
-            records = [record for donor in donors for record in
-                       donor.records.filter(rate__isnull=False,
-                                            is_involved_now=False,
-                                            post_in_group_date__isnull=True,
-                                            failed_date__isnull=True,
-                                            post_in_donor_date__gt=allowed_time_threshold)]
+            records = Record.objects.filter(
+                rate__isnull=False,
+                is_involved_now=False,
+                post_in_group_date__isnull=True,
+                failed_date__isnull=True,
+                post_in_donor_date__gt=allowed_time_threshold,
+                donor__in=donors
+            )
 
-            if group.is_delete_audio_enabled:
-                records = [record for record in records if
-                           record.get_attachments_count() - record.audios.count() > 1]
+            if group.banned_origin_attachment_types:
+                records = filter_banned_records(records, group.banned_origin_attachment_types)
 
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
@@ -214,7 +216,7 @@ def examine_groups():
                 if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
                     group_male_female_ratio = 1
                 else:
-                    group_male_female_ratio = group.male_weekly_average_count/group.female_weekly_average_count
+                    group_male_female_ratio = group.male_weekly_average_count / group.female_weekly_average_count
 
                 if group.group_id in ast.literal_eval(config.GROUPS_ID_TMP):
                     the_best_record = find_suitable_record(
@@ -267,10 +269,6 @@ def post_music(login, password, app_id, group_id, record_id):
         audios = list(record.audios.all())
 
         attachments = []
-
-        # audios
-        if group.is_delete_audio_enabled:
-            audios = []
 
         if group.is_audios_shuffle_enabled and len(audios) > 1:
             shuffle(audios)
@@ -395,9 +393,9 @@ def post_movie(group_id, movie_id):
 
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
-                          f'{country}{", " if country else ""}'\
-                          f'{", ".join(movie.genres.all().values_list("name", flat=True)[:2])}, ' \
-                          f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
+        f'{country}{", " if country else ""}' \
+        f'{", ".join(movie.genres.all().values_list("name", flat=True)[:2])}, ' \
+        f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
 
     video_description = f'{trailer_information}\n\n{movie.overview}'
 
@@ -462,9 +460,9 @@ def post_movie(group_id, movie_id):
             trailer.save(update_fields=['status', 'vk_url'])
 
         record_text = f'{trailer_name}\n\n' \
-                      f'{trailer_information}\n\n' \
-                      f'{trailer_link if uploaded_trailer else ""}\n\n' \
-                      f'{movie.overview}'
+            f'{trailer_information}\n\n' \
+            f'{trailer_link if uploaded_trailer else ""}\n\n' \
+            f'{movie.overview}'
 
         post_response = api.wall.post(owner_id=f'-{group_id}',
                                       from_group=1,
@@ -595,9 +593,6 @@ def post_record(login, password, app_id, group_id, record_id):
 
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
 
-        if group.is_delete_audio_enabled:
-            audios = []
-
         if group.is_audios_shuffle_enabled and len(audios) > 1:
             shuffle(audios)
             log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
@@ -622,9 +617,9 @@ def post_record(login, password, app_id, group_id, record_id):
         image_files = [download_file(image.url) for image in images[::-1]]
 
         if (
-            group.is_merge_images_enabled
-            and len(images) == 6
-            and is_all_images_not_horizontal(image_files)
+                group.is_merge_images_enabled
+                and len(images) == 6
+                and is_all_images_not_horizontal(image_files)
         ):
             old_image_files = image_files
             image_files = [merge_six_images_into_one(image_files)]
@@ -640,9 +635,9 @@ def post_record(login, password, app_id, group_id, record_id):
 
             percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
             if (
-                not group.is_merge_images_enabled
-                and group.is_changing_image_to_square_enabled
-                and not is_text_on_image(image_local_filename)
+                    not group.is_merge_images_enabled
+                    and group.is_changing_image_to_square_enabled
+                    and not is_text_on_image(image_local_filename)
             ):
                 actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 
@@ -742,14 +737,15 @@ def pin_best_post():
         log.debug('search for posts from {} to now'.format(time_threshold))
 
         records_count = config.WALL_RECORD_COUNT_TO_PIN
-        wall = [record for record in get_wall(search_api, group.domain_or_id, count=records_count)['items']
-                if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
+        wall, error = get_wall(search_api, group.domain_or_id, count=records_count)
+        records = [record for record in wall['items']
+                   if datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
-        if wall:
-            log.debug('got {} wall records in last 24 hours'.format(len(wall)))
+        if records:
+            log.debug('got {} wall records in last 24 hours'.format(len(records)))
 
             try:
-                best = max(wall, key=lambda item: item['likes']['count'])
+                best = max(records, key=lambda item: item['likes']['count'])
             except KeyError:
                 log.error('failed to fetch best record', exc_info=True)
                 continue
@@ -866,7 +862,7 @@ def update_statistics():
                     Horoscope.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count() + \
                     Movie.objects.filter(group_id=group.domain_or_id).filter(starts & ends).count()
 
-                group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id).\
+                group.number_of_ad_posts_yesterday = AdRecord.objects.filter(group_id=group.domain_or_id). \
                     filter(starts & ends).count()
 
                 group.statistics_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -921,12 +917,12 @@ def sex_statistics_weekly():
                         male_count_list.append(sex.get('visitors'))
 
             if male_count_list:
-                male_average_count = sum(male_count_list)//len(male_count_list)
+                male_average_count = sum(male_count_list) // len(male_count_list)
             else:
                 male_average_count = 0
 
             if female_count_list:
-                female_average_count = sum(female_count_list)//len(female_count_list)
+                female_average_count = sum(female_count_list) // len(female_count_list)
             else:
                 female_average_count = 0
 
@@ -934,7 +930,8 @@ def sex_statistics_weekly():
             group.female_weekly_average_count = female_average_count
             group.sex_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
 
-            group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
+            group.save(
+                update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
     except:
         log.debug('', exc_info=True)
 

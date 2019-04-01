@@ -1,9 +1,6 @@
 #
 
-import os
-
 from PIL import Image
-from django.conf import settings
 from django.test import TestCase
 
 import posting.core.images as images
@@ -54,10 +51,10 @@ class ImagesTests(TestCase):
 
         self.assertEqual(position, (40, 85))
 
-    def test_abstraction(self):
-        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
-        result = images.paste_abstraction_on_template(template_image, 'pic.jpg')
-        self.assertIsNotNone(result)
+    # def test_abstraction(self):
+    #     template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
+    #     result = images.paste_abstraction_on_template(template_image, 'pic.jpg')
+    #     self.assertIsNotNone(result)
 
     def test_calculate_box(self):
         size = (800, 600)
