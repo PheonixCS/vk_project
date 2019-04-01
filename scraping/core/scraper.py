@@ -240,7 +240,12 @@ def update_structured_records(records: dict) -> None:
         fresh_records = records[donor_id]
         donor_records_ids = [record['id'] for record in fresh_records]
 
-        donor = Donor.objects.get(id=str(donor_id))
+        try:
+            donor = Donor.objects.get(id=str(donor_id))
+        except Donor.DoesNotExist:
+            log.info(f'not existing donor {donor_id} with {len(fresh_records)} records', exc_info=True)
+            continue
+
         records_in_db = Record.objects.filter(record_id__in=donor_records_ids, donor=donor)
 
         for record in records_in_db:
