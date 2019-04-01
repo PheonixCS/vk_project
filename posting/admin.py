@@ -86,7 +86,7 @@ class GroupAdmin(admin.ModelAdmin):
                        'posting_time', 'user', 'callback_api_token', 'banned_origin_attachment_types')
         }),
         ('Параметры уникализации', {
-            'fields': ('is_text_delete_enabled', 'is_delete_audio_enabled', 'is_text_filling_enabled',
+            'fields': ('is_text_delete_enabled', 'is_text_filling_enabled',
                        'is_image_mirror_enabled', 'is_changing_image_to_square_enabled', 'RGB_image_tone',
                        'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled', 'is_merge_images_enabled',
                        'is_replace_russian_with_english', 'is_additional_text_enabled',
