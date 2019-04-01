@@ -144,7 +144,7 @@ def set_donors_average_view():
 @shared_task
 def rate_new_posts() -> None:
     log.debug('rating started')
-    threshold = datetime.now(tz=timezone.utc) - timedelta(hours=config.NEW_RECORD_MATURITY_MINUTES)
+    threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=config.NEW_RECORD_MATURITY_MINUTES)
 
     new_token = ServiceToken.objects.filter(last_used__isnull=True)
     if new_token:
