@@ -153,7 +153,7 @@ def rate_new_posts() -> None:
         token = ServiceToken.objects.order_by('last_used').first()
 
     token.last_used = timezone.now()
-    token.save(update_fields='last_used')
+    token.save(update_fields=['last_used'])
     log.debug(f'Using {token} token for rate_new_posts')
 
     api = create_vk_api_using_service_token(token)
