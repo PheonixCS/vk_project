@@ -19,7 +19,7 @@ from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, 
 from services.vk.core import create_vk_api_using_service_token
 from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
 from services.vk.vars import GROUP_IS_BANNED
-from services.vk.wall import get_wall, get_wall_by_post_id
+from services.vk.wall import get_wall
 
 log = logging.getLogger('scraping.scraper')
 
@@ -136,60 +136,6 @@ def save_horoscope_record_to_db(group, record, zodiac_sign):
     return created
 
 
-def rate_records(donor_id, records):
-    """
-
-    :param donor_id:
-    :param records:
-    :type donor_id: int
-    :type records: list
-    :return: None
-    """
-    log.info('start rating {} records'.format(len(records)))
-
-    default_timedelta = 3600
-    factor = 0.5
-
-    for record in records:
-        # TODO make one query with all records instead of one call each record
-        log.debug('rating {}'.format(record['id']))
-        try:
-            record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
-        except:
-            log.error('handling record error', exc_info=True)
-
-        delta_likes = record['likes']['count'] - record_obj.likes_count
-        delta_reposts = record['reposts']['count'] - record_obj.reposts_count
-        delta_views = record.get('views', dict()).get('count', 0) - record_obj.views_count
-
-        if delta_likes == 0 or delta_views == 0:
-            log.info('record {} in group {} NOT rated with deltas likes: {}, reposts: {}, views:{}'.format(
-                record['id'],
-                donor_id,
-                delta_likes,
-                delta_reposts,
-                delta_views
-            ))
-            continue
-
-        if delta_likes == 0 or delta_reposts == 0 or delta_views == 0:
-            resulting_rate = 1  # consider that this is right minimum
-        else:
-            resulting_rate = (delta_reposts / delta_likes + delta_likes / delta_views) * default_timedelta * factor
-        record_obj.rate = int(resulting_rate)
-
-        log.info('record {} in group {} rated {} with deltas likes: {}, reposts: {}, views:{}'.format(
-            record['id'],
-            donor_id,
-            resulting_rate,
-            delta_likes,
-            delta_reposts,
-            delta_views
-        ))
-
-        record_obj.save()
-
-
 def main():
     log.info('start main scrapper')
 
@@ -286,28 +232,6 @@ def main():
             log.info('saved {} records in group {}'.format(len(new_records), donor.id))
 
 
-def extract_records_sex(api, donor_id, records):
-    log.debug('extract_records_sex called')
-    for record in records:
-        record_obj = Record.objects.get(record_id=record['id'], donor_id=donor_id)
-        user_ids = fetch_liked_user_ids(api, donor_id, record['id'])
-        sex_list = get_users_sex_by_ids(api, user_ids)
-
-        females_count = sex_list.count(1)
-        males_count = sex_list.count(2)
-
-        males_females_ratio = males_count / (females_count or 1)
-
-        record_obj.females_count = females_count
-        record_obj.males_count = males_count
-        record_obj.unknown_count = sex_list.count(0)
-        record_obj.males_females_ratio = males_females_ratio
-
-        record_obj.save(update_fields=['females_count', 'males_count', 'unknown_count', 'males_females_ratio'])
-
-    log.debug('extract_records_sex finished')
-
-
 def update_structured_records(records: dict) -> None:
     log.debug('update_structured_records called')
     fields = ['rate', 'views_count', 'likes_count', 'reposts_count', 'females_count',
@@ -340,4 +264,3 @@ def update_structured_records(records: dict) -> None:
 
             record.status = Record.READY
             record.save(update_fields=fields)
-
