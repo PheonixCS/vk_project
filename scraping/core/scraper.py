@@ -351,7 +351,7 @@ def extract_records_sex(api, donor_id, records):
 def update_structured_records(records: dict) -> None:
     log.debug('update_structured_records called')
     fields = ['rate', 'views_count', 'likes_count', 'reposts_count', 'females_count',
-              'males_count', 'unknown_count', 'males_females_ratio']
+              'males_count', 'unknown_count', 'males_females_ratio', 'status']
 
     for donor_id in records.keys():
         fresh_records = records[donor_id]
@@ -377,5 +377,7 @@ def update_structured_records(records: dict) -> None:
                                + record.likes_count / record.views_count) * 900
             else:
                 record.rate = record.views_count / donor.average_views_number * 1000
+
+            record.status = Record.READY
             record.save(update_fields=fields)
 
