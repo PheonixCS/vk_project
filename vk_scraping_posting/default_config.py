@@ -1,13 +1,12 @@
 # Our settings that can be changed on air w/o process reload
 from collections import OrderedDict
 
-
 CONSTANCE_CONFIG = {
     'VK_API_VERSION': (5.74, 'VK API version'),
     'MIN_STRING_MATCH_RATIO': (0.85, 'Non documented'),
     'HOROSCOPES_DONOR_ID': ('83815413', 'Horoscopes specific donor id', str),
     'MAX_TEXT_TO_FILL_LENGTH': (70, 'Maximum text length to adding on image'),
-    'MIN_QUANTITY_OF_PIXELS':  (700, 'Minimum pixels of any size of image for scraping'),
+    'MIN_QUANTITY_OF_PIXELS': (700, 'Minimum pixels of any size of image for scraping'),
     'PIXELS_TO_CUT_FROM_BOTTOM': (10, 'Pixels to cut from bottom'),
     'PERCENTAGE_TO_CROP_FROM_EDGES': (0.05, 'Non documented'),
     'FONT_NAME': ('SFUIDisplay-Regular.otf', 'Font name for filling', str),
@@ -46,16 +45,17 @@ CONSTANCE_CONFIG = {
     'GROUPS_ID_TMP': ('28446706,23639186,42440233,44062380',
                       'List of groups for new best records logic',
                       str),
-    'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int)
+    'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int),
+    'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int)
 }
-
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
     ('General', (
         'VK_API_VERSION', 'WALL_RECORD_COUNT_TO_PIN', 'OLD_RECORDS_HOURS',
         'OLD_AD_RECORDS_HOURS', 'OLD_HOROSCOPES_HOURS', 'OLD_MODERATION_TRANSACTIONS_HOURS',
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
-        'MIN_STRING_MATCH_RATIO', 'GROUPS_ID_TMP', 'COMMON_RECORDS_COUNT_FOR_DONOR'
+        'MIN_STRING_MATCH_RATIO', 'GROUPS_ID_TMP', 'COMMON_RECORDS_COUNT_FOR_DONOR',
+        'NEW_RECORD_MATURITY_MINUTES'
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',

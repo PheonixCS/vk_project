@@ -14,12 +14,12 @@ from scraping.core.filters import (
 )
 from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
 from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
-from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
-from services.vk.wall import get_wall, get_wall_by_post_id
-from services.vk.core import create_vk_api_using_service_token
 from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
     Movie, Genre, Trailer, Frame
+from services.vk.core import create_vk_api_using_service_token
+from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
 from services.vk.vars import GROUP_IS_BANNED
+from services.vk.wall import get_wall, get_wall_by_post_id
 
 log = logging.getLogger('scraping.scraper')
 
@@ -336,7 +336,7 @@ def extract_records_sex(api, donor_id, records):
         females_count = sex_list.count(1)
         males_count = sex_list.count(2)
 
-        males_females_ratio = males_count/(females_count or 1)
+        males_females_ratio = males_count / (females_count or 1)
 
         record_obj.females_count = females_count
         record_obj.males_count = males_count
@@ -371,5 +371,5 @@ def update_structured_records(records: dict) -> None:
                 record.rate = (record.reposts_count / record.likes_count
                                + record.likes_count / record.views_count) * 900
             else:
-                record.rate = record.views_count/donor.average_views_number * 1000
+                record.rate = record.views_count / donor.average_views_number * 1000
             record.save(update_fields=fields)

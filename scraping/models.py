@@ -1,6 +1,7 @@
+from random import randint
+
 from django.db import models
 from django.db.models import Count
-from random import randint
 
 
 class Donor(models.Model):

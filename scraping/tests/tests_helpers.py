@@ -1,5 +1,6 @@
 #
 from django.test import TestCase
+
 from scraping.core.helpers import extract_records_per_donor
 
 

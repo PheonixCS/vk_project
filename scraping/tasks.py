@@ -8,15 +8,14 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from posting.core.poster import get_movies_rating_intervals
+from posting.models import ServiceToken
+from scraping.core.helpers import extract_records_per_donor
 from scraping.core.scraper import main, save_movie_to_db, update_structured_records
 from scraping.core.vk_helper import get_records_info
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
-from posting.models import ServiceToken
 from services.themoviedb.wrapper import discover_movies
-from services.youtube.core import download_trailer
-from scraping.core.helpers import extract_records_per_donor
 from services.vk.core import create_vk_api_using_service_token
-
+from services.youtube.core import download_trailer
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -136,7 +135,7 @@ def set_donors_average_view():
         else:
             all_records = Record.objects.filter(donor=donor).order_by('-post_in_donor_date')[:required_count]
             views_count = all_records.aggregate(Sum('views_count')).get('views_count__sum')
-            donor.average_views_number = views_count/required_count
+            donor.average_views_number = views_count / required_count
             donor.save(update_fields=['average_views_number'])
 
     log.debug('set_donors_average_view finished')
@@ -145,8 +144,7 @@ def set_donors_average_view():
 @shared_task
 def rate_new_posts() -> None:
     log.debug('rating started')
-    # TODO timedelta to config
-    threshold = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+    threshold = datetime.now(tz=timezone.utc) - timedelta(hours=config.NEW_RECORD_MATURITY_MINUTES)
 
     new_token = ServiceToken.objects.filter(last_used__isnull=True)
     if new_token:
@@ -168,7 +166,7 @@ def rate_new_posts() -> None:
     if new_records:
         i = 0
         while i < new_records.count():
-            records_info = get_records_info(api, new_records[i: i+100])
+            records_info = get_records_info(api, new_records[i: i + 100])
             structured_records = extract_records_per_donor(records_info)
             update_structured_records(structured_records)
             i += 100

@@ -1,13 +1,13 @@
 # test for periodic deleting tasks
-from django.test import TestCase
+from datetime import datetime, timedelta
+
 from constance.test import override_config
+from django.test import TestCase
+from django.utils import timezone
 
 from posting.models import Group
 from scraping.models import Record, Gif, Image, Video, Audio, Donor
-
 from scraping.tasks import delete_oldest
-from datetime import datetime, timedelta
-from django.utils import timezone
 
 
 @override_config(COMMON_RECORDS_COUNT_FOR_DONOR=3)
@@ -61,4 +61,3 @@ class DeletingTests(TestCase):
 
         self.assertEqual(Record.objects.all().count(), 3)
         self.assertEqual(Record.objects.filter(post_in_donor_date__lt=now).exists(), 0)
-

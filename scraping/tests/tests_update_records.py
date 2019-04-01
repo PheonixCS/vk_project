@@ -1,9 +1,10 @@
 # Tests for records update functions
 
-from scraping.core.scraper import update_structured_records
 from django.test import TestCase
-from scraping.models import Gif, Image, Video, Record, Donor, Audio
+
 from posting.models import Group
+from scraping.core.scraper import update_structured_records
+from scraping.models import Gif, Image, Video, Record, Donor, Audio
 
 
 class UpdateFreshRecordsTest(TestCase):

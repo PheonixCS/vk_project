@@ -1,11 +1,10 @@
 # test donors average count calculation
 
-from django.test import TestCase
 from constance.test import override_config
+from django.test import TestCase
 
 from posting.models import Group
 from scraping.models import Record, Gif, Image, Video, Audio, Donor
-
 from scraping.tasks import set_donors_average_view
 
 

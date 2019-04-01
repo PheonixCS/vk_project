@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 
 from constance import config
 from django.utils import timezone
-from vk_requests.exceptions import VkAPIError
-from .vars import *
 from vk_requests.api import API
+from vk_requests.exceptions import VkAPIError
+
+from .vars import *
 
 log = logging.getLogger('services.vk.wall')
 

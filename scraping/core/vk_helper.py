@@ -1,8 +1,9 @@
 # methods to work with vk api and data
 
 from django.db.models.query import QuerySet
-from services.vk.wall import get_records_info_from_groups
 from vk_requests.api import API
+
+from services.vk.wall import get_records_info_from_groups
 
 
 def get_records_info(api: API, records: QuerySet) -> dict:
