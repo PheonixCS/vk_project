@@ -30,9 +30,6 @@ def save_record_to_db(donor, record):
         donor=donor,
         record_id=record['id'],
         defaults={
-            'likes_count': record['likes']['count'],
-            'reposts_count': record['reposts']['count'],
-            'views_count': record.get('views', dict()).get('count', 0),
             'text': record['text'],
             'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
                 '%Y-%m-%d %H:%M:%S')
@@ -287,43 +284,6 @@ def main():
             for record in new_records:
                 save_record_to_db(donor, record)
             log.info('saved {} records in group {}'.format(len(new_records), donor.id))
-
-            # Rating part
-            # Get all non rated records from this api call
-            non_rated_records = [record for record in all_records
-                                 if Record.objects.filter(record_id=record['id'], rate__isnull=True, donor_id=donor.id)]
-
-            if non_rated_records:
-                try:
-                    rate_records(donor.id, non_rated_records)
-                    extract_records_sex(api, donor.id, non_rated_records)
-                except:
-                    log.error('error while rating', exc_info=True)
-
-            all_non_rated = Record.objects.filter(rate__isnull=True, donor_id=donor.id)
-
-            if all_non_rated:
-                if len(all_non_rated) > 100:
-                    log.warning('too many non rated records!')
-                    # TODO sort it by date, delete oldest
-                    all_non_rated = all_non_rated[:100]
-
-                if donor.id.isdigit():
-                    digit_id = donor.id
-                else:
-                    # TODO fix this
-                    # digit_id = fetch_group_id(api, donor.id)
-                    digit_id = donor.id
-
-                all_non_rated = [record.record_id for record in all_non_rated]
-
-                all_non_rated = get_wall_by_post_id(api, digit_id, all_non_rated)
-
-                if not all_non_rated:
-                    log.warning('got 0 unrated records from api')
-                    continue
-
-                rate_records(donor.id, all_non_rated)
 
 
 def extract_records_sex(api, donor_id, records):
