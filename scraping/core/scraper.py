@@ -261,8 +261,11 @@ def update_structured_records(records: dict) -> None:
 
             if donor.average_views_number is None:  # I don't know why without "is None" it doesn't work as I want
                 log.info(f'Donor {donor_id},{donor.name} has not average views number, fallback')
-                record.rate = (record.reposts_count / record.likes_count
-                               + record.likes_count / record.views_count) * 900
+                if 0 in (record.reposts_count, record.likes_count, record.views_count):
+                    record.rate = 0
+                else:
+                    record.rate = (record.reposts_count / record.likes_count
+                                   + record.likes_count / record.views_count) * 900
             else:
                 record.rate = record.views_count / donor.average_views_number * 1000
 
