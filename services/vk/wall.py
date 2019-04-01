@@ -35,7 +35,7 @@ def get_wall(api, group_id, count=20):
             )
     except VkAPIError as error_msg:
         reason = None
-        if error_msg == BANNED_GROUP_ERROR_MESSAGE:
+        if BANNED_GROUP_ERROR_MESSAGE in error_msg:
             reason = GROUP_IS_BANNED
         log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None, reason
