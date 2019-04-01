@@ -35,7 +35,7 @@ def save_record_to_db(donor, record):
         }
     )
     if created:
-        log.info('record {} was in db, modifying'.format(record['id']))
+        log.info('record {} created'.format(record['id']))
         if 'attachments' in record:
             if any('video' in d for d in record['attachments']):
                 videos = [item for item in record['attachments'] if item['type'] == 'video']
