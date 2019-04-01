@@ -73,11 +73,11 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
 
 
-def find_the_best_post(records, best_ratio, percent=20):
+def find_the_best_post(records: QuerySet, best_ratio, percent=20):
     log.debug('find_the_best_post called')
 
     eps = 0.1
-    records.sort(key=lambda x: x.rate, reverse=True)
+    records = records.order_by('-rate')
 
     end_index = int(len(records) / 100 * percent) or 1
     records = records[:end_index]
@@ -139,9 +139,9 @@ def find_next_element_by_last_used_id(objects, last_used_object_id):
     return next((obj for obj in objects if obj.id > last_used_object_id), objects[0])
 
 
-def find_suitable_record(records, best_ratio, divergence=20):
+def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
     divergence = divergence/100
-    records.sort(key=lambda x: x.rate, reverse=True)
+    records = records.order_by('rate')
     max_male_percent = from_ratio_to_percent(best_ratio) + divergence
     min_male_percent = from_ratio_to_percent(best_ratio) - divergence
 
@@ -151,7 +151,7 @@ def find_suitable_record(records, best_ratio, divergence=20):
             best_record = record
             break
     else:
-        best_record = records[0]
+        best_record = records.first()
 
     return best_record
 
