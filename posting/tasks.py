@@ -270,10 +270,6 @@ def post_music(login, password, app_id, group_id, record_id):
 
         attachments = []
 
-        # audios
-        if group.is_delete_audio_enabled:
-            audios = []
-
         if group.is_audios_shuffle_enabled and len(audios) > 1:
             shuffle(audios)
             log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
