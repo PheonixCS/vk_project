@@ -350,7 +350,8 @@ def extract_records_sex(api, donor_id, records):
 
 def update_structured_records(records: dict) -> None:
     log.debug('update_structured_records called')
-    fields = ['rate', 'views_count', 'likes_count', 'reposts_count']
+    fields = ['rate', 'views_count', 'likes_count', 'reposts_count', 'females_count',
+              'males_count', 'unknown_count', 'males_females_ratio']
 
     for donor_id in records.keys():
         fresh_records = records[donor_id]
@@ -365,6 +366,10 @@ def update_structured_records(records: dict) -> None:
             record.views_count = fresh_record.get('views', {}).get('count', 0)
             record.likes_count = fresh_record.get('likes', {}).get('count', 0)
             record.reposts_count = fresh_record.get('reposts', {}).get('count', 0)
+            record.unknown_count = fresh_record.get('unknown_count', 0)
+            record.males_count = fresh_record.get('males_count', 1)
+            record.females_count = fresh_record.get('females_count', 1)
+            record.males_females_ratio = fresh_record.get('males_females_ratio', 1)
 
             if donor.average_views_number is None:  # I don't know why without "is None" it doesn't work as I want
                 log.info(f'Donor {donor_id},{donor.name} has not average views number, fallback')
@@ -373,3 +378,4 @@ def update_structured_records(records: dict) -> None:
             else:
                 record.rate = record.views_count / donor.average_views_number * 1000
             record.save(update_fields=fields)
+
