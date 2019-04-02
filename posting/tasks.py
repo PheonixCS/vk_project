@@ -14,8 +14,14 @@ from django.utils import timezone
 
 from posting.core.horoscopes import generate_special_group_reference
 from posting.core.horoscopes_images import transfer_horoscope_to_image
-from posting.core.images import is_all_images_not_horizontal, merge_poster_and_three_images, merge_six_images_into_one, \
-    is_text_on_image, paste_abstraction_on_template, paste_text_on_music_image
+from posting.core.images import (
+    is_all_images_not_horizontal,
+    merge_poster_and_three_images,
+    merge_six_images_into_one,
+    is_text_on_image,
+    paste_abstraction_on_template,
+    paste_text_on_music_image
+)
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -44,7 +50,7 @@ from services.vk.wall import get_wall
 log = logging.getLogger('posting.scheduled')
 
 
-@shared_task(time_limit=55)
+@shared_task(time_limit=59)
 def examine_groups():
     log.debug('start group examination')
     groups_to_post_in = Group.objects.filter(user__isnull=False,
@@ -53,12 +59,12 @@ def examine_groups():
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
-    now_time_utc = datetime.now(tz=timezone.utc)
+    now_time_utc = timezone.now()
     now_minute = now_time_utc.minute
 
-    ads_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=1, minutes=5)
-    allowed_time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=8)
-    week_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
+    ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
+    allowed_time_threshold = now_time_utc - timedelta(hours=8)
+    week_ago = now_time_utc - timedelta(days=7)
     today_start = now_time_utc.replace(hour=0, minute=0, second=0)
 
     for group in groups_to_post_in:
@@ -66,17 +72,24 @@ def examine_groups():
 
         last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
         if last_hour_ads.exists():
-            last_hour_ads_count = last_hour_ads.count()
-        else:
-            last_hour_ads_count = 0
-
-        log.debug(f'got {last_hour_ads_count} ads in last hour and 5 minutes for group {group.domain_or_id}')
-
-        if (last_hour_ads_count or is_ads_posted_recently(group)) and not config.IS_DEV:
-            log.info(f'pass group {group.domain_or_id} because ad post was published recently')
+            log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
             continue
 
-        # TODO it is not part of examine, need to move it to task or something
+        if group.is_movies:
+            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=ads_time_threshold)
+        else:
+            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
+        last_hour_posts_exist = last_hour_posts.exists()
+
+        if last_hour_posts_exist:
+            log.debug(f'got posts in last hour and 5 minutes for group {group.domain_or_id}')
+            if not group.is_horoscopes:
+                continue
+        else:
+            if not config.IS_DEV and is_ads_posted_recently(group):
+                log.info(f'pass group {group.domain_or_id} because ad post was published recently')
+                continue
+
         if not group.group_id:
             api = create_vk_session_using_login_password(group.user.login,
                                                          group.user.password,
@@ -86,19 +99,9 @@ def examine_groups():
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])
 
-        if group.is_movies:
-            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=ads_time_threshold)
-        else:
-            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
-
-        last_hour_posts_exist = last_hour_posts.exists()
-
-        log.debug(f'got {len(last_hour_posts)} posts in last hour and 5 minutes for group {group.domain_or_id}')
-
         movies_condition = (
                 group.is_movies
                 and (group.posting_time.minute == now_minute or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
-                and not last_hour_ads_count
         )
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
@@ -157,28 +160,28 @@ def examine_groups():
 
         horoscope_condition = (
                 group.is_horoscopes
-                and group.horoscopes.filter(post_in_group_date__isnull=True)
                 and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-                and not last_hour_ads_count
+                and group.horoscopes.filter(post_in_group_date__isnull=True)
         )
         if horoscope_condition:
-            log.debug(f'{group.domain_or_id} in horosopes condition')
+            log.debug(f'{group.domain_or_id} in horoscopes condition')
 
-            horoscope_record = group.horoscopes.filter(post_in_group_date__isnull=True,
-                                                       post_in_donor_date__gt=today_start).last()
-            if horoscope_record:
+            horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True,
+                                                        post_in_donor_date__gt=today_start)
+            if horoscope_records.exists():
+                horoscope_record = horoscope_records.last()
                 post_horoscope.delay(group.user.login,
                                      group.user.password,
                                      group.user.app_id,
                                      group.group_id,
-                                     horoscope_record.id)
+                                     horoscope_record.id
+                                     )
                 continue
             else:
                 log.warning('got no horoscopes records')
 
         common_condition = (
                 (group.posting_time.minute == now_minute or not last_hour_posts_exist)
-                and not last_hour_ads_count
                 and not group.is_movies
         )
         if common_condition:
@@ -194,7 +197,7 @@ def examine_groups():
 
             records = Record.objects.filter(
                 rate__isnull=False,
-                is_involved_now=False,
+                status=Record.READY,
                 post_in_group_date__isnull=True,
                 failed_date__isnull=True,
                 post_in_donor_date__gt=allowed_time_threshold,
@@ -233,8 +236,8 @@ def examine_groups():
             else:
                 the_best_record = max(records, key=lambda x: x.rate)
 
-            the_best_record.is_involved_now = True
-            the_best_record.save(update_fields=['is_involved_now'])
+            the_best_record.status = Record.POSTING
+            the_best_record.save(update_fields=['status'])
             log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
 
             try:
@@ -252,20 +255,20 @@ def examine_groups():
                                       the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
-                the_best_record.is_involved_now = False
-                the_best_record.save(update_fields=['is_involved_now'])
+                the_best_record.status = Record.FAILED
+                the_best_record.save(update_fields=['status'])
 
 
 @shared_task
 def post_music(login, password, app_id, group_id, record_id):
     log.debug(f'start posting music in group {group_id}')
 
-    session = create_vk_session_using_login_password(login, password, app_id)
-    api = session.get_api()
+    group = Group.objects.get(group_id=group_id)
+    record = Record.objects.get(pk=record_id)
 
     try:
-        group = Group.objects.get(group_id=group_id)
-        record = Record.objects.get(pk=record_id)
+        session = create_vk_session_using_login_password(login, password, app_id)
+        api = session.get_api()
         audios = list(record.audios.all())
 
         attachments = []
@@ -337,9 +340,9 @@ def post_music(login, password, app_id, group_id, record_id):
             if record_original_image:
                 abstraction = record_original_image
             else:
-                record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                record.is_involved_now = False
-                record.save(update_fields=['failed_date', 'is_involved_now'])
+                record.failed_date = timezone.now()
+                record.status = Record.FAILED
+                record.save(update_fields=['failed_date', 'status'])
                 return
 
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
@@ -356,12 +359,14 @@ def post_music(login, password, app_id, group_id, record_id):
                                       attachments=','.join(attachments))
 
         record.post_in_group_id = post_response.get('post_id', 0)
-        record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        record.post_in_group_date = timezone.now()
         record.group = group
-        record.is_involved_now = False
+        record.status = Record.POSTED
         record.save()
     except:
         log.error('got unexpected error in post music', exc_info=True)
+        record.status = Record.FAILED
+        record.save(update_fields=['status'])
     log.debug('post in group {} finished'.format(group_id))
 
 
@@ -558,14 +563,14 @@ def post_record(login, password, app_id, group_id, record_id):
 
     if not session:
         log.error('session not created in group {}'.format(group_id))
-        record.is_involved_now = False
-        record.save(update_fields=['is_involved_now'])
+        record.status = Record.FAILED
+        record.save(update_fields=['status'])
         return
 
     if not api:
         log.error('no api was created in group {}'.format(group_id))
-        record.is_involved_now = False
-        record.save(update_fields=['is_involved_now'])
+        record.status = Record.FAILED
+        record.save(update_fields=['status'])
         return
 
     try:
@@ -653,9 +658,9 @@ def post_record(login, password, app_id, group_id, record_id):
             for gif in gifs:
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
         elif gifs:
-            record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-            record.is_involved_now = False
-            record.save(update_fields=['failed_date', 'is_involved_now'])
+            record.failed_date = timezone.now()
+            record.status = Record.FAILED
+            record.save(update_fields=['failed_date', 'status'])
             return
 
         log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
@@ -663,9 +668,9 @@ def post_record(login, password, app_id, group_id, record_id):
             if check_video_availability(api, video.owner_id, video.video_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
-                record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                record.is_involved_now = False
-                record.save(update_fields=['failed_date', 'is_involved_now'])
+                record.failed_date = timezone.now()
+                record.status = Record.FAILED
+                record.save(update_fields=['failed_date', 'status'])
                 return
 
         additional_texts = group.additional_texts.all().order_by('id')
@@ -691,21 +696,21 @@ def post_record(login, password, app_id, group_id, record_id):
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
-        record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        record.is_involved_now = False
-        record.save(update_fields=['failed_date', 'is_involved_now'])
+        record.failed_date = timezone.now()
+        record.status = Record.FAILED
+        record.save(update_fields=['failed_date', 'status'])
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
-        record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        record.is_involved_now = False
-        record.save(update_fields=['failed_date', 'is_involved_now'])
+        record.failed_date = timezone.now()
+        record.status = Record.FAILED
+        record.save(update_fields=['failed_date', 'status'])
         return
 
     record.post_in_group_id = post_response.get('post_id', 0)
     record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     record.group = group
-    record.is_involved_now = False
+    record.status = Record.POSTED
     record.save()
     log.debug('post in group {} finished'.format(group_id))
 
