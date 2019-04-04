@@ -400,6 +400,8 @@ def post_movie(group_id, movie_id):
     video_description = f'{trailer_information}\n\n{movie.overview}'
 
     images = [frame.url for frame in movie.frames.all()]
+    shuffle(images)
+    images = images[:3]
     image_files = [download_file(image) for image in images]
 
     try:
