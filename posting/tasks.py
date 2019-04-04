@@ -47,9 +47,10 @@ log = logging.getLogger('posting.scheduled')
 @shared_task(time_limit=55)
 def examine_groups():
     log.debug('start group examination')
-    groups_to_post_in = Group.objects.filter(user__isnull=False,
-                                             donors__isnull=False,
-                                             is_posting_active=True).distinct()
+    groups_to_post_in = Group.objects.filter(
+        user__isnull=False,
+        is_posting_active=True
+    ).distinct()
 
     log.debug('got {} groups'.format(len(groups_to_post_in)))
 
@@ -185,6 +186,9 @@ def examine_groups():
             log.debug(f'{group.domain_or_id} in common condition')
 
             donors = group.donors.all()
+            if not donors:
+                log.warning(f'Group {group.domain_or_id} got no donors but in common condition!')
+                continue
 
             if len(donors) > 1:
                 # find last record id and its donor id
