@@ -261,7 +261,7 @@ genres = [
     {'id': '7', 'name': 'Металл', 'gender': 'М'},
     {'id': '21', 'name': 'Альтернатива', 'gender': 'Ж'},
     {'id': '8', 'name': 'Dubstep', 'gender': 'М'},
-    {'id': '1001', 'name': 'banned', 'gender': ''},
+    {'id': '1001', 'name': 'banned', 'gender': ''}, # Jazz & Blues
     {'id': '10', 'name': 'Drum & Bass', 'gender': 'М'},
     {'id': '11', 'name': 'Trance', 'gender': 'М'},
     {'id': '12', 'name': 'Шансон', 'gender': 'М'},
@@ -270,7 +270,7 @@ genres = [
     {'id': '15', 'name': 'Регги', 'gender': 'М'},
     {'id': '16', 'name': 'Классическая музыка', 'gender': 'Ж'},
     {'id': '17', 'name': 'Indie Pop', 'gender': 'М'},
-    {'id': '19', 'name': 'banned', 'gender': ''},
-    {'id': '22', 'name': 'banned', 'gender': ''}, #Electropop & Disco
-    {'id': '18', 'name': 'banned', 'gender': ''}
+    {'id': '19', 'name': 'banned', 'gender': ''}, # Speech
+    {'id': '22', 'name': 'banned', 'gender': ''}, # Electropop & Disco
+    {'id': '18', 'name': 'banned', 'gender': ''}, # Other
 ]
