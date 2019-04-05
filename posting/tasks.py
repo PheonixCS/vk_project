@@ -331,9 +331,7 @@ def post_music(login, password, app_id, group_id, record_id):
             group.save(update_fields=['last_used_background_abstraction_id'])
             image_to_template = abstraction.picture
         else:
-            record.failed_date = timezone.now()
-            record.status = Record.FAILED
-            record.save(update_fields=['failed_date', 'status'])
+            record.fail()
             return
 
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
@@ -354,8 +352,7 @@ def post_music(login, password, app_id, group_id, record_id):
         record.save()
     except:
         log.error('got unexpected error in post music', exc_info=True)
-        record.status = Record.FAILED
-        record.save(update_fields=['status'])
+        record.fail()
     log.debug('post in group {} finished'.format(group_id))
 
 
@@ -465,7 +462,7 @@ def post_movie(group_id, movie_id):
                                       message=record_text,
                                       attachments=','.join(attachments))
 
-        movie.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        movie.post_in_group_date = timezone.now()
         movie.group = Group.objects.get(group_id=group_id)
         movie.save(update_fields=['post_in_group_date', 'group'])
 
@@ -541,27 +538,25 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
-    # create api here coz celery through vk_api exception, idk why
-    session = create_vk_session_using_login_password(login, password, app_id)
-    api = session.get_api()
+    group = Group.objects.get(group_id=group_id)
+    record = Record.objects.get(pk=record_id)
 
     try:
-        group = Group.objects.get(group_id=group_id)
-        record = Record.objects.get(pk=record_id)
+        session = create_vk_session_using_login_password(login, password, app_id)
+        api = session.get_api()
     except:
         log.error('got unexpected exception in post_record for group {}'.format(group_id), exc_info=True)
+        record.fail()
         return
 
     if not session:
         log.error('session not created in group {}'.format(group_id))
-        record.status = Record.FAILED
-        record.save(update_fields=['status'])
+        record.fail()
         return
 
     if not api:
         log.error('no api was created in group {}'.format(group_id))
-        record.status = Record.FAILED
-        record.save(update_fields=['status'])
+        record.fail()
         return
 
     try:
@@ -649,9 +644,7 @@ def post_record(login, password, app_id, group_id, record_id):
             for gif in gifs:
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
         elif gifs:
-            record.failed_date = timezone.now()
-            record.status = Record.FAILED
-            record.save(update_fields=['failed_date', 'status'])
+            record.fail()
             return
 
         log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
@@ -659,9 +652,7 @@ def post_record(login, password, app_id, group_id, record_id):
             if check_video_availability(api, video.owner_id, video.video_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
-                record.failed_date = timezone.now()
-                record.status = Record.FAILED
-                record.save(update_fields=['failed_date', 'status'])
+                record.fail()
                 return
 
         additional_texts = group.additional_texts.all().order_by('id')
@@ -687,22 +678,21 @@ def post_record(login, password, app_id, group_id, record_id):
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
-        record.failed_date = timezone.now()
-        record.status = Record.FAILED
-        record.save(update_fields=['failed_date', 'status'])
+        record.fail()
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
-        record.failed_date = timezone.now()
-        record.status = Record.FAILED
-        record.save(update_fields=['failed_date', 'status'])
+        record.fail()
         return
 
+    fields = ['post_in_group_id', 'post_in_group_date', 'group', 'status']
+
     record.post_in_group_id = post_response.get('post_id', 0)
-    record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    record.post_in_group_date = timezone.now()
     record.group = group
     record.status = Record.POSTED
-    record.save()
+    record.save(update_fields=fields)
+
     log.debug('post in group {} finished'.format(group_id))
 
 
@@ -884,8 +874,6 @@ def update_statistics():
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
-    now_time = datetime.now(tz=timezone.utc)
-
     all_groups = Group.objects.all()
     log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
 
@@ -924,7 +912,7 @@ def sex_statistics_weekly():
 
             group.male_weekly_average_count = male_average_count
             group.female_weekly_average_count = female_average_count
-            group.sex_last_update_date = now_time.strftime('%Y-%m-%d %H:%M:%S')
+            group.sex_last_update_date = timezone.now()
 
             group.save(
                 update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
