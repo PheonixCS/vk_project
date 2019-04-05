@@ -278,6 +278,8 @@ def post_music(login, password, app_id, group_id, record_id):
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         # text
+        record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
+
         artist_text = get_music_compilation_artist(audios)
 
         genre = get_music_compilation_genre(audios)
@@ -297,8 +299,6 @@ def post_music(login, password, app_id, group_id, record_id):
         else:
             genre_text = None
 
-        record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
-
         if len(record_text) <= 50:
             text_to_image = record_text.replace('\n', ' ')
             record_text = ''
@@ -306,16 +306,10 @@ def post_music(login, password, app_id, group_id, record_id):
             text_to_image = ''
 
         if artist_text:
-            if text_to_image:
-                text_to_image = f'{text_to_image}\n{artist_text}'
-            else:
-                text_to_image = artist_text
+            text_to_image = f'{text_to_image}\n{artist_text}' if text_to_image else artist_text
 
         if genre_text:
-            if text_to_image:
-                text_to_image = f'{text_to_image}\n{genre_text}'
-            else:
-                text_to_image = genre_text
+            text_to_image = f'{text_to_image}\n{genre_text}' if text_to_image else genre_text
 
         # image
         record_original_image = record.images.first()
