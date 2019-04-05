@@ -285,6 +285,8 @@ def post_music(login, password, app_id, group_id, record_id):
             attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
 
         # text
+        record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
+
         artist_text = get_music_compilation_artist(audios)
 
         genre = get_music_compilation_genre(audios)
@@ -304,8 +306,6 @@ def post_music(login, password, app_id, group_id, record_id):
         else:
             genre_text = None
 
-        record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
-
         if len(record_text) <= 50:
             text_to_image = record_text.replace('\n', ' ')
             record_text = ''
@@ -313,46 +313,31 @@ def post_music(login, password, app_id, group_id, record_id):
             text_to_image = ''
 
         if artist_text:
-            if text_to_image:
-                text_to_image = f'{text_to_image}\n{artist_text}'
-            else:
-                text_to_image = artist_text
+            text_to_image = f'{text_to_image}\n{artist_text}' if text_to_image else artist_text
 
         if genre_text:
-            if text_to_image:
-                text_to_image = f'{text_to_image}\n{genre_text}'
-            else:
-                text_to_image = genre_text
+            text_to_image = f'{text_to_image}\n{genre_text}' if text_to_image else genre_text
 
         # image
         record_original_image = record.images.first()
+        abstractions = BackgroundAbstraction.objects.all().order_by('id')
 
         if record_original_image:
-            record_original_image = download_file(record_original_image.url)
-            is_record_image_fit = not is_text_on_image(record_original_image)
-        else:
-            is_record_image_fit = False
-
-        abstractions = BackgroundAbstraction.objects.all().order_by('id')
-        if (not is_record_image_fit and abstractions) or config.FORCE_USE_ABSTRACTION:
+            image_to_template = download_file(record_original_image.url)
+        elif abstractions or config.FORCE_USE_ABSTRACTION:
             abstraction = find_next_element_by_last_used_id(abstractions,
                                                             group.last_used_background_abstraction_id)
             group.last_used_background_abstraction_id = abstraction.id
             group.save(update_fields=['last_used_background_abstraction_id'])
-            abstraction = abstraction.picture
-        else:  # we need to post record anyway
-            if record_original_image:
-                abstraction = record_original_image
-            else:
-                record.failed_date = timezone.now()
-                record.status = Record.FAILED
-                record.save(update_fields=['failed_date', 'status'])
-                return
+            image_to_template = abstraction.picture
+        else:
+            record.failed_date = timezone.now()
+            record.status = Record.FAILED
+            record.save(update_fields=['failed_date', 'status'])
+            return
 
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
-
-        result_image_name = paste_abstraction_on_template(template_image, abstraction)
-
+        result_image_name = paste_abstraction_on_template(template_image, image_to_template)
         paste_text_on_music_image(result_image_name, text_to_image)
 
         attachments.append(upload_photo(session, result_image_name, group_id))
