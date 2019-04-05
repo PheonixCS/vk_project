@@ -319,33 +319,24 @@ def post_music(login, password, app_id, group_id, record_id):
 
         # image
         record_original_image = record.images.first()
+        abstractions = BackgroundAbstraction.objects.all().order_by('id')
 
         if record_original_image:
-            record_original_image = download_file(record_original_image.url)
-            is_record_image_fit = not is_text_on_image(record_original_image)
-        else:
-            is_record_image_fit = False
-
-        abstractions = BackgroundAbstraction.objects.all().order_by('id')
-        if (not is_record_image_fit and abstractions) or config.FORCE_USE_ABSTRACTION:
+            image_to_template = download_file(record_original_image.url)
+        elif abstractions or config.FORCE_USE_ABSTRACTION:
             abstraction = find_next_element_by_last_used_id(abstractions,
                                                             group.last_used_background_abstraction_id)
             group.last_used_background_abstraction_id = abstraction.id
             group.save(update_fields=['last_used_background_abstraction_id'])
-            abstraction = abstraction.picture
-        else:  # we need to post record anyway
-            if record_original_image:
-                abstraction = record_original_image
-            else:
-                record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-                record.is_involved_now = False
-                record.save(update_fields=['failed_date', 'is_involved_now'])
-                return
+            image_to_template = abstraction.picture
+        else:
+            record.failed_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+            record.is_involved_now = False
+            record.save(update_fields=['failed_date', 'is_involved_now'])
+            return
 
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
-
-        result_image_name = paste_abstraction_on_template(template_image, abstraction)
-
+        result_image_name = paste_abstraction_on_template(template_image, image_to_template)
         paste_text_on_music_image(result_image_name, text_to_image)
 
         attachments.append(upload_photo(session, result_image_name, group_id))
