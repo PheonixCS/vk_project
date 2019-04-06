@@ -2,6 +2,7 @@ from random import randint
 
 from django.db import models
 from django.db.models import Count
+from django.utils import timezone
 
 
 class Donor(models.Model):
@@ -83,7 +84,6 @@ class Record(models.Model):
     post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
     post_in_group_id = models.IntegerField(null=True)
     failed_date = models.DateTimeField(null=True)
-    is_involved_now = models.BooleanField(default=False)
     females_count = models.IntegerField(default=0, verbose_name='Лайков от женщин')
     males_count = models.IntegerField(default=0, verbose_name='Лайков от мужчин')
     males_females_ratio = models.FloatField(default=1.0, verbose_name='Соотношение мужчин к женщинам в лайках')
@@ -105,6 +105,11 @@ class Record(models.Model):
         audio_count = self.audios.count()
 
         return sum([gif_count, image_count, video_count, audio_count])
+
+    def fail(self):
+        self.status = self.FAILED
+        self.failed_date = timezone.now()
+        self.save(update_fields=['status', 'failed_date'])
 
     def __str__(self):
         return '{}'.format(self.record_id)
