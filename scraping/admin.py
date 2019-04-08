@@ -11,7 +11,7 @@ class FilterInLine(admin.StackedInline):
 
 class DonorAdmin(admin.ModelAdmin):
     exclude = ('url',)
-    readonly_fields = ('vk_url_field',)
+    readonly_fields = ('vk_url_field', 'average_views_number')
     list_display = ('id', 'vk_url_field',)
 
     inlines = [FilterInLine]
