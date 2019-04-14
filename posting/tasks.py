@@ -76,16 +76,20 @@ def examine_groups():
             log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
             continue
 
+        if group.is_horoscopes:
+            is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+        else:
+            is_time_to_post = group.posting_time.minute == now_minute
+
         if group.is_movies:
             last_hour_posts = Movie.objects.filter(post_in_group_date__gt=ads_time_threshold)
         else:
             last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
         last_hour_posts_exist = last_hour_posts.exists()
 
-        if last_hour_posts_exist:
-            log.debug(f'got posts in last hour and 5 minutes for group {group.domain_or_id}')
-            if not group.is_horoscopes:
-                continue
+        if last_hour_posts_exist and not is_time_to_post:
+            log.info(f'got posts in last hour and 5 minutes for group {group.domain_or_id}')
+            continue
         else:
             if not config.IS_DEV and is_ads_posted_recently(group):
                 log.info(f'pass group {group.domain_or_id} because ad post was published recently')
@@ -102,7 +106,7 @@ def examine_groups():
 
         movies_condition = (
                 group.is_movies
-                and (group.posting_time.minute == now_minute or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
+                and (is_time_to_post or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
         )
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
@@ -161,7 +165,7 @@ def examine_groups():
 
         horoscope_condition = (
                 group.is_horoscopes
-                and abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+                and is_time_to_post
                 and group.horoscopes.filter(post_in_group_date__isnull=True)
         )
         if horoscope_condition:
@@ -182,7 +186,7 @@ def examine_groups():
                 log.warning('got no horoscopes records')
 
         common_condition = (
-                (group.posting_time.minute == now_minute or not last_hour_posts_exist)
+                (is_time_to_post or not last_hour_posts_exist)
                 and not group.is_movies
         )
         if common_condition:
