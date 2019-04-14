@@ -11,7 +11,8 @@ class Donor(models.Model):
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
     is_banned = models.BooleanField(default=False, verbose_name='Донор забанен')
-    average_views_number = models.IntegerField(null=True, verbose_name='Среднее количество просмотров поста')
+    average_views_number = models.IntegerField(
+        null=True, verbose_name='Среднее количество просмотров поста', blank=True)
 
     # Standard
     def save(self, *args, **kwargs):
