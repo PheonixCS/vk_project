@@ -76,7 +76,7 @@ def examine_groups():
             log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
             continue
 
-        if group.is_horoscopes:
+        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True):
             is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
         else:
             is_time_to_post = group.posting_time.minute == now_minute
