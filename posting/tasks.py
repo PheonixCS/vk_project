@@ -1,4 +1,4 @@
-import ast
+import logging
 import logging
 import os
 from datetime import datetime, timedelta
@@ -26,7 +26,6 @@ from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
     delete_files,
-    find_the_best_post,
     get_country_name_by_code,
     get_next_interval_by_movie_rating,
     get_movies_rating_intervals,
