@@ -1,5 +1,4 @@
 import logging
-import logging
 import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
