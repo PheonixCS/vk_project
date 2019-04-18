@@ -42,9 +42,6 @@ CONSTANCE_CONFIG = {
     'OLD_MOVIES_TIME_THRESHOLD': (7, 'Number of days when movie become old', int),
     'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int),
     'FORCE_USE_ABSTRACTION': (False, 'Forcing using of abstraction in music', bool),
-    'GROUPS_ID_TMP': ('28446706,23639186,42440233,44062380',
-                      'List of groups for new best records logic',
-                      str),
     'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int),
     'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int)
 }
@@ -54,7 +51,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'VK_API_VERSION', 'WALL_RECORD_COUNT_TO_PIN', 'OLD_RECORDS_HOURS',
         'OLD_AD_RECORDS_HOURS', 'OLD_HOROSCOPES_HOURS', 'OLD_MODERATION_TRANSACTIONS_HOURS',
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
-        'MIN_STRING_MATCH_RATIO', 'GROUPS_ID_TMP', 'COMMON_RECORDS_COUNT_FOR_DONOR',
+        'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
         'NEW_RECORD_MATURITY_MINUTES'
     )),
     ('Horoscopes', (
@@ -69,6 +66,6 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
     ('Images', (
         'MAX_TEXT_TO_FILL_LENGTH', 'MIN_QUANTITY_OF_PIXELS', 'SIX_IMAGES_OFFSET', 'SIX_IMAGES_WIDTH',
         'THE_SAME_SIZE_FACTOR', 'FONT_NAME', 'FONT_SIZE_PERCENT', 'PERCENTAGE_TO_CROP_FROM_EDGES',
-        'PIXELS_TO_CUT_FROM_BOTTOM', 'IMAGE_SIDE_OFFSET_ABS'
+        'PIXELS_TO_CUT_FROM_BOTTOM', 'IMAGE_SIDE_OFFSET_ABS', 'IMAGE_SPACING_ABS'
     ))
 ])

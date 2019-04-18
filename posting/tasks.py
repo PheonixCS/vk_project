@@ -229,18 +229,11 @@ def examine_groups():
                 else:
                     group_male_female_ratio = group.male_weekly_average_count / group.female_weekly_average_count
 
-                if group.group_id in ast.literal_eval(config.GROUPS_ID_TMP):
-                    the_best_record = find_suitable_record(
-                        records,
-                        group_male_female_ratio,
-                        config.RECORDS_SELECTION_PERCENT
-                    )
-                else:
-                    the_best_record = find_the_best_post(
-                        records,
-                        group_male_female_ratio,
-                        config.RECORDS_SELECTION_PERCENT
-                    )
+                the_best_record = find_suitable_record(
+                    records,
+                    group_male_female_ratio,
+                    config.RECORDS_SELECTION_PERCENT
+                )
             else:
                 the_best_record = max(records, key=lambda x: x.rate)
 
