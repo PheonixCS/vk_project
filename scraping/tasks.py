@@ -194,6 +194,7 @@ def parse_horoscopes() -> None:
 
     for group in groups_with_horoscope_posting:
         group_sign_ru = fetch_zodiac_sign(group.name)
+        log.debug(f'Group {group} got sign: "{group_sign_ru}"')
         if group_sign_ru:
             group_sign_en = horoscopes_translate(group_sign_ru, to_lang='en')
             if group_sign_en not in parsed.keys():
