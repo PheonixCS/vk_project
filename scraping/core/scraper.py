@@ -1,10 +1,9 @@
 import datetime
 import logging
 
-from constance import config
 from django.utils import timezone
 
-from posting.models import ServiceToken, Group
+from posting.models import ServiceToken
 from scraping.core.filters import (
     filter_with_custom_filters,
     filter_out_ads,
@@ -13,9 +12,19 @@ from scraping.core.filters import (
     filter_out_records_with_small_images,
 )
 from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
-from scraping.core.horoscopes import find_horoscopes, fetch_zodiac_sign
-from scraping.models import Donor, Record, Image, Gif, Video, Audio, Horoscope, \
-    Movie, Genre, Trailer, Frame
+from scraping.models import (
+    Donor,
+    Record,
+    Image,
+    Gif,
+    Video,
+    Audio,
+    Horoscope,
+    Movie,
+    Genre,
+    Trailer,
+    Frame
+)
 from services.vk.core import create_vk_api_using_service_token
 from services.vk.vars import GROUP_IS_BANNED
 from services.vk.wall import get_wall
@@ -111,25 +120,17 @@ def save_movie_to_db(movie):
     return created
 
 
-def save_horoscope_record_to_db(group, record, zodiac_sign):
+def save_horoscope_record_to_db(group, text, zodiac_sign):
     log.info('save_horoscope_record_to_db called')
     obj, created = Horoscope.objects.get_or_create(
         group=group,
         zodiac_sign=zodiac_sign,
-        post_in_donor_date=datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
-            '%Y-%m-%d %H:%M:%S'),
         defaults={
-            'text': record['text'],
+            'text': text,
         }
     )
     if created:
-        log.info('record {} was in db, modifying'.format(record['id']))
-        if 'attachments' in record:
-            if any('photo' in d for d in record['attachments']):
-                images = [item for item in record['attachments'] if item['type'] == 'photo']
-                for image in images:
-                    obj.image_url = find_url_of_biggest_image(image['photo'])
-                obj.save(update_fields=['image_url'])
+        log.info('horoscope was in db, modifying')
     log.info('save_horoscope_record_to_db result: {}'.format(created))
 
     return created
@@ -198,32 +199,6 @@ def main():
                 except:
                     log.error('error while filter', exc_info=True)
                     continue
-
-            # Horoscopes
-            horoscopes_donor_id = config.HOROSCOPES_DONOR_ID
-            if horoscopes_donor_id in donor.id:
-                log.debug('start scraping horoscope donor')
-                horoscopes_records = find_horoscopes(new_records)
-                log.debug('got {} horoscopes records'.format(len(horoscopes_records)))
-
-                groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
-                log.debug('got {} groups with active horoscope posting'.format(len(groups_with_horoscope_posting)))
-
-                for horoscope_record in horoscopes_records:
-                    new_records.remove(horoscope_record)
-
-                    # Save horoscope to db
-                    for group in groups_with_horoscope_posting:
-                        record_zodiac_sign = fetch_zodiac_sign(horoscope_record.get('text').splitlines()[0])
-                        group_zodiac_sign = fetch_zodiac_sign(group.name)
-                        if group_zodiac_sign:
-                            if not group_zodiac_sign == record_zodiac_sign:
-                                continue
-
-                        log.debug('saving horoscope record {} in db'.format(horoscope_record['id']))
-                        save_horoscope_record_to_db(group, horoscope_record, record_zodiac_sign)
-            log.debug('got {} records after deleting horoscopes posts in donor {}'.format(len(new_records),
-                                                                                          donor.id))
 
             # Save records to db
             for record in new_records:
