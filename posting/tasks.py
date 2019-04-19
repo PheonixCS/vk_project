@@ -62,6 +62,7 @@ def examine_groups():
     now_minute = now_time_utc.minute
 
     ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
+    hour_ago_threshold = now_time_utc - timedelta(hours=1)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
     week_ago = now_time_utc - timedelta(days=7)
     today_start = now_time_utc.replace(hour=0, minute=0, second=0)
@@ -81,9 +82,11 @@ def examine_groups():
             is_time_to_post = group.posting_time.minute == now_minute
 
         if group.is_movies:
-            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=ads_time_threshold)
+            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
+        elif group.is_horoscopes:
+            last_hour_posts = Horoscope.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
         else:
-            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
+            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
         last_hour_posts_exist = last_hour_posts.exists()
 
         if last_hour_posts_exist and not is_time_to_post:
