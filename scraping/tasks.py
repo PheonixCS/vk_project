@@ -181,20 +181,27 @@ def rate_new_posts() -> None:
 
 @shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
 def parse_horoscopes() -> None:
+    log.debug('start parse_horoscopes')
     horoscope_page = MailRuHoroscopes()
 
     tomorrow_date_ru = get_tomorrow_date_ru()
+    log.debug(f'tomorrows date in ru is {tomorrow_date_ru}')
 
     parsed = horoscope_page.parse()
+    log.debug(f'parsed {len(parsed)} horoscopes')
     groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+    log.debug(f'got {len(groups_with_horoscope_posting)} groups for posting')
 
     for group in groups_with_horoscope_posting:
         group_sign_ru = fetch_zodiac_sign(group.name)
         if group_sign_ru:
             group_sign_en = horoscopes_translate(group_sign_ru, to_lang='en')
             if group_sign_en not in parsed.keys():
+                log.warning(f'{group_sign_en} not in {parsed.keys()}')
                 continue
             else:
                 additional_text = '{}, {}'.format(tomorrow_date_ru, group_sign_ru)
                 record_text = '{}\n{}'.format(additional_text, parsed[group_sign_en])
                 save_horoscope_record_to_db(group, record_text, group_sign_en)
+
+    log.debug('finish parse_horoscopes')

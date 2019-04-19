@@ -35,6 +35,7 @@ class HoroscopesPage:
         ]
 
     def parse(self) -> dict:
+        log.info(f'started parsing {self.host}')
         result = {}
 
         for sign in self.signs_map.items():
@@ -68,8 +69,10 @@ class HoroscopesPage:
             log.warning('saved not all horoscopes signs!')
 
         if not result:
+            log.info(f'got no horoscopes for {self.host}')
             raise Exception('No results found while parsing horoscopes')
 
+        log.info(f'finish parsing {self.host}')
         return result
 
     def _collect_data(self, page_text):
@@ -78,7 +81,7 @@ class HoroscopesPage:
         try:
             node = soup.findAll(*self.text_locator)
         except Exception:
-            log.debug('parsing exception', exc_info=True)
+            log.warning('parsing exception', exc_info=True)
             return None
 
         if node:
