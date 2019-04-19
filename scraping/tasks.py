@@ -8,14 +8,16 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from posting.core.poster import get_movies_rating_intervals
-from posting.models import ServiceToken
-from scraping.core.helpers import extract_records_per_donor
-from scraping.core.scraper import main, save_movie_to_db, update_structured_records
+from posting.models import ServiceToken, Group
+from scraping.core.horoscopes import fetch_zodiac_sign, horoscopes_translate
+from scraping.core.helpers import extract_records_per_donor, get_tomorrow_date_ru
+from scraping.core.scraper import main, save_movie_to_db, update_structured_records, save_horoscope_record_to_db
 from scraping.core.vk_helper import get_records_info, extract_records_sex
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
 from services.themoviedb.wrapper import discover_movies
 from services.vk.core import create_vk_api_using_service_token
 from services.youtube.core import download_trailer
+from services.horoscopes.mailru import MailRuHoroscopes
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -175,3 +177,32 @@ def rate_new_posts() -> None:
             i += 100
 
     log.debug('rating finished')
+
+
+@shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
+def parse_horoscopes() -> None:
+    log.debug('start parse_horoscopes')
+    horoscope_page = MailRuHoroscopes()
+
+    tomorrow_date_ru = get_tomorrow_date_ru()
+    log.debug(f'tomorrows date in ru is {tomorrow_date_ru}')
+
+    parsed = horoscope_page.parse()
+    log.debug(f'parsed {len(parsed)} horoscopes')
+    groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+    log.debug(f'got {len(groups_with_horoscope_posting)} groups for posting')
+
+    for group in groups_with_horoscope_posting:
+        group_sign_ru = fetch_zodiac_sign(group.name)
+        log.debug(f'Group {group} got sign: "{group_sign_ru}"')
+        if group_sign_ru:
+            group_sign_en = horoscopes_translate(group_sign_ru, to_lang='en')
+            if group_sign_en not in parsed.keys():
+                log.warning(f'{group_sign_en} not in {parsed.keys()}')
+                continue
+            else:
+                additional_text = '{}, {}'.format(tomorrow_date_ru, group_sign_ru)
+                record_text = '{}\n{}'.format(additional_text, parsed[group_sign_en])
+                save_horoscope_record_to_db(group, record_text, group_sign_en)
+
+    log.debug('finish parse_horoscopes')

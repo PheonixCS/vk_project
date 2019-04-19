@@ -54,7 +54,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'update_statistics': {
         'task': 'posting.tasks.update_statistics',
-        'schedule': crontab(minute=5, hour=1)  # at 0:05 am UTC (3:05 am by MSK)
+        'schedule': crontab(minute=5, hour=1)  # at 1:05 am UTC (4:05 am by MSK)
     },
     'process_moderation_transaction': {
         'task': 'moderation.tasks.process_transactions',
@@ -83,7 +83,12 @@ CELERY_BEAT_SCHEDULE = {
     'rate_new_posts': {
         'task': 'scraping.tasks.rate_new_posts',
         'schedule': crontab(minute='15, 45')
-    }
+    },
+    'parse_horoscopes': {
+        'task': 'scraping.tasks.parse_horoscopes',
+        'schedule': crontab(minute=55, hour=11)  # at 11:55 am UTC (14:55 am by MSK)
+        # 'schedule': crontab(minute=25, hour=5)  # at 5:55 am UTC (8:25 am by MSK)
+    },
 }
 
 

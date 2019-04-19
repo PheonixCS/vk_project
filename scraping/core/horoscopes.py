@@ -24,3 +24,25 @@ def find_horoscopes(records):
             horoscopes_records.append(record)
 
     return horoscopes_records
+
+
+def horoscopes_translate(name, to_lang='ru'):
+    signs_map = {
+        'arises': 'овен',
+        'taurus': 'телец',
+        'gemini': 'близнецы',
+        'cancer': 'рак',
+        'leo': 'лев',
+        'virgo': 'дева',
+        'libra': 'весы',
+        'scorpio': 'скорпион',
+        'sagittarius': 'стрелец',
+        'capricorn': 'козерог',
+        'aquarius': 'водолеи',
+        'pisces': 'рыбы'
+    }
+
+    if to_lang == 'en':
+        signs_map = dict((v, k) for k, v in signs_map.items())
+
+    return signs_map.get(name)
