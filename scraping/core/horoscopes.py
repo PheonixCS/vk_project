@@ -38,7 +38,7 @@ def horoscopes_translate(name, to_lang='ru'):
         'scorpio': 'скорпион',
         'sagittarius': 'стрелец',
         'capricorn': 'козерог',
-        'aquarius': 'водолеи',
+        'aquarius': 'водолей',
         'pisces': 'рыбы'
     }
 
