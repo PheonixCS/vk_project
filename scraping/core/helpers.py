@@ -1,4 +1,5 @@
 # Helpers to work with scraper data
+from datetime import datetime, timedelta
 
 
 def distribute_donors_between_accounts(donors, accounts):
@@ -37,3 +38,26 @@ def extract_records_per_donor(vk_response: dict) -> dict:
         group_records_map.update(current_group)
 
     return group_records_map
+
+
+def get_tomorrow_date_ru():
+    tomorrow = datetime.now() + timedelta(days=1)
+
+    month_ru = [
+        'января',
+        'февраля',
+        'марта',
+        'апреля',
+        'мая',
+        'июня',
+        'июля',
+        'августа',
+        'сентября',
+        'октября',
+        'ноября',
+        'декабря'
+    ]
+
+    date = '{} {}'.format(tomorrow.strftime('%d'), month_ru[int(tomorrow.strftime('%m')) - 1])
+
+    return date

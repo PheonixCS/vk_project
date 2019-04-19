@@ -75,7 +75,8 @@ def examine_groups():
             continue
 
         if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True):
-            is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+            # is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+            is_time_to_post = group.posting_time.minute == now_minute
         else:
             is_time_to_post = group.posting_time.minute == now_minute
 
@@ -169,8 +170,7 @@ def examine_groups():
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horoscopes condition')
 
-            horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True,
-                                                        post_in_donor_date__gt=today_start)
+            horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
             if horoscope_records.exists():
                 horoscope_record = horoscope_records.last()
                 post_horoscope.delay(group.user.login,
