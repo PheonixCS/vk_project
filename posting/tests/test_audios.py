@@ -18,20 +18,35 @@ class AudioAttachmentsTest(TestCase):
         ]
 
     def test_common(self):
-        prepared_audios = prepare_audio_attachments(self.audios)
+        result = prepare_audio_attachments(self.audios)
 
-        self.assertListEqual(prepared_audios, ['audio1_1', 'audio1_2', 'audio2_1'])
+        expected = ['audio1_1', 'audio1_2', 'audio2_1']
+
+        self.assertListEqual(result, expected)
+
+    def test_no_audios(self):
+        audios = []
+
+        result = prepare_audio_attachments(audios, is_shuffle=True, is_cut=True)
+
+        expected = []
+
+        self.assertEqual(result, expected)
 
     def test_cut(self):
-        prepared_audios = prepare_audio_attachments(self.audios, is_cut=True)
+        result = prepare_audio_attachments(self.audios, is_cut=True)
 
-        self.assertListEqual(prepared_audios, ['audio1_1', 'audio1_2'])
+        expected = ['audio1_1', 'audio1_2']
+
+        self.assertListEqual(result, expected)
 
     def test_one_audio_cut(self):
         audios = [
             Audio(1, 1),
         ]
 
-        prepared_audios = prepare_audio_attachments(audios, is_cut=True)
+        result = prepare_audio_attachments(audios, is_cut=True)
 
-        self.assertListEqual(prepared_audios, ['audio1_1'])
+        expected = ['audio1_1']
+
+        self.assertListEqual(result, expected)
