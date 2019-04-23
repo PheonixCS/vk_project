@@ -91,7 +91,6 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
@@ -155,7 +154,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'vk_scraping_posting.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
@@ -169,7 +167,6 @@ DATABASES = {
         'PORT': os.environ['DB_PORT'],
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -189,7 +186,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -203,7 +199,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
@@ -213,18 +208,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-FILE_UPLOAD_PERMISSIONS=0o640
+FILE_UPLOAD_PERMISSIONS = 0o640
 
 sentry_logging = LoggingIntegration(
     level=logging.INFO,  # Capture info and above as breadcrumbs
-    event_level=logging.WARNING     # Send no events from log messages
+    event_level=logging.WARNING  # Send no events from log messages
 )
 
 sentry_sdk.init(
     dsn="https://374beeda2c78426ea8cd2cc84d176b1b@sentry.io/1290864",
     integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
 )
-
 
 from .default_config import *
 
@@ -259,8 +253,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default',
-            'propagate': True
+            'formatter': 'default'
         },
         'moderation': {
             'level': 'DEBUG',
@@ -269,8 +262,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default',
-            'propagate': True
+            'formatter': 'default'
 
         },
         'scraping': {
@@ -280,8 +272,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default',
-            'propagate': True
+            'formatter': 'default'
         },
         'posting': {
             'level': 'DEBUG',
@@ -290,8 +281,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default',
-            'propagate': True
+            'formatter': 'default'
         },
         '': {
             'level': 'DEBUG',
@@ -300,34 +290,39 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default',
-            'propagate': True
+            'formatter': 'default'
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'django'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG')
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         },
         'scraping': {
             'handlers': ['scraping'],
-            'level': os.getenv('SCRAPER_LOG_LEVEL', 'DEBUG')
+            'level': os.getenv('SCRAPER_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         },
         'posting': {
             'handlers': ['posting'],
-            'level': os.getenv('POSTING_LOG_LEVEL', 'DEBUG')
+            'level': os.getenv('POSTING_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         },
         'moderation': {
             'handlers': ['moderation'],
-            'level': os.getenv('MODERATION_LOG_LEVEL', 'DEBUG')
+            'level': os.getenv('MODERATION_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         },
         'сelery': {
             'handlers': ['console', 'celery'],
-            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
+            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         },
         'services': {
             'handlers': [''],
-            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG')
+            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         },
     },
 }
