@@ -75,7 +75,7 @@ def prepare_audio_attachments(audios, is_shuffle=False, is_cut=False):
     if is_shuffle:
         shuffle(audios)
 
-    if is_cut and len(audios):
+    if is_cut and len(audios) > 1:
         audios = audios[:-1]
 
     return [f'audio{audio.owner_id}_{audio.audio_id}' for audio in audios]
