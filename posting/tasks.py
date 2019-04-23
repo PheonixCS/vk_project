@@ -1,4 +1,5 @@
 import logging
+import ast
 import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
@@ -872,7 +873,17 @@ def update_statistics():
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
-    all_groups = Group.objects.all()
+    # TODO вынести в функцию и написать тесты
+    try:
+        groups_to_exclude = ast.literal_eval(config.EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE)
+    except SyntaxError:
+        groups_to_exclude = []
+        log.warning('sex_statistics_weekly got wrong format from config', exc_info=True)
+
+    if groups_to_exclude:
+        all_groups = Group.objects.exclude(group_id__in=groups_to_exclude)
+    else:
+        all_groups = Group.objects.all()
     log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
 
     try:

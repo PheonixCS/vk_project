@@ -43,7 +43,10 @@ CONSTANCE_CONFIG = {
     'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int),
     'FORCE_USE_ABSTRACTION': (False, 'Forcing using of abstraction in music', bool),
     'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int),
-    'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int)
+    'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int),
+    'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE': ('[42440233, 28446706, 23639186]',
+                                                  'Don\'t update sex statistic for list of groups',
+                                                  bool),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
