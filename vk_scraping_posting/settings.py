@@ -247,7 +247,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/celery.log",
-            'when': 'D',
+            'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
             'formatter': 'default'
@@ -256,46 +256,52 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/django.log",
-            'when': 'D',
+            'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default'
+            'formatter': 'default',
+            'propagate': True
         },
         'moderation': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/moderation.log",
-            'when': 'D',
+            'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default'
+            'formatter': 'default',
+            'propagate': True
+
         },
         'scraping': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/scraping.log",
-            'when': 'D',
+            'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default'
+            'formatter': 'default',
+            'propagate': True
         },
         'posting': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/posting.log",
-            'when': 'D',
+            'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default'
+            'formatter': 'default',
+            'propagate': True
         },
         '': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/other.log",
-            'when': 'D',
+            'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'formatter': 'default'
+            'formatter': 'default',
+            'propagate': True
         },
     },
     'loggers': {
