@@ -43,7 +43,8 @@ CONSTANCE_CONFIG = {
     'TMDB_NUMBER_OF_STORED_TRAILERS': (3, 'Number of movie trailers to store in db', int),
     'FORCE_USE_ABSTRACTION': (False, 'Forcing using of abstraction in music', bool),
     'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int),
-    'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int)
+    'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int),
+    'CUT_ONE_AUDIO_ATTACHMENT': (False, 'Cut one random audio attachment from posts'),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -67,5 +68,8 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'MAX_TEXT_TO_FILL_LENGTH', 'MIN_QUANTITY_OF_PIXELS', 'SIX_IMAGES_OFFSET', 'SIX_IMAGES_WIDTH',
         'THE_SAME_SIZE_FACTOR', 'FONT_NAME', 'FONT_SIZE_PERCENT', 'PERCENTAGE_TO_CROP_FROM_EDGES',
         'PIXELS_TO_CUT_FROM_BOTTOM', 'IMAGE_SIDE_OFFSET_ABS', 'IMAGE_SPACING_ABS'
-    ))
+    )),
+    ('Music', (
+        'CUT_ONE_AUDIO_ATTACHMENT',
+    )),
 ])

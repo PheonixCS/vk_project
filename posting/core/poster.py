@@ -2,21 +2,19 @@ import ast
 import logging
 import os
 from collections import Counter
+from random import shuffle
 
 import requests
 from constance import config
+from django.conf import settings
 from django.db.models import Count
 from django.db.models.query import QuerySet
-from django.conf import settings
-
 
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
     mirror_image
 from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
-
 from scraping.models import Attachment
-
 
 log = logging.getLogger('posting.poster')
 
@@ -71,6 +69,16 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
 
     if 'text_to_fill' in keys:
         fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
+
+
+def prepare_audio_attachments(audios, is_shuffle=False, is_cut=False):
+    if is_shuffle:
+        shuffle(audios)
+
+    if is_cut and len(audios) > 1:
+        audios = audios[:-1]
+
+    return [f'audio{audio.owner_id}_{audio.audio_id}' for audio in audios]
 
 
 def find_the_best_post(records: QuerySet, best_ratio, percent=20):
