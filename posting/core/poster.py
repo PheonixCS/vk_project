@@ -3,6 +3,7 @@ import logging
 import os
 from collections import Counter
 from typing import List
+from random import shuffle
 
 import requests
 from constance import config
@@ -70,6 +71,16 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
 
     if 'text_to_fill' in keys:
         fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
+
+
+def prepare_audio_attachments(audios, is_shuffle=False, is_cut=False):
+    if is_shuffle:
+        shuffle(audios)
+
+    if is_cut and len(audios) > 1:
+        audios = audios[:-1]
+
+    return [f'audio{audio.owner_id}_{audio.audio_id}' for audio in audios]
 
 
 def find_the_best_post(records: QuerySet, best_ratio, percent=20):

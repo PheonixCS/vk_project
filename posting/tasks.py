@@ -35,6 +35,7 @@ from posting.core.poster import (
     find_suitable_record,
     filter_banned_records,
     get_groups_to_update_sex_statistics,
+    prepare_audio_attachments,
 )
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
@@ -273,16 +274,17 @@ def post_music(login, password, app_id, group_id, record_id):
     try:
         session = create_vk_session_using_login_password(login, password, app_id)
         api = session.get_api()
-        audios = list(record.audios.all())
 
         attachments = []
 
-        if group.is_audios_shuffle_enabled and len(audios) > 1:
-            shuffle(audios)
-            log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
+        # audios
+        audios = list(record.audios.all())
+        prepared_audios = prepare_audio_attachments(audios,
+                                                    is_shuffle=group.is_audios_shuffle_enabled,
+                                                    is_cut=config.CUT_ONE_AUDIO_ATTACHMENT
+                                                    )
 
-        for audio in audios:
-            attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
+        attachments.extend(prepared_audios)
 
         # text
         record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
@@ -564,7 +566,6 @@ def post_record(login, password, app_id, group_id, record_id):
         actions_to_unique_image = {}
 
         images = list(record.images.all())
-        audios = list(record.audios.all())
         gifs = record.gifs.all()
         videos = record.videos.all()
         record_text = record.text
@@ -582,14 +583,15 @@ def post_record(login, password, app_id, group_id, record_id):
             actions_to_unique_image['text_to_fill'] = delete_emoji_from_text(record_text)
             record_text = ''
 
+        # audios part
+
+        audios = list(record.audios.all())
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
-
-        if group.is_audios_shuffle_enabled and len(audios) > 1:
-            shuffle(audios)
-            log.debug('group {} {} audios shuffled'.format(group_id, len(audios)))
-
-        for audio in audios:
-            attachments.append('audio{}_{}'.format(audio.owner_id, audio.audio_id))
+        prepared_audios = prepare_audio_attachments(audios,
+                                                    is_shuffle=group.is_audios_shuffle_enabled,
+                                                    is_cut=config.CUT_ONE_AUDIO_ATTACHMENT
+                                                    )
+        attachments.extend(prepared_audios)
 
         # images part
 

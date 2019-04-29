@@ -44,9 +44,10 @@ CONSTANCE_CONFIG = {
     'FORCE_USE_ABSTRACTION': (False, 'Forcing using of abstraction in music', bool),
     'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int),
     'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int),
+    'CUT_ONE_AUDIO_ATTACHMENT': (False, 'Cut one random audio attachment from posts'),
     'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE': ('[42440233, 28446706, 23639186]',
-                                                  'Don\'t update sex statistic for list of groups',
-                                                  str),
+                                              'Don\'t update sex statistic for list of groups',
+                                              str),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -55,7 +56,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'OLD_AD_RECORDS_HOURS', 'OLD_HOROSCOPES_HOURS', 'OLD_MODERATION_TRANSACTIONS_HOURS',
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
         'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
-        'NEW_RECORD_MATURITY_MINUTES'
+        'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE',
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',
@@ -70,5 +71,8 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'MAX_TEXT_TO_FILL_LENGTH', 'MIN_QUANTITY_OF_PIXELS', 'SIX_IMAGES_OFFSET', 'SIX_IMAGES_WIDTH',
         'THE_SAME_SIZE_FACTOR', 'FONT_NAME', 'FONT_SIZE_PERCENT', 'PERCENTAGE_TO_CROP_FROM_EDGES',
         'PIXELS_TO_CUT_FROM_BOTTOM', 'IMAGE_SIDE_OFFSET_ABS', 'IMAGE_SPACING_ABS'
-    ))
+    )),
+    ('Music', (
+        'CUT_ONE_AUDIO_ATTACHMENT',
+    )),
 ])

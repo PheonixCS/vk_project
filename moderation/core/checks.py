@@ -13,12 +13,13 @@ log = logging.getLogger('moderation.core.checks')
 
 def is_post_ad(api, post_id, group_id):
     try:
-        post = api.wall.getById(posts='-{}_{}'.format(group_id, post_id),
-                                api_version=config.VK_API_VERSION)
+        response = api.wall.getById(posts='-{}_{}'.format(group_id, post_id),
+                                    api_version=config.VK_API_VERSION)
+        post = response[0] if response else {}
     except ApiError as error_msg:
         log.error('Group {} post {} got api error in getById method: {}'.format(group_id, post_id, error_msg))
         return None
-    return post[0].get('marked_as_ads', False)
+    return post.get('marked_as_ads', None)
 
 
 def is_stop_words_in_text(stop_list, text):
