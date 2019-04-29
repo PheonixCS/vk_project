@@ -46,7 +46,7 @@ CONSTANCE_CONFIG = {
     'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int),
     'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE': ('[42440233, 28446706, 23639186]',
                                                   'Don\'t update sex statistic for list of groups',
-                                                  bool),
+                                                  str),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([

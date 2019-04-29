@@ -33,7 +33,8 @@ from posting.core.poster import (
     get_music_compilation_genre,
     get_music_compilation_artist,
     find_suitable_record,
-    filter_banned_records
+    filter_banned_records,
+    get_groups_to_update_sex_statistics,
 )
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
@@ -873,21 +874,10 @@ def update_statistics():
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
-    # TODO вынести в функцию и написать тесты
     try:
-        groups_to_exclude = ast.literal_eval(config.EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE)
-    except SyntaxError:
-        groups_to_exclude = []
-        log.warning('sex_statistics_weekly got wrong format from config', exc_info=True)
+        groups = get_groups_to_update_sex_statistics()
 
-    if groups_to_exclude:
-        all_groups = Group.objects.exclude(group_id__in=groups_to_exclude)
-    else:
-        all_groups = Group.objects.all()
-    log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
-
-    try:
-        for group in all_groups:
+        for group in groups:
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
             if not session:
                 continue
