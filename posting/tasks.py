@@ -85,12 +85,20 @@ def examine_groups():
             is_time_to_post = group.posting_time.minute == now_minute
 
         if group.is_movies:
-            last_hour_posts = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
-        elif group.is_horoscopes:
-            last_hour_posts = Horoscope.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
+            last_hour_movies = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
+            movies_exit = last_hour_movies.exists()
         else:
-            last_hour_posts = Record.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
-        last_hour_posts_exist = last_hour_posts.exists()
+            movies_exit = False
+
+        if group.is_horoscopes:
+            last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
+            horoscopes_exist = last_hour_horoscopes.exists()
+        else:
+            horoscopes_exist = False
+
+        last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
+
+        last_hour_posts_exist = last_hour_posts_common.exists() or movies_exit or horoscopes_exist
 
         if last_hour_posts_exist and not is_time_to_post:
             log.info(f'got posts in last hour and 5 minutes for group {group.domain_or_id}')
