@@ -2,6 +2,7 @@ import ast
 import logging
 import os
 from collections import Counter
+from typing import List
 from random import shuffle
 
 import requests
@@ -14,6 +15,7 @@ from posting.core.images import crop_percentage_from_image_edges, color_image_in
     mirror_image
 from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
+from posting.models import Group
 from scraping.models import Attachment
 
 log = logging.getLogger('posting.poster')
@@ -191,3 +193,20 @@ def filter_banned_records(records: QuerySet, banned_types: list) -> QuerySet:
         records = annotated.exclude(attachments_count__gt=0)
 
     return records
+
+
+def get_groups_to_update_sex_statistics(exclude_groups: List[int] = None) -> QuerySet:
+    if not exclude_groups:
+        try:
+            exclude_groups = ast.literal_eval(config.EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE)
+        except SyntaxError:
+            exclude_groups = []
+            log.warning('sex_statistics_weekly got wrong format from config', exc_info=True)
+
+    if exclude_groups:
+        groups = Group.objects.exclude(group_id__in=exclude_groups)
+    else:
+        groups = Group.objects.all()
+    log.debug('got {} groups in sex_statistics_weekly'.format(len(groups)))
+
+    return groups

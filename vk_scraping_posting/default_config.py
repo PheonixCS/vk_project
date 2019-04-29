@@ -45,6 +45,9 @@ CONSTANCE_CONFIG = {
     'COMMON_RECORDS_COUNT_FOR_DONOR': (25, 'Number of records that we need to rate donor', int),
     'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int),
     'CUT_ONE_AUDIO_ATTACHMENT': (False, 'Cut one random audio attachment from posts'),
+    'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE': ('[42440233, 28446706, 23639186]',
+                                              'Don\'t update sex statistic for list of groups',
+                                              str),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -53,7 +56,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'OLD_AD_RECORDS_HOURS', 'OLD_HOROSCOPES_HOURS', 'OLD_MODERATION_TRANSACTIONS_HOURS',
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
         'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
-        'NEW_RECORD_MATURITY_MINUTES'
+        'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE',
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',

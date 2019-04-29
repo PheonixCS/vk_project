@@ -1,4 +1,5 @@
 import logging
+import ast
 import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
@@ -33,6 +34,7 @@ from posting.core.poster import (
     get_music_compilation_artist,
     find_suitable_record,
     filter_banned_records,
+    get_groups_to_update_sex_statistics,
     prepare_audio_attachments,
 )
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
@@ -874,11 +876,10 @@ def update_statistics():
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
-    all_groups = Group.objects.all()
-    log.debug('got {} groups in sex_statistics_weekly'.format(len(all_groups)))
-
     try:
-        for group in all_groups:
+        groups = get_groups_to_update_sex_statistics()
+
+        for group in groups:
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
             if not session:
                 continue
