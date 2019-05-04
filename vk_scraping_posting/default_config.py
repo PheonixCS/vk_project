@@ -48,6 +48,9 @@ CONSTANCE_CONFIG = {
     'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE': ('[42440233, 28446706, 23639186]',
                                               'Don\'t update sex statistic for list of groups',
                                               str),
+    'MAIN_HOROSCOPES_IDS': ('[29062628, 29038248]',
+                            'Main horoscope groups',
+                            str),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -60,7 +63,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',
-        'HOROSCOPES_FONT_TITLE', 'HOROSCOPES_FONT_BODY'
+        'HOROSCOPES_FONT_TITLE', 'HOROSCOPES_FONT_BODY', 'MAIN_HOROSCOPES_IDS'
     )),
     ('Movies', (
         'TMDB_API_KEY', 'TMDB_SEARCH_START_YEAR', 'TMDB_NEW_MOVIES_OFFSET', 'TMDB_MIN_TRAILERS_COUNT',

@@ -70,6 +70,8 @@ def examine_groups():
     week_ago = now_time_utc - timedelta(days=7)
     today_start = now_time_utc.replace(hour=0, minute=0, second=0)
 
+    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
+
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
 
@@ -78,9 +80,13 @@ def examine_groups():
             log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
             continue
 
-        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True):
-            # is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            is_time_to_post = group.posting_time.minute == now_minute
+        if group.is_horoscopes:
+            if group.group_id in main_horoscope_ids and Horoscope.objects.filter(post_in_group_date__gt=today_start):
+                is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+            elif group.horoscopes.filter(post_in_group_date__isnull=True):
+                is_time_to_post = group.posting_time.minute == now_minute
+            else:
+                is_time_to_post = False
         else:
             is_time_to_post = group.posting_time.minute == now_minute
 
@@ -179,12 +185,15 @@ def examine_groups():
         horoscope_condition = (
                 group.is_horoscopes
                 and is_time_to_post
-                and group.horoscopes.filter(post_in_group_date__isnull=True)
+                and (group.horoscopes.filter(post_in_group_date__isnull=True) or group.group_id in main_horoscope_ids)
         )
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horoscopes condition')
 
-            horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
+            if group.group_id in main_horoscope_ids:
+                horoscope_records = Horoscope.objects.filter(post_in_group_date__gt=today_start)
+            else:
+                horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
             if horoscope_records.exists():
                 horoscope_record = horoscope_records.last()
                 post_horoscope.delay(group.user.login,
@@ -539,7 +548,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
         return
 
-    horoscope_record.post_in_group_date = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    horoscope_record.post_in_group_date = timezone.now()
     horoscope_record.save()
     log.debug('post horoscopes in group {} finished'.format(group_id))
 
