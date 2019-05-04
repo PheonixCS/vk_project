@@ -52,8 +52,11 @@ def ban_donors_admins():
         donors_ids = [donor.id for donor in group.donors.all()]
         log.info(f'working with group {group.domain_or_id} donors {donors_ids}')
 
-        api = create_vk_session_using_login_password(group.user.login, group.user.password,
-                                                     group.user.app_id).get_api()
+        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        api = session.get_api()
+        if not api:
+            log.warning(f'group {group.domain_or_id} no api created!')
+            return None
 
         donors = get_groups_by_id(api, donors_ids, fields='contacts')
 

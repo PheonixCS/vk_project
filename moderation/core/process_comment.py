@@ -82,8 +82,8 @@ def process_comment(comment):
     if not is_moderation_needed(comment['object']['from_id'], comment['group_id'], white_list):
         return False
 
-    api = create_vk_session_using_login_password(group.user.login, group.user.password,
-                                                 group.user.app_id).get_api()
+    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+    api = session.get_api()
     if not api:
         log.warning('group {} no api created!'.format(comment['group_id']))
         return None
