@@ -23,8 +23,12 @@ def generate_special_group_reference(horoscope_text):
     }
 
     special_group_zodiac_zign = fetch_zodiac_sign(horoscope_text.splitlines()[0]).capitalize()
-    special_group_id = Group.objects.filter(name=special_group_zodiac_zign).first().domain_or_id
+    # special_group_id = Group.objects.filter(name=special_group_zodiac_zign).first().domain_or_id
     horoscope_date = fetch_date_from_horoscope_text(horoscope_text)
-    return f'[club{special_group_id}|' \
-           f'Гороскоп для {replace_map[special_group_zodiac_zign]}] ' \
+
+    # return f'[club{special_group_id}|' \
+    #        f'Гороскоп для {replace_map[special_group_zodiac_zign]}] ' \
+    #        f'на {horoscope_date}'
+
+    return f'Гороскоп для {replace_map[special_group_zodiac_zign]}] ' \
            f'на {horoscope_date}'
