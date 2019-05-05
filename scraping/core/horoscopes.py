@@ -1,5 +1,12 @@
 #
 import re
+import ast
+
+from scraping.core.scraper import log
+from scraping.models import Horoscope, Attachment
+from posting.models import Group
+
+from constance import config
 
 
 def fetch_zodiac_sign(text):
@@ -46,3 +53,44 @@ def horoscopes_translate(name, to_lang='ru'):
         signs_map = dict((v, k) for k, v in signs_map.items())
 
     return signs_map.get(name)
+
+
+def save_horoscope_record_to_db(group, text, zodiac_sign):
+    log.info('save_horoscope_record_to_db called')
+    obj, created = Horoscope.objects.get_or_create(
+        group=group,
+        zodiac_sign=zodiac_sign,
+        defaults={
+            'text': text,
+        }
+    )
+    if created:
+        log.info('horoscope created')
+
+    return created
+
+
+# FIXME need tests
+def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str) -> None:
+    log.info('save_horoscope_record_to_db called')
+    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
+
+    for group_id in main_horoscope_ids:
+
+        group = Group.objects.get(group_id=group_id)
+
+        horoscope_obj, created = Horoscope.objects.get_or_create(
+            group=group,
+            zodiac_sign=horoscope.zodiac_sign,
+            defaults={
+                'text': horoscope.text,
+            }
+        )
+        if created:
+            log.info('horoscope created')
+
+            Attachment.objects.create(
+                data_type=Attachment.PICTURE,
+                h_record=horoscope_obj,
+                vk_attachment_id=image_vk_url
+            )

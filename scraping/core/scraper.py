@@ -19,7 +19,6 @@ from scraping.models import (
     Gif,
     Video,
     Audio,
-    Horoscope,
     Movie,
     Genre,
     Trailer,
@@ -117,21 +116,6 @@ def save_movie_to_db(movie):
                 movie=obj,
                 url=frame
             )
-    return created
-
-
-def save_horoscope_record_to_db(group, text, zodiac_sign):
-    log.info('save_horoscope_record_to_db called')
-    obj, created = Horoscope.objects.get_or_create(
-        group=group,
-        zodiac_sign=zodiac_sign,
-        defaults={
-            'text': text,
-        }
-    )
-    if created:
-        log.info('horoscope created')
-
     return created
 
 
