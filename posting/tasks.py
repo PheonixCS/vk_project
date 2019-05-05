@@ -506,7 +506,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         return
 
     group = Group.objects.get(group_id=group_id)
-    horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
+    horoscope_record = Horoscope.objects.get(pk=horoscope_record_id)
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
     try:
