@@ -30,5 +30,5 @@ def generate_special_group_reference(horoscope_text):
     #        f'Гороскоп для {replace_map[special_group_zodiac_zign]}] ' \
     #        f'на {horoscope_date}'
 
-    return f'Гороскоп для {replace_map[special_group_zodiac_zign]}] ' \
-           f'на {horoscope_date}'
+    return f'Гороскоп для {replace_map[special_group_zodiac_zign]} ' \
+           f'на {horoscope_date}.'
