@@ -9,9 +9,9 @@ from django.utils import timezone
 
 from posting.core.poster import get_movies_rating_intervals
 from posting.models import ServiceToken, Group
-from scraping.core.horoscopes import fetch_zodiac_sign, horoscopes_translate
+from scraping.core.horoscopes import fetch_zodiac_sign, horoscopes_translate, save_horoscope_record_to_db
 from scraping.core.helpers import extract_records_per_donor, get_tomorrow_date_ru
-from scraping.core.scraper import main, save_movie_to_db, update_structured_records, save_horoscope_record_to_db
+from scraping.core.scraper import main, save_movie_to_db, update_structured_records
 from scraping.core.vk_helper import get_records_info, extract_records_sex
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
 from services.themoviedb.wrapper import discover_movies
