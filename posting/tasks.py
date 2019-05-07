@@ -513,11 +513,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         record_text = horoscope_record.text
 
-        horo_pictures = horoscope_record.attachments.filter(data_type=Attachment.PICTURE)
-        if horo_pictures:
-            attachments = horo_pictures.first().vk_attachment_id
-
-        elif config.HOROSCOPES_TO_IMAGE_ENABLED:
+        if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
             attachments = upload_photo(session, horoscope_image_name, group_id)
             delete_files(horoscope_image_name)
