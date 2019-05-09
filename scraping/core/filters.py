@@ -209,7 +209,7 @@ def min_quantity_of_audios_filter(item, custom_filter):
     return True
 
 
-def filter_with_custom_filters(custom_filters, records):
+def filter_with_custom_filters(records, custom_filters):
     filtered_records = []
     for custom_filter in custom_filters:
         filters = tuple()

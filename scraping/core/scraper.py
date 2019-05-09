@@ -27,6 +27,7 @@ from scraping.models import (
 from services.vk.core import create_vk_api_using_service_token
 from services.vk.vars import GROUP_IS_BANNED
 from services.vk.wall import get_wall
+from scraping.core.scraping_stats import save_filter_stats
 
 log = logging.getLogger('scraping.scraper')
 
@@ -165,18 +166,28 @@ def main():
 
 # TODO need tests
 def filter_records(donor, records):
+    origin = len(records)
     records = filter_out_ads(records)
+    save_filter_stats(donor, 'ads', origin-len(records))
 
+    origin = len(records)
     records = filter_out_records_with_small_images(records)
+    save_filter_stats(donor, 'small_images', origin - len(records))
 
     custom_filters = donor.filters.all()
     if custom_filters:
         log.debug('got {} custom filters'.format(len(custom_filters)))
-        records = filter_with_custom_filters(custom_filters, records)
+        origin = len(records)
+        records = filter_with_custom_filters(records, custom_filters)
+        save_filter_stats(donor, 'custom_filters', origin - len(records))
 
+    origin = len(records)
     records = filter_out_copies(records)
+    save_filter_stats(donor, 'copies', origin - len(records))
 
+    origin = len(records)
     records = filter_out_records_with_unsuitable_attachments(records)
+    save_filter_stats(donor, 'bad attachments', origin - len(records))
 
     log.debug('got {} records after all filters in donor {}'.format(len(records), donor.id))
     return records
