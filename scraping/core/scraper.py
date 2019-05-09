@@ -149,44 +149,54 @@ def main():
                     donor.ban()
                 continue
 
-            # Fetch 20 records from donor wall.
-            # That 20 records can content some useless information, adds and
-            # information that we don't need.
-            all_records = wall['items']
-            log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
+            new_records = exclude_old_records(donor, wall)
 
-            # now get records that we don't have in our db
-            new_records = [record for record in all_records
-                           if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
-            log.debug('got {} new records in donor {}'.format(len(new_records), donor.id))
-
-            # Filters
-            if new_records:
-                try:
-                    new_records = filter_out_ads(new_records)
-                    log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
-
-                    new_records = filter_out_records_with_small_images(new_records)
-
-                    custom_filters = donor.filters.all()
-                    if custom_filters:
-                        log.debug('got {} custom filters'.format(len(custom_filters)))
-                        new_records = filter_with_custom_filters(custom_filters, new_records)
-                        log.debug('got {} records in donor {}'.format(len(new_records), donor.id))
-
-                    new_records = filter_out_copies(new_records)
-
-                    new_records = filter_out_records_with_unsuitable_attachments(new_records)
-
-                    log.debug('got {} records after all filters in donor {}'.format(len(new_records), donor.id))
-                except:
-                    log.error('error while filter', exc_info=True)
-                    continue
+            try:
+                filtered_new_records = filter_records(donor, new_records)
+            except:
+                log.error('error while filter', exc_info=True)
+                continue
 
             # Save records to db
-            for record in new_records:
+            for record in filtered_new_records:
                 save_record_to_db(donor, record)
-            log.info('saved {} records in group {}'.format(len(new_records), donor.id))
+            log.info('saved {} records in group {}'.format(len(filtered_new_records), donor.id))
+
+
+# TODO need tests
+def filter_records(donor, records):
+    records = filter_out_ads(records)
+
+    records = filter_out_records_with_small_images(records)
+
+    custom_filters = donor.filters.all()
+    if custom_filters:
+        log.debug('got {} custom filters'.format(len(custom_filters)))
+        records = filter_with_custom_filters(custom_filters, records)
+
+    records = filter_out_copies(records)
+
+    records = filter_out_records_with_unsuitable_attachments(records)
+
+    log.debug('got {} records after all filters in donor {}'.format(len(records), donor.id))
+    return records
+
+
+# TODO need tests
+def exclude_old_records(donor, wall):
+    all_records = wall['items']
+    log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
+
+    # now get records that we don't have in our db
+    # new_records = [record for record in all_records
+    #                if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
+
+    donor_record_ids = Record.objects.filter(donor=donor).values_list('record_id', flat=True)
+    new_records = [record for record in all_records if not record['id'] in donor_record_ids]
+
+    log.debug('got {} new records in donor {}'.format(len(new_records), donor.id))
+
+    return new_records
 
 
 def update_structured_records(records: dict) -> None:
