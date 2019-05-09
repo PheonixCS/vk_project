@@ -222,6 +222,10 @@ class Attachment(models.Model):
         (GIF, 'gif'),
         (PICTURE, 'picture')
     )
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='attachments', null=True)
+    h_record = models.ForeignKey(Horoscope, on_delete=models.CASCADE, related_name='attachments', null=True)
 
     data_type = models.CharField(choices=TYPE_CHOICES, max_length=16)
+    origin_url = models.URLField(null=True)
+    vk_attachment_id = models.CharField(null=True, max_length=200)
 
