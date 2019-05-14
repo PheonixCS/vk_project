@@ -3,7 +3,7 @@ import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from scraping.models import Attachment
+from scraping.models import Attachment, Record
 
 
 class User(models.Model):
@@ -160,3 +160,16 @@ class BackgroundAbstraction(models.Model):
 
     class Meta:
         app_label = 'posting'
+
+
+class PostingHistory(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='history')
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='history')
+
+    candidates_number = models.IntegerField()
+    candidates_internal_ids = models.CharField(max_length=2500)
+
+    class Meta:
+        verbose_name = 'История постинга'
+        verbose_name_plural = 'История постинга'

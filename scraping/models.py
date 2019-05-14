@@ -229,3 +229,15 @@ class Attachment(models.Model):
     origin_url = models.URLField(null=True)
     vk_attachment_id = models.CharField(null=True, max_length=200)
 
+
+class ScrapingHistory(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    group = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='history')
+
+    filter_name = models.CharField(max_length=100, default='unknown')
+    filtered_number = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'История скрапинга'
+        verbose_name_plural = 'История скрапинга'
+

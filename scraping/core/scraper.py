@@ -27,7 +27,7 @@ from scraping.models import (
 from services.vk.core import create_vk_api_using_service_token
 from services.vk.vars import GROUP_IS_BANNED
 from services.vk.wall import get_wall
-from scraping.core.scraping_stats import save_filter_stats
+from scraping.core.scraping_history import save_filter_stats
 
 log = logging.getLogger('scraping.scraper')
 

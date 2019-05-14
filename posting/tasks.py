@@ -37,6 +37,7 @@ from posting.core.poster import (
     get_groups_to_update_sex_statistics,
     prepare_audio_attachments,
 )
+from posting.core.posting_history import save_posting_history
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
 from posting.core.vk_helper import is_ads_posted_recently
@@ -259,6 +260,8 @@ def examine_groups():
             the_best_record.status = Record.POSTING
             the_best_record.save(update_fields=['status'])
             log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
+
+            save_posting_history(group=group, record=the_best_record, candidates=records.exclude(pk=the_best_record.id))
 
             try:
                 if group.is_background_abstraction_enabled:
