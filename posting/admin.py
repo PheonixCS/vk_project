@@ -166,14 +166,14 @@ class PostingHistoryAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'group', 'record', 'candidates_number', 'candidates_internal_ids')
     list_display = ('created_at', 'group', 'record', 'candidates_number')
 
-    def candidates_internal_ids(self, obj):
-        list_of_ids = ast.literal_eval(obj.candidates_internal_ids)
-        links = []
-        for record_id in list_of_ids:
-            link = reverse('admin.vk_scraping_posting_record_change', args=[record_id])
-            links.append('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>'.format(link, record_id))
-
-        return ','.join(links)
+    # def candidates_internal_ids(self, obj):
+    #     list_of_ids = ast.literal_eval(obj.candidates_internal_ids)
+    #     links = []
+    #     for record_id in list_of_ids:
+    #         link = reverse('admin.vk_scraping_posting_record_change', args=[record_id])
+    #         links.append('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>'.format(link, record_id))
+    #
+    #     return ','.join(links)
 
 
 admin.site.register(User, UserAdmin)

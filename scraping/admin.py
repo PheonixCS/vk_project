@@ -63,7 +63,7 @@ class RecordAdmin(admin.ModelAdmin):
         'group_audience_ratio'
     ]
     search_fields = [
-        'group_url'
+        'group_url', 'id'
     ]
     list_filter = [
         'group', IsPostedFilter
