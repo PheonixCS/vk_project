@@ -77,7 +77,10 @@ class RecordAdmin(admin.ModelAdmin):
         return format_html(f'<a href="{obj.donor_url}" target="_blank" rel="noopener noreferrer">{obj.donor_url}</a>')
 
     def post_in_group_url_field(self, obj):
-        return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
+        if obj.group_url:
+            return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
+        else:
+            return ''
 
     def post_audience_ratio(self, obj):
         if obj.males_count and obj.females_count:
@@ -85,11 +88,16 @@ class RecordAdmin(admin.ModelAdmin):
                                         round(obj.females_count / (obj.males_count + obj.females_count) * 100))
 
     def group_audience_ratio(self, obj):
-        males = obj.group.male_weekly_average_count
-        females = obj.group.female_weekly_average_count
+        try:
+            males = obj.group.male_weekly_average_count
+            females = obj.group.female_weekly_average_count
+        except AttributeError:
+            males, females = None, None
         if males and females:
             return '{}% М {}% Ж'.format(round(males / (males + females) * 100),
                                         round(females / (males + females) * 100))
+        else:
+            return 'None'
 
     post_in_donor_url_field.allow_tags = True
     post_in_donor_url_field.short_description = 'Пост в источнике'
