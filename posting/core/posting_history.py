@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 
 def save_posting_history(group: Group, record: Record, candidates: QuerySet) -> PostingHistory:
 
-    candidates_str = str(candidates.values_list('id', flat=True))
+    candidates_str = str(list(candidates.values_list('id', flat=True)))
     candidates_number = int(candidates.count())
 
     obj = PostingHistory.objects.create(
