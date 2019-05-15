@@ -1,10 +1,12 @@
 # functions to store scraping statistics
-from posting.models import PostingHistory
+from posting.models import PostingHistory, Group
+from scraping.models import Record
+from django.db.models import QuerySet
 
 
-def save_posting_history(group, record, candidates):
+def save_posting_history(group: Group, record: Record, candidates: QuerySet) -> PostingHistory:
 
-    candidates_str = candidates.values_list('id', flat=True)
+    candidates_str = str(candidates.values_list('id', flat=True))
     candidates_number = int(candidates.count())
 
     obj = PostingHistory.objects.create(
