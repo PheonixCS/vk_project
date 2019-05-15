@@ -47,7 +47,7 @@ class RecordAdmin(admin.ModelAdmin):
         'group_url'
     ]
     list_filter = [
-        'group'
+        'group', 'IsPostedFilter'
     ]
     ordering = [
         '-post_in_group_date'
@@ -83,9 +83,31 @@ class RecordAdmin(admin.ModelAdmin):
             self.readonly_fields = [field.name for field in obj.__class__._meta.fields]
         return self.readonly_fields
 
-    def get_queryset(self, request):
-        qs = super(RecordAdmin, self).get_queryset(request)
-        return qs.filter(post_in_group_date__isnull=False)
+    # def get_queryset(self, request):
+    #     qs = super(RecordAdmin, self).get_queryset(request)
+    #     return qs.filter(post_in_group_date__isnull=False)
+
+    def is_posted(self, obj):
+        return obj.post_in_group_date is None
+
+
+class IsPostedFilter(admin.SimpleListFilter):
+    title = 'is_posted'
+    parameter_name = 'is_posted'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('Yes', 'Yes'),
+            ('No', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'Yes':
+            return queryset.filter(post_in_group_date__isnull=False)
+        elif value == 'No':
+            return queryset.exclude(post_in_group_date__isnull=False)
+        return queryset
 
 
 class ScrapingHistoryAdmin(admin.ModelAdmin):
