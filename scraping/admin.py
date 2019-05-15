@@ -26,6 +26,25 @@ class DonorAdmin(admin.ModelAdmin):
     vk_url_field.short_description = 'Ссылка'
 
 
+class IsPostedFilter(admin.SimpleListFilter):
+    title = 'is_posted'
+    parameter_name = 'is_posted'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('Yes', 'Yes'),
+            ('No', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'Yes':
+            return queryset.filter(post_in_group_date__isnull=False)
+        elif value == 'No':
+            return queryset.exclude(post_in_group_date__isnull=False)
+        return queryset
+
+
 class RecordAdmin(admin.ModelAdmin):
     exclude = [
         'females_count',
@@ -41,13 +60,14 @@ class RecordAdmin(admin.ModelAdmin):
         'post_in_group_url_field',
         'post_in_group_date',
         'post_audience_ratio',
-        'group_audience_ratio'
+        'group_audience_ratio',
+        'is_posted'
     ]
     search_fields = [
         'group_url'
     ]
     list_filter = [
-        'group', 'IsPostedFilter'
+        'group', IsPostedFilter
     ]
     ordering = [
         '-post_in_group_date'
@@ -91,23 +111,7 @@ class RecordAdmin(admin.ModelAdmin):
         return obj.post_in_group_date is None
 
 
-class IsPostedFilter(admin.SimpleListFilter):
-    title = 'is_posted'
-    parameter_name = 'is_posted'
 
-    def lookups(self, request, model_admin):
-        return (
-            ('Yes', 'Yes'),
-            ('No', 'No'),
-        )
-
-    def queryset(self, request, queryset):
-        value = self.value()
-        if value == 'Yes':
-            return queryset.filter(post_in_group_date__isnull=False)
-        elif value == 'No':
-            return queryset.exclude(post_in_group_date__isnull=False)
-        return queryset
 
 
 class ScrapingHistoryAdmin(admin.ModelAdmin):
