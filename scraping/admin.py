@@ -60,8 +60,7 @@ class RecordAdmin(admin.ModelAdmin):
         'post_in_group_url_field',
         'post_in_group_date',
         'post_audience_ratio',
-        'group_audience_ratio',
-        'is_posted'
+        'group_audience_ratio'
     ]
     search_fields = [
         'group_url'
@@ -117,9 +116,6 @@ class RecordAdmin(admin.ModelAdmin):
 
     def is_posted(self, obj):
         return obj.post_in_group_date is None
-
-
-
 
 
 class ScrapingHistoryAdmin(admin.ModelAdmin):
