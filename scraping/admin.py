@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Donor, Filter, Record
+from .models import Donor, Filter, Record, ScrapingHistory
 
 
 class FilterInLine(admin.StackedInline):
@@ -88,5 +88,15 @@ class RecordAdmin(admin.ModelAdmin):
         return qs.filter(post_in_group_date__isnull=False)
 
 
+class ScrapingHistoryAdmin(admin.ModelAdmin):
+    ordering = ['-created_at']
+    list_filter = ('group', 'filter_name')
+    search_fields = ['group', 'filter_name']
+
+    readonly_fields = ('created_at', 'group', 'filter_name', 'filtered_number')
+    list_display = ('created_at', 'group', 'filter_name', 'filtered_number')
+
+
 admin.site.register(Donor, DonorAdmin)
 admin.site.register(Record, RecordAdmin)
+admin.site.register(ScrapingHistory, ScrapingHistoryAdmin)
