@@ -90,7 +90,7 @@ class RecordAdmin(admin.ModelAdmin):
 
 class ScrapingHistoryAdmin(admin.ModelAdmin):
     ordering = ['-created_at']
-    list_filter = ('group', 'filter_name')
+    list_filter = ('filter_name', 'group')
     search_fields = ['group', 'filter_name']
 
     readonly_fields = ('created_at', 'group', 'filter_name', 'filtered_number')
