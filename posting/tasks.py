@@ -115,9 +115,10 @@ def examine_groups():
                 continue
 
         if not group.group_id:
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+            api = session.get_api()
             if not api:
                 continue
             group.group_id = fetch_group_id(api, group.domain_or_id)
@@ -290,7 +291,11 @@ def post_music(login, password, app_id, group_id, record_id):
 
     try:
         session = create_vk_session_using_login_password(login, password, app_id)
+        if not session:
+            return
         api = session.get_api()
+        if not api:
+            return
 
         attachments = []
 
@@ -495,12 +500,11 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('start posting horoscopes in {} group'.format(group_id))
 
     session = create_vk_session_using_login_password(login, password, app_id)
-    api = session.get_api()
-
     if not session:
         log.error('session not created in group {}'.format(group_id))
         return
 
+    api = session.get_api()
     if not api:
         log.error('no api was created in group {}'.format(group_id))
         return
@@ -757,7 +761,12 @@ def pin_best_post():
             log.debug('got best record with id: {}'.format(best['id']))
 
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+
             api = session.get_api()
+            if not api:
+                continue
 
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])
