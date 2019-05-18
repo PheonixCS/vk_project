@@ -58,6 +58,6 @@ def get_tomorrow_date_ru():
         'декабря'
     ]
 
-    date = '{} {}'.format(tomorrow.strftime('%d'), month_ru[int(tomorrow.strftime('%m')) - 1])
+    date = '{} {}'.format(tomorrow.day, month_ru[int(tomorrow.strftime('%m')) - 1])
 
     return date

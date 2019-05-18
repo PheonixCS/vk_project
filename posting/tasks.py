@@ -37,12 +37,13 @@ from posting.core.poster import (
     get_groups_to_update_sex_statistics,
     prepare_audio_attachments,
 )
+from posting.core.posting_history import save_posting_history
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
-from scraping.core.horoscopes import fetch_zodiac_sign
-from scraping.models import Record, Horoscope, Movie, Trailer
+from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
+from scraping.models import Record, Horoscope, Movie, Trailer, Attachment
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
@@ -80,13 +81,14 @@ def examine_groups():
             log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
             continue
 
-        if group.is_horoscopes:
-            if group.group_id in main_horoscope_ids and Horoscope.objects.filter(post_in_group_date__gt=today_start):
-                is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            elif group.horoscopes.filter(post_in_group_date__isnull=True):
-                is_time_to_post = group.posting_time.minute == now_minute
-            else:
-                is_time_to_post = False
+        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True):
+            is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+            # if group.group_id in main_horoscope_ids and Horoscope.objects.filter(post_in_group_date__gt=today_start):
+            #     is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
+            # elif group.horoscopes.filter(post_in_group_date__isnull=True):
+            #     is_time_to_post = group.posting_time.minute == now_minute
+            # else:
+            #     is_time_to_post = False
         else:
             is_time_to_post = group.posting_time.minute == now_minute
 
@@ -186,15 +188,12 @@ def examine_groups():
         horoscope_condition = (
                 group.is_horoscopes
                 and is_time_to_post
-                and (group.horoscopes.filter(post_in_group_date__isnull=True) or group.group_id in main_horoscope_ids)
+                and group.horoscopes.filter(post_in_group_date__isnull=True)
         )
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horoscopes condition')
 
-            if group.group_id in main_horoscope_ids:
-                horoscope_records = Horoscope.objects.filter(post_in_group_date__gt=today_start)
-            else:
-                horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
+            horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
             if horoscope_records.exists():
                 horoscope_record = horoscope_records.last()
                 post_horoscope.delay(group.user.login,
@@ -262,6 +261,8 @@ def examine_groups():
             the_best_record.status = Record.POSTING
             the_best_record.save(update_fields=['status'])
             log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
+
+            save_posting_history(group=group, record=the_best_record, candidates=records.exclude(pk=the_best_record.id))
 
             try:
                 if group.is_background_abstraction_enabled:
@@ -508,9 +509,11 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     if not api:
         log.error('no api was created in group {}'.format(group_id))
         return
+    
+    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
     group = Group.objects.get(group_id=group_id)
-    horoscope_record = Horoscope.objects.get(pk=horoscope_record_id)
+    horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
     try:
@@ -554,6 +557,10 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
     horoscope_record.post_in_group_date = timezone.now()
     horoscope_record.save()
+
+    if group_id not in main_horoscope_ids:
+        save_horoscope_for_main_groups(horoscope_record, attachments)
+
     log.debug('post horoscopes in group {} finished'.format(group_id))
 
 

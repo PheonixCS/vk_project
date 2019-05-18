@@ -3,8 +3,10 @@ from django.contrib.admin.views.main import ChangeList
 from django.db.models import Sum, TextField
 from django.forms import Textarea
 from django.utils.html import format_html
+from django.urls import reverse
+import ast
 
-from .models import User, ServiceToken, Group, AdditionalText, BackgroundAbstraction, MusicGenreEpithet
+from .models import User, ServiceToken, Group, AdditionalText, BackgroundAbstraction, MusicGenreEpithet, PostingHistory
 
 
 class MembershipInline(admin.TabularInline):
@@ -156,7 +158,26 @@ class BackgroundAbstractionAdmin(admin.ModelAdmin):
         return format_html(f'<img src="{obj.picture.url}" width="{obj.picture.width}" height={obj.picture.height} />')
 
 
+class PostingHistoryAdmin(admin.ModelAdmin):
+    ordering = ['-created_at']
+    list_filter = ('group',)
+    search_fields = ['group', 'record']
+
+    readonly_fields = ('created_at', 'group', 'record', 'candidates_number', 'candidates_internal_ids')
+    list_display = ('created_at', 'group', 'record', 'candidates_number')
+
+    # def candidates_internal_ids(self, obj):
+    #     list_of_ids = ast.literal_eval(obj.candidates_internal_ids)
+    #     links = []
+    #     for record_id in list_of_ids:
+    #         link = reverse('admin.vk_scraping_posting_record_change', args=[record_id])
+    #         links.append('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>'.format(link, record_id))
+    #
+    #     return ','.join(links)
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(ServiceToken)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(BackgroundAbstraction, BackgroundAbstractionAdmin)
+admin.site.register(PostingHistory, PostingHistoryAdmin)

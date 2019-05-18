@@ -222,6 +222,22 @@ class Attachment(models.Model):
         (GIF, 'gif'),
         (PICTURE, 'picture')
     )
+    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='attachments', null=True)
+    h_record = models.ForeignKey(Horoscope, on_delete=models.CASCADE, related_name='attachments', null=True)
 
     data_type = models.CharField(choices=TYPE_CHOICES, max_length=16)
+    origin_url = models.URLField(null=True)
+    vk_attachment_id = models.CharField(null=True, max_length=200)
+
+
+class ScrapingHistory(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    group = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='history')
+
+    filter_name = models.CharField(max_length=100, default='unknown')
+    filtered_number = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'История скрапинга'
+        verbose_name_plural = 'История скрапинга'
 

@@ -11,7 +11,7 @@ class SexStatisticsTests(TestCase):
 
     def create_groups(self):
         for group_id in self.group_ids:
-            Group.objects.get_or_create(domain_or_id='test', group_id=group_id)
+            Group.objects.get_or_create(domain_or_id='test{}'.format(group_id), group_id=group_id)
 
     @override_config(EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE='[]')
     def test_mistake_in_config(self):
