@@ -3,6 +3,8 @@ from random import randint
 from django.db import models
 from django.db.models import Count
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Donor(models.Model):
@@ -91,13 +93,13 @@ class Record(models.Model):
     unknown_count = models.IntegerField(default=0, verbose_name='Лайков от неопределенного пола')
     status = models.IntegerField(choices=STATUS_CHOICES, default=NEW, verbose_name='Статус записи')
 
-    def save(self, *args, **kwargs):
-        if self.record_id:
-            self.donor_url = f'https://vk.com/wall-{self.donor_id}_{self.record_id}'
-        if self.post_in_group_id:
-            self.group_url = f'https://vk.com/wall-{self.group_id}_{self.post_in_group_id}'
-
-        super(Record, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.record_id:
+    #         self.donor_url = f'https://vk.com/wall-{self.donor_id}_{self.record_id}'
+    #     if self.post_in_group_id:
+    #         self.group_url = f'https://vk.com/wall-{self.group_id}_{self.post_in_group_id}'
+    #
+    #     super(Record, self).save(*args, **kwargs)
 
     def get_attachments_count(self):
         gif_count = self.gifs.count()
@@ -118,6 +120,17 @@ class Record(models.Model):
     class Meta:
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
+
+
+# https://stackoverflow.com/questions/13014411
+@receiver(post_save, sender=Record, dispatch_uid='update_links')
+def update_links(sender, instance, **kwargs):
+    if instance.record_id:
+        instance.donor_url = f'https://vk.com/wall-{instance.donor_id}_{instance.record_id}'
+    if instance.post_in_group_id:
+        instance.group_url = f'https://vk.com/wall-{instance.group_id}_{instance.post_in_group_id}'
+
+    instance.save()
 
 
 class Image(models.Model):
