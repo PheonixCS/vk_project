@@ -128,7 +128,7 @@ def set_donors_average_view():
     log.debug('set_donors_average_view started')
 
     required_count = config.COMMON_RECORDS_COUNT_FOR_DONOR
-    donors = Donor.objects.filter(is_involved=True, is_banned=False)
+    donors = Donor.objects.filter(is_involved=True, ban_reason__isnull=True)
 
     for donor in donors:
         if donor.records.count() < required_count:
