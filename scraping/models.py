@@ -6,11 +6,19 @@ from django.utils import timezone
 
 
 class Donor(models.Model):
+    OLD = 1
+    DISABLED = 2
+
+    BAN_REASONS_CHOICES = (
+        (OLD, 'old'),
+        (DISABLED, 'disabled'),
+    )
+
     id = models.CharField(max_length=32, verbose_name='Domain/id группы донора', primary_key=True)
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
-    is_banned = models.BooleanField(default=False, verbose_name='Донор забанен')
+    ban_reason = models.IntegerField(choices=BAN_REASONS_CHOICES, blank=True, null=True)
     average_views_number = models.IntegerField(
         null=True, verbose_name='Среднее количество просмотров поста', blank=True)
 
@@ -27,9 +35,9 @@ class Donor(models.Model):
         verbose_name_plural = 'Источники'
 
     # Custom
-    def ban(self):
-        self.is_banned = True
-        self.save(update_fields=['is_banned'])
+    def ban(self, reason):
+        self.ban_reason = reason
+        self.save(update_fields=['ban_reason'])
 
 
 class Filter(models.Model):
