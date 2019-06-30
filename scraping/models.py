@@ -3,8 +3,6 @@ from random import randint
 from django.db import models
 from django.db.models import Count
 from django.utils import timezone
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 
 class Donor(models.Model):
@@ -12,15 +10,16 @@ class Donor(models.Model):
     DISABLED = 2
 
     BAN_REASONS_CHOICES = (
-        (OLD, 'old'),
-        (DISABLED, 'disabled'),
+        (OLD, 'Нет новых постов'),
+        (DISABLED, 'Забанен в вк'),
     )
 
     id = models.CharField(max_length=32, verbose_name='Domain/id группы донора', primary_key=True)
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
-    ban_reason = models.IntegerField(choices=BAN_REASONS_CHOICES, blank=True, null=True)
+    ban_reason = models.IntegerField(choices=BAN_REASONS_CHOICES, blank=True, null=True,
+                                     verbose_name='Причина отключения донора')
     average_views_number = models.IntegerField(
         null=True, verbose_name='Среднее количество просмотров поста', blank=True)
 
@@ -131,18 +130,6 @@ class Record(models.Model):
     class Meta:
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
-
-
-# # https://stackoverflow.com/questions/13014411
-# @receiver(post_save, sender=Record, dispatch_uid='update_links')
-# def update_links(sender, instance, **kwargs):
-#     if instance.record_id:
-#         instance.donor_url = f'https://vk.com/wall-{instance.donor_id}_{instance.record_id}'
-#     if instance.post_in_group_id:
-#         instance.group_url = f'https://vk.com/wall-{instance.group_id}_{instance.post_in_group_id}'
-#     # prevent recursion
-#     instance.save()
-#     post_save.connect(update_links, sender=sender)
 
 
 class Image(models.Model):
