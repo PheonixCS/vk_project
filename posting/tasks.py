@@ -48,6 +48,7 @@ from services.vk.core import create_vk_session_using_login_password, create_vk_a
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
 from services.vk.wall import get_wall
+from services.horoscopes.core import HoroscopesPage
 
 log = logging.getLogger('posting.scheduled')
 
@@ -83,12 +84,6 @@ def examine_groups():
 
         if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True):
             is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            # if group.group_id in main_horoscope_ids and Horoscope.objects.filter(post_in_group_date__gt=today_start):
-            #     is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-            # elif group.horoscopes.filter(post_in_group_date__isnull=True):
-            #     is_time_to_post = group.posting_time.minute == now_minute
-            # else:
-            #     is_time_to_post = False
         else:
             is_time_to_post = group.posting_time.minute == now_minute
 
@@ -117,9 +112,10 @@ def examine_groups():
                 continue
 
         if not group.group_id:
-            api = create_vk_session_using_login_password(group.user.login,
-                                                         group.user.password,
-                                                         group.user.app_id).get_api()
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+            api = session.get_api()
             if not api:
                 continue
             group.group_id = fetch_group_id(api, group.domain_or_id)
@@ -194,7 +190,16 @@ def examine_groups():
 
             horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
             if horoscope_records.exists():
-                horoscope_record = horoscope_records.last()
+
+                horoscope_signs = HoroscopesPage.get_signs()
+                for sign in horoscope_signs:
+                    records_filter = horoscope_records.filter(zodiac_sign=sign)
+                    if records_filter:
+                        horoscope_record = records_filter.last()
+                        break
+                else:
+                    horoscope_record = horoscope_records.last()
+
                 post_horoscope.delay(group.user.login,
                                      group.user.password,
                                      group.user.app_id,
@@ -291,7 +296,11 @@ def post_music(login, password, app_id, group_id, record_id):
 
     try:
         session = create_vk_session_using_login_password(login, password, app_id)
+        if not session:
+            return
         api = session.get_api()
+        if not api:
+            return
 
         attachments = []
 
@@ -496,16 +505,16 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('start posting horoscopes in {} group'.format(group_id))
 
     session = create_vk_session_using_login_password(login, password, app_id)
-    api = session.get_api()
-    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
-
     if not session:
         log.error('session not created in group {}'.format(group_id))
         return
 
+    api = session.get_api()
     if not api:
         log.error('no api was created in group {}'.format(group_id))
         return
+    
+    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
     group = Group.objects.get(group_id=group_id)
     horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
@@ -763,7 +772,12 @@ def pin_best_post():
             log.debug('got best record with id: {}'.format(best['id']))
 
             session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            if not session:
+                continue
+
             api = session.get_api()
+            if not api:
+                continue
 
             group.group_id = fetch_group_id(api, group.domain_or_id)
             group.save(update_fields=['group_id'])

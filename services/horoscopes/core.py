@@ -10,16 +10,7 @@ log = logging.getLogger('services.horoscopes')
 
 
 class HoroscopesPage:
-    def __init__(self, host):
-        self.host = host
-        self.signs_map = {}
-        self.text_locator = ''
-        self.parser = 'html.parser'
-
-        self._headers = {
-            'User-Agent': self.update_user_agent()
-        }
-        self._signs = [
+    SIGNS = [
             'arises',  # Овен
             'taurus',  # Телец
             'gemini',  # Близнецы
@@ -33,6 +24,16 @@ class HoroscopesPage:
             'aquarius',  # Водолеи
             'pisces'  # Рыбы
         ]
+
+    def __init__(self, host):
+        self.host = host
+        self.signs_map = {}
+        self.text_locator = ''
+        self.parser = 'html.parser'
+
+        self._headers = {
+            'User-Agent': self.update_user_agent()
+        }
 
     def parse(self) -> dict:
         log.info(f'started parsing {self.host}')
@@ -101,3 +102,7 @@ class HoroscopesPage:
         ]
 
         return random.choice(list_of_agents)
+
+    @classmethod
+    def get_signs(cls):
+        return cls.SIGNS

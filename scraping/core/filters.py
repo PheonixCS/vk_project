@@ -60,14 +60,23 @@ def filter_out_records_with_small_images(records, min_quantity_of_pixels=config.
         attachments = record.get('attachments')
         if not attachments:
             filtered_records.append(record)
+            continue
+
+        for attachment in attachments:
+            if attachment['type'] != 'photo':
+                continue
+
+            width = attachment['photo'].get('width', None)
+            height = attachment['photo'].get('height', None)
+            if not width or not height:
+                log.debug(f'record {record.get("id", None)} photo has no dimensions')
+                continue
+
+            if width < min_quantity_of_pixels or height < min_quantity_of_pixels:
+                log.debug(f'filter record {record.get("id", None)} due to min width or height value')
+                break
         else:
-            for attachment in attachments:
-                if attachment['type'] == 'photo' and (attachment['photo']['width'] < min_quantity_of_pixels or
-                                                      attachment['photo']['height'] < min_quantity_of_pixels):
-                    log.debug('filter record {} due to min width or height value'.format(record.get('id', None)))
-                    break
-            else:
-                filtered_records.append(record)
+            filtered_records.append(record)
 
     return filtered_records
 

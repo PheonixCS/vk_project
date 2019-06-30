@@ -11,7 +11,12 @@ from scraping.core.filters import (
     filter_out_records_with_unsuitable_attachments,
     filter_out_records_with_small_images,
 )
-from scraping.core.helpers import distribute_donors_between_accounts, find_url_of_biggest_image
+from scraping.core.helpers import (
+    distribute_donors_between_accounts,
+    find_url_of_biggest_image,
+    is_donor_out_of_date,
+    find_newest_record,
+)
 from scraping.models import (
     Donor,
     Record,
@@ -126,7 +131,7 @@ def main():
     tokens = [token.app_service_token for token in ServiceToken.objects.all()]
     log.info('working with {} tokens: {}'.format(len(tokens), tokens))
 
-    donors = Donor.objects.filter(is_involved=True, is_banned=False)
+    donors = Donor.objects.filter(is_involved=True, ban_reason__isnull=True)
     log.info('got {} active donors'.format(len(donors)))
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
@@ -147,7 +152,12 @@ def main():
             wall, error_reason = get_wall(api, donor.id)
             if not wall:
                 if error_reason == GROUP_IS_BANNED:
-                    donor.ban()
+                    donor.ban(reason=donor.DISABLED)
+                continue
+
+            newest_record = find_newest_record(wall['items'])
+            if is_donor_out_of_date(newest_record['date']):
+                donor.ban(reason=donor.OLD)
                 continue
 
             new_records = exclude_old_records(donor, wall)

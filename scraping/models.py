@@ -3,14 +3,24 @@ from random import randint
 from django.db import models
 from django.db.models import Count
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Donor(models.Model):
+    OLD = 1
+    DISABLED = 2
+
+    BAN_REASONS_CHOICES = (
+        (OLD, 'old'),
+        (DISABLED, 'disabled'),
+    )
+
     id = models.CharField(max_length=32, verbose_name='Domain/id группы донора', primary_key=True)
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     is_involved = models.BooleanField(default=True, verbose_name='Донор задействован?')
-    is_banned = models.BooleanField(default=False, verbose_name='Донор забанен')
+    ban_reason = models.IntegerField(choices=BAN_REASONS_CHOICES, blank=True, null=True)
     average_views_number = models.IntegerField(
         null=True, verbose_name='Среднее количество просмотров поста', blank=True)
 
@@ -27,9 +37,9 @@ class Donor(models.Model):
         verbose_name_plural = 'Источники'
 
     # Custom
-    def ban(self):
-        self.is_banned = True
-        self.save(update_fields=['is_banned'])
+    def ban(self, reason):
+        self.ban_reason = reason
+        self.save(update_fields=['ban_reason'])
 
 
 class Filter(models.Model):
@@ -91,13 +101,13 @@ class Record(models.Model):
     unknown_count = models.IntegerField(default=0, verbose_name='Лайков от неопределенного пола')
     status = models.IntegerField(choices=STATUS_CHOICES, default=NEW, verbose_name='Статус записи')
 
-    def save(self, *args, **kwargs):
-        if self.record_id:
-            self.donor_url = f'https://vk.com/wall-{self.donor_id}_{self.record_id}'
-        if self.post_in_group_id:
-            self.group_url = f'https://vk.com/wall-{self.group_id}_{self.post_in_group_id}'
-
-        super(Record, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.record_id:
+    #         self.donor_url = f'https://vk.com/wall-{self.donor_id}_{self.record_id}'
+    #     if self.post_in_group_id:
+    #         self.group_url = f'https://vk.com/wall-{self.group_id}_{self.post_in_group_id}'
+    #
+    #     super(Record, self).save(*args, **kwargs)
 
     def get_attachments_count(self):
         gif_count = self.gifs.count()
@@ -118,6 +128,17 @@ class Record(models.Model):
     class Meta:
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
+
+
+# https://stackoverflow.com/questions/13014411
+@receiver(post_save, sender=Record, dispatch_uid='update_links')
+def update_links(sender, instance, **kwargs):
+    if instance.record_id:
+        instance.donor_url = f'https://vk.com/wall-{instance.donor_id}_{instance.record_id}'
+    if instance.post_in_group_id:
+        instance.group_url = f'https://vk.com/wall-{instance.group_id}_{instance.post_in_group_id}'
+
+    instance.save()
 
 
 class Image(models.Model):

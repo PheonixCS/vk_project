@@ -51,6 +51,7 @@ CONSTANCE_CONFIG = {
     'MAIN_HOROSCOPES_IDS': ('[29062628, 29038248]',
                             'Main horoscope groups',
                             str),
+    'DONOR_OUTDATE_INTERVAL': (30, 'Donor considered outdated if last post was N days ago', int)
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
