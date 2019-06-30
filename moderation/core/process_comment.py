@@ -83,6 +83,8 @@ def process_comment(comment):
         return False
 
     session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+    if not session:
+        return None
     api = session.get_api()
     if not api:
         log.warning('group {} no api created!'.format(comment['group_id']))
