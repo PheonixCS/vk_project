@@ -49,7 +49,9 @@ class GroupInline(admin.TabularInline):
     readonly_fields = [
         'url',
         'name',
-        'group_id'
+        'group_id',
+        'domain_or_id',
+        'posting_time'
     ]
 
 
