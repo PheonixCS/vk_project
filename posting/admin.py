@@ -177,10 +177,6 @@ class UserAdmin(admin.ModelAdmin):
     readonly_fields = ('vk_url_field',)
     list_display = ('login', 'vk_url_field',)
 
-    inlines = [
-        GroupInline,
-    ]
-
     def vk_url_field(self, obj):
         if obj.url:
             if obj.initials:
