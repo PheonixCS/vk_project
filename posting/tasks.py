@@ -910,7 +910,7 @@ def update_statistics():
 
 
 @shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
-def sex_statistics_weekly(self):
+def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
     groups = get_groups_to_update_sex_statistics()
