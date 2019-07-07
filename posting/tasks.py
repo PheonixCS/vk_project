@@ -348,11 +348,14 @@ def post_music(login, password, app_id, group_id, record_id):
             text_to_image = f'{text_to_image}\n{genre_text}' if text_to_image else genre_text
 
         # image
+        image_file_paths = []
         record_original_image = record.images.first()
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
+        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
         if record_original_image:
             image_to_template = download_file(record_original_image.url)
+            image_file_paths.append(image_to_template)
         elif abstractions or config.FORCE_USE_ABSTRACTION:
             abstraction = find_next_element_by_last_used_id(abstractions,
                                                             group.last_used_background_abstraction_id)
@@ -363,8 +366,9 @@ def post_music(login, password, app_id, group_id, record_id):
             record.fail()
             return
 
-        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
         result_image_name = paste_abstraction_on_template(template_image, image_to_template)
+        image_file_paths.append(result_image_name)
+
         paste_text_on_music_image(result_image_name, text_to_image)
 
         attachments.append(upload_photo(session, result_image_name, group_id))
@@ -373,6 +377,8 @@ def post_music(login, password, app_id, group_id, record_id):
                                       from_group=1,
                                       message=record_text,
                                       attachments=','.join(attachments))
+
+        delete_files(image_file_paths)
 
         record.post_in_group_id = post_response.get('post_id', 0)
         record.post_in_group_date = timezone.now()
