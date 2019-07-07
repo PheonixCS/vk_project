@@ -25,6 +25,7 @@ pytesseract==0.2.4
 pytube==9.3.0
 pytz==2018.4
 ratelimit==2.2.0
+ratelimitingfilter==1.2
 raven==6.9.0
 requests==2.18.4
 sentry-sdk==0.3.6
