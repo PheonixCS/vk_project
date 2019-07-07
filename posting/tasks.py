@@ -840,7 +840,7 @@ def delete_old_ads():
     log.info('finish deleting old ads')
 
 
-@shared_task
+@shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
 def update_statistics():
     log.debug('update_statistics called')
 
