@@ -126,6 +126,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 FILE_UPLOAD_PERMISSIONS = 0o640
 
+# IMPORT ORDER IS IMPORTANT
 from .celery_settings import *
 from .constance_settings import *
 from .log_settings import *

@@ -74,8 +74,8 @@ def get_ad_in_last_hour(api, group_id):
                   'date': records[0].get('date')}
             log.debug('got ad with id {} in group {}'.format(ad['id'], group_id))
             return ad
-    except:
-        log.error('got unexpected error in get_ad_in_last_hour', exc_info=True)
+    except VkAPIError as error_msg:
+        log.error('got unexpected error in get_ad_in_last_hour {}'.format(error_msg))
 
 
 def get_records_info_from_groups(api: API, posts: list) -> dict:

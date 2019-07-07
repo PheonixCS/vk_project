@@ -1,12 +1,33 @@
 import logging
 import os
+
+import requests
 import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-
 from vk_scraping_posting.settings import BASE_DIR
+
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', '')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+
+
+class TelegramHandler(logging.Handler):
+    def emit(self, record):
+        if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+            print('lol <{}> <{}>'.format(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID))
+            return
+
+        log_entry = self.format(record)
+        payload = {
+            'chat_id': TELEGRAM_CHAT_ID,
+            'text': log_entry,
+            'parse_mode': 'HTML'
+        }
+        return requests.post('https://api.telegram.org/bot{token}/sendMessage'.format(token=TELEGRAM_TOKEN),
+                             data=payload).content
+
 
 sentry_logging = LoggingIntegration(
     level=logging.INFO,  # Capture info and above as breadcrumbs
@@ -24,6 +45,15 @@ LOGGING = {
     'formatters': {
         'default': {
             'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+        }
+    },
+
+    'filters': {
+        'rate_limit': {
+            '()': 'ratelimitingfilter.RateLimitingFilter',
+            'rate': 5,
+            'per': 60*30,  # 30 minutes
+            'burst': 1
         }
     },
 
@@ -79,6 +109,10 @@ LOGGING = {
             'backupCount': 7,
             'formatter': 'default'
         },
+        'telegram': {
+            'level': 'DEBUG',
+            'class': 'vk_scraping_posting.log_settings.TelegramHandler',
+        },
         '': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
@@ -120,5 +154,11 @@ LOGGING = {
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
             'propagate': True
         },
+        'telegram': {
+            'handlers': ['telegram'],
+            'level': 'WARNING',
+            'propagate': True,
+            'filters': ['rate_limit']
+        }
     },
 }
