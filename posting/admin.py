@@ -12,47 +12,6 @@ class MembershipInline(admin.TabularInline):
     extra = 1
 
 
-class GroupInline(admin.TabularInline):
-    model = Group
-    exclude = [
-        'statistic_url',
-        'is_horoscopes',
-        'is_movies',
-        'is_pin_enabled',
-        'callback_api_token',
-        'is_text_delete_enabled',
-        'is_text_filling_enabled',
-        'is_image_mirror_enabled',
-        'is_changing_image_to_square_enabled',
-        'RGB_image_tone',
-        'is_photos_shuffle_enabled',
-        'is_audios_shuffle_enabled',
-        'is_merge_images_enabled',
-        'is_replace_russian_with_english',
-        'is_additional_text_enabled',
-        'last_used_additional_text_id',
-        'is_background_abstraction_enabled',
-        'last_used_background_abstraction_id',
-        'is_music_genre_epithet_enabled',
-        'last_used_music_genre_epithet_id',
-        'members_count',
-        'members_growth',
-        'number_of_posts_yesterday',
-        'number_of_ad_posts_yesterday',
-        'statistics_last_update_date',
-        'male_weekly_average_count',
-        'female_weekly_average_count',
-        'sex_last_update_date',
-        'donors',
-        'banned_origin_attachment_types'
-    ]
-    readonly_fields = [
-        'url',
-        'name',
-        'group_id'
-    ]
-
-
 class DonorAdmin(admin.ModelAdmin):
     inlines = [
         MembershipInline,
@@ -143,6 +102,8 @@ class GroupAdmin(admin.ModelAdmin):
     inlines = [
         MembershipInline, AdditionalTextInline, MusicGenreEpithetInline
     ]
+
+    list_filter = ['user']
 
     def vk_url_field(self, obj):
         if obj.name:
