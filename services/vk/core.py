@@ -4,8 +4,10 @@ import vk_api
 import vk_requests
 from constance import config
 from vk_requests.exceptions import VkAPIError
+from .vars import BANNED_ACCOUNT_ERROR_MESSAGE
 
 log = logging.getLogger('services.vk.core')
+telegram = logging.getLogger('telegram')
 
 
 def create_vk_session_using_login_password(login, password, app_id):
@@ -16,6 +18,8 @@ def create_vk_session_using_login_password(login, password, app_id):
         vk_session.auth()
     except vk_api.AuthError as error_msg:
         log.info('User {} got api error: {}'.format(login, error_msg))
+        if error_msg == BANNED_ACCOUNT_ERROR_MESSAGE:
+            telegram.critical('Администратор с номером {} не смог залогиниться'.format(login))
         return None
     except:
         log.error('got unexpected error in create_vk_session_using_login_password', exc_info=True)
@@ -30,6 +34,7 @@ def create_vk_api_using_service_token(token):
         api = vk_requests.create_api(service_token=token, api_version=config.VK_API_VERSION)
     except VkAPIError as error_msg:
         log.error('token {} got api error: {}'.format(token, error_msg))
+        telegram.critical('Ошибка с токеном {}: {}'.format(token, error_msg))
         return None
 
     return api

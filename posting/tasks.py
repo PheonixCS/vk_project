@@ -43,7 +43,7 @@ from posting.core.text_utilities import replace_russian_with_english_letters, de
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
-from scraping.models import Record, Horoscope, Movie, Trailer, Attachment
+from scraping.models import Record, Horoscope, Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
@@ -51,6 +51,7 @@ from services.vk.wall import get_wall
 from services.horoscopes.core import HoroscopesPage
 
 log = logging.getLogger('posting.scheduled')
+telegram = logging.getLogger('telegram')
 
 
 @shared_task(time_limit=59)
@@ -70,9 +71,6 @@ def examine_groups():
     hour_ago_threshold = now_time_utc - timedelta(hours=1)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
     week_ago = now_time_utc - timedelta(days=7)
-    today_start = now_time_utc.replace(hour=0, minute=0, second=0)
-
-    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
@@ -283,6 +281,7 @@ def examine_groups():
                                       the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
+                telegram.critical('Неожиданная ошибка при подготовке к постингу')
                 the_best_record.status = Record.FAILED
                 the_best_record.save(update_fields=['status'])
 
@@ -381,6 +380,7 @@ def post_music(login, password, app_id, group_id, record_id):
         record.save()
     except:
         log.error('got unexpected error in post music', exc_info=True)
+        telegram.critical('Неожиданная ошибка при постинге музыки')
         record.fail()
     log.debug('post in group {} finished'.format(group_id))
 
@@ -498,6 +498,7 @@ def post_movie(group_id, movie_id):
         log.debug(f'{post_response} in group {group_id}')
     except:
         log.error('error in movie posting', exc_info=True)
+        telegram.critical('Неожиданная ошибка при постинге фильмов')
 
 
 @shared_task
@@ -557,6 +558,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        telegram.critical('Неожиданная ошибка при постинге гороскопов')
         return
 
     horoscope_record.post_in_group_date = timezone.now()
@@ -716,6 +718,7 @@ def post_record(login, password, app_id, group_id, record_id):
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        telegram.critical('Неожиданная ошибка при обычном постинге')
         record.fail()
         return
 
