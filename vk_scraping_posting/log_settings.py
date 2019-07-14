@@ -52,8 +52,8 @@ LOGGING = {
         'rate_limit': {
             '()': 'ratelimitingfilter.RateLimitingFilter',
             'rate': 5,
-            'per': 60*30,  # 30 minutes
-            'burst': 1
+            'per': 60*10,  # 10 minutes
+            'burst': 5
         }
     },
 
