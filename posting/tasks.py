@@ -43,7 +43,7 @@ from posting.core.text_utilities import replace_russian_with_english_letters, de
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
-from scraping.models import Record, Horoscope, Movie, Trailer, Attachment
+from scraping.models import Record, Horoscope, Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
@@ -51,6 +51,7 @@ from services.vk.wall import get_wall
 from services.horoscopes.core import HoroscopesPage
 
 log = logging.getLogger('posting.scheduled')
+telegram = logging.getLogger('telegram')
 
 
 @shared_task(time_limit=59)
@@ -70,9 +71,6 @@ def examine_groups():
     hour_ago_threshold = now_time_utc - timedelta(hours=1)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
     week_ago = now_time_utc - timedelta(days=7)
-    today_start = now_time_utc.replace(hour=0, minute=0, second=0)
-
-    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
@@ -283,6 +281,7 @@ def examine_groups():
                                       the_best_record.id)
             except:
                 log.error('got unexpected exception in examine_groups', exc_info=True)
+                telegram.critical('Неожиданная ошибка при подготовке к постингу')
                 the_best_record.status = Record.FAILED
                 the_best_record.save(update_fields=['status'])
 
@@ -348,11 +347,14 @@ def post_music(login, password, app_id, group_id, record_id):
             text_to_image = f'{text_to_image}\n{genre_text}' if text_to_image else genre_text
 
         # image
+        image_file_paths = []
         record_original_image = record.images.first()
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
+        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 
         if record_original_image:
             image_to_template = download_file(record_original_image.url)
+            image_file_paths.append(image_to_template)
         elif abstractions or config.FORCE_USE_ABSTRACTION:
             abstraction = find_next_element_by_last_used_id(abstractions,
                                                             group.last_used_background_abstraction_id)
@@ -363,8 +365,9 @@ def post_music(login, password, app_id, group_id, record_id):
             record.fail()
             return
 
-        template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
         result_image_name = paste_abstraction_on_template(template_image, image_to_template)
+        image_file_paths.append(result_image_name)
+
         paste_text_on_music_image(result_image_name, text_to_image)
 
         attachments.append(upload_photo(session, result_image_name, group_id))
@@ -374,6 +377,8 @@ def post_music(login, password, app_id, group_id, record_id):
                                       message=record_text,
                                       attachments=','.join(attachments))
 
+        delete_files(image_file_paths)
+
         record.post_in_group_id = post_response.get('post_id', 0)
         record.post_in_group_date = timezone.now()
         record.group = group
@@ -381,6 +386,7 @@ def post_music(login, password, app_id, group_id, record_id):
         record.save()
     except:
         log.error('got unexpected error in post music', exc_info=True)
+        telegram.critical('Неожиданная ошибка при постинге музыки')
         record.fail()
     log.debug('post in group {} finished'.format(group_id))
 
@@ -498,6 +504,7 @@ def post_movie(group_id, movie_id):
         log.debug(f'{post_response} in group {group_id}')
     except:
         log.error('error in movie posting', exc_info=True)
+        telegram.critical('Неожиданная ошибка при постинге фильмов')
 
 
 @shared_task
@@ -557,6 +564,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        telegram.critical('Неожиданная ошибка при постинге гороскопов')
         return
 
     horoscope_record.post_in_group_date = timezone.now()
@@ -716,6 +724,7 @@ def post_record(login, password, app_id, group_id, record_id):
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
+        telegram.critical('Неожиданная ошибка при обычном постинге')
         record.fail()
         return
 
@@ -840,7 +849,7 @@ def delete_old_ads():
     log.info('finish deleting old ads')
 
 
-@shared_task
+@shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
 def update_statistics():
     log.debug('update_statistics called')
 
@@ -909,52 +918,48 @@ def update_statistics():
     log.debug('update_statistics finished successfully')
 
 
-@shared_task
+@shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
-    try:
-        groups = get_groups_to_update_sex_statistics()
+    groups = get_groups_to_update_sex_statistics()
 
-        for group in groups:
-            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
-            if not session:
-                continue
+    for group in groups:
+        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        if not session:
+            continue
 
-            api = session.get_api()
-            if not api:
-                continue
+        api = session.get_api()
+        if not api:
+            continue
 
-            stats = get_group_week_statistics(api, group_id=group.group_id)
+        stats = get_group_week_statistics(api, group_id=group.group_id)
 
-            male_count_list = []
-            female_count_list = []
+        male_count_list = []
+        female_count_list = []
 
-            for day in stats:
-                sex_list = day.get('sex', [])
-                for sex in sex_list:
-                    if sex.get('value', 'n') == 'f':
-                        female_count_list.append(sex.get('visitors'))
-                    elif sex.get('value', 'n') == 'm':
-                        male_count_list.append(sex.get('visitors'))
+        for day in stats:
+            sex_list = day.get('sex', [])
+            for sex in sex_list:
+                if sex.get('value', 'n') == 'f':
+                    female_count_list.append(sex.get('visitors'))
+                elif sex.get('value', 'n') == 'm':
+                    male_count_list.append(sex.get('visitors'))
 
-            if male_count_list:
-                male_average_count = sum(male_count_list) // len(male_count_list)
-            else:
-                male_average_count = 0
+        if male_count_list:
+            male_average_count = sum(male_count_list) // len(male_count_list)
+        else:
+            male_average_count = 0
 
-            if female_count_list:
-                female_average_count = sum(female_count_list) // len(female_count_list)
-            else:
-                female_average_count = 0
+        if female_count_list:
+            female_average_count = sum(female_count_list) // len(female_count_list)
+        else:
+            female_average_count = 0
 
-            group.male_weekly_average_count = male_average_count
-            group.female_weekly_average_count = female_average_count
-            group.sex_last_update_date = timezone.now()
+        group.male_weekly_average_count = male_average_count
+        group.female_weekly_average_count = female_average_count
+        group.sex_last_update_date = timezone.now()
 
-            group.save(
-                update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
-    except:
-        log.debug('', exc_info=True)
+        group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
 
     log.debug('sex_statistics_weekly finished')

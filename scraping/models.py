@@ -38,7 +38,8 @@ class Donor(models.Model):
     # Custom
     def ban(self, reason):
         self.ban_reason = reason
-        self.save(update_fields=['ban_reason'])
+        self.is_involved = False
+        self.save(update_fields=['ban_reason', 'is_involved'])
 
 
 class Filter(models.Model):

@@ -17,6 +17,8 @@ from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
 from posting.models import Group
 from scraping.models import Attachment
+from django.utils import timezone
+from datetime import timedelta
 
 log = logging.getLogger('posting.poster')
 
@@ -196,6 +198,9 @@ def filter_banned_records(records: QuerySet, banned_types: list) -> QuerySet:
 
 
 def get_groups_to_update_sex_statistics(exclude_groups: List[int] = None) -> QuerySet:
+    now_time_utc = timezone.now()
+    week_ago = now_time_utc - timedelta(days=6, hours=23)
+
     if not exclude_groups:
         try:
             exclude_groups = ast.literal_eval(config.EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE)
@@ -207,6 +212,8 @@ def get_groups_to_update_sex_statistics(exclude_groups: List[int] = None) -> Que
         groups = Group.objects.exclude(group_id__in=exclude_groups)
     else:
         groups = Group.objects.all()
+
+    groups = groups.filter(sex_last_update_date__lte=week_ago)
     log.debug('got {} groups in sex_statistics_weekly'.format(len(groups)))
 
     return groups
