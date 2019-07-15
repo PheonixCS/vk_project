@@ -93,7 +93,7 @@ def process_comment(comment):
     words_stop_list = set(moderation_rule.words_stop_list.split())
     words_in_text = re.sub("[^\w]", " ", comment['object']['text']).split()
 
-    all_checks = (checks.is_post_ad(api, comment['object']['post_id'], comment['group_id']),
+    all_checks = (checks.is_post_ad(comment['object']['post_id'], comment['group_id']),
                   checks.is_stop_words_in_text(words_stop_list, words_in_text),
                   checks.is_scam_words_in_text(words_in_text),
                   checks.is_video_in_attachments(comment['object'].get('attachments', [])),

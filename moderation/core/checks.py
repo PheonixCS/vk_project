@@ -3,23 +3,19 @@ import re
 
 from alphabet_detector import AlphabetDetector
 from urlextract import URLExtract
-from constance import config
-from vk_api import ApiError
+from posting.models import AdRecord
 
 from posting.core.text_utilities import delete_emoji_from_text
 
 log = logging.getLogger('moderation.core.checks')
 
 
-def is_post_ad(api, post_id, group_id):
+def is_post_ad(post_id, group_id):
     try:
-        response = api.wall.getById(posts='-{}_{}'.format(group_id, post_id),
-                                    api_version=config.VK_API_VERSION)
-        post = response[0] if response else {}
-    except ApiError as error_msg:
-        log.error('Group {} post {} got api error in getById method: {}'.format(group_id, post_id, error_msg))
-        return None
-    return post.get('marked_as_ads', None)
+        ad_record = AdRecord.objects.get(group__group_id=group_id, ad_record_id=post_id)
+        return ad_record is not None
+    except AdRecord.DoesNotExist:
+        return False
 
 
 def is_stop_words_in_text(stop_list, text):
