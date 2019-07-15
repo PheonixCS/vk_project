@@ -41,9 +41,9 @@ from posting.core.posting_history import save_posting_history
 from posting.core.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text, \
     delete_emoji_from_text
 from posting.core.vk_helper import is_ads_posted_recently
-from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
+from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, PostingHistory
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
-from scraping.models import Record, Horoscope, Movie, Trailer
+from scraping.models import Record, Horoscope, Movie, Trailer, ScrapingHistory
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
 from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
@@ -963,3 +963,20 @@ def sex_statistics_weekly():
         group.save(update_fields=['male_weekly_average_count', 'female_weekly_average_count', 'sex_last_update_date'])
 
     log.debug('sex_statistics_weekly finished')
+
+
+@shared_task(time_limit=120)
+def delete_old_stat():
+    log.info('delete_old_stat called')
+
+    time_threshold = timezone.now() - timedelta(days=config.STATS_STORING_TIME)
+
+    objects_to_delete = PostingHistory.objects.filter(created_at__lte=time_threshold)
+    number_of_records, extended = objects_to_delete.delete()
+    log.info(f'deleted {number_of_records} of posting history')
+
+    objects_to_delete = ScrapingHistory.objects.filter(created_at__lte=time_threshold)
+    number_of_records, extended = objects_to_delete.delete()
+    log.info(f'deleted {number_of_records} of scraping history')
+
+    log.info('delete_old_stat finished')
