@@ -680,8 +680,9 @@ def post_record(login, password, app_id, group_id, record_id):
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
 
-        uploaded = upload_photos(session, image_files, group_id)
-        attachments.extend(uploaded)
+        if image_files:
+            uploaded = upload_photos(session, image_files, group_id)
+            attachments.extend(uploaded)
 
         delete_files(image_files)
 
