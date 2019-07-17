@@ -49,7 +49,7 @@ def upload_gif(session, gif_url):
             return 'doc{}_{}'.format(owner_id, gif_id)
 
 
-@retry(reraise=True, stop=stop_after_attempt(2), wait=wait_fixed(0.3),
+@retry(reraise=True, stop=stop_after_attempt(3), wait=wait_fixed(3),
        before_sleep=before_sleep_log(log, logging.DEBUG))
 def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id: str) -> list or str or None:
     log.debug('upload_photo called')
