@@ -51,7 +51,8 @@ CONSTANCE_CONFIG = {
     'MAIN_HOROSCOPES_IDS': ('[29062628, 29038248]',
                             'Main horoscope groups',
                             str),
-    'DONOR_OUTDATE_INTERVAL': (30, 'Donor considered outdated if last post was N days ago', int)
+    'DONOR_OUTDATE_INTERVAL': (30, 'Donor considered outdated if last post was N days ago', int),
+    'STATS_STORING_TIME': (30, 'Statistics storing time in days', int)
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -60,7 +61,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'OLD_AD_RECORDS_HOURS', 'OLD_HOROSCOPES_HOURS', 'OLD_MODERATION_TRANSACTIONS_HOURS',
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
         'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
-        'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE',
+        'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE', 'STATS_STORING_TIME'
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',
