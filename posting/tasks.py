@@ -454,7 +454,7 @@ def post_movie(group_id, movie_id):
             to_upload.extend(image_files[:2])
 
             uploaded = upload_photos(session, to_upload, group_id)
-            attachments.append(uploaded)
+            attachments.extend(uploaded)
 
         delete_files(image_files)
 
@@ -682,7 +682,10 @@ def post_record(login, password, app_id, group_id, record_id):
 
         if image_files:
             uploaded = upload_photos(session, image_files, group_id)
-            attachments.extend(uploaded)
+            if isinstance(uploaded, list) and len(uploaded) == 1:
+                attachments.append(uploaded[0])
+            else:
+                attachments.extend(uploaded)
 
         delete_files(image_files)
 
