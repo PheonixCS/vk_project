@@ -3,7 +3,7 @@ import logging
 import vk_api
 
 from posting.core.poster import download_file
-from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_fixed, before_sleep_log
 
 log = logging.getLogger('services.vk.files')
 
@@ -49,7 +49,8 @@ def upload_gif(session, gif_url):
             return 'doc{}_{}'.format(owner_id, gif_id)
 
 
-@retry(reraise=True, stop=stop_after_attempt(2), wait=wait_fixed(0.3), retry=retry_if_exception_type(vk_api.VkApiError))
+@retry(reraise=True, stop=stop_after_attempt(2), wait=wait_fixed(0.3),
+       before_sleep=before_sleep_log(log, logging.DEBUG))
 def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id: str) -> list or str or None:
     log.debug('upload_photo called')
 
