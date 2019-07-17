@@ -3,6 +3,7 @@ import logging
 import vk_api
 
 from posting.core.poster import download_file
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 log = logging.getLogger('services.vk.files')
 
@@ -48,12 +49,16 @@ def upload_gif(session, gif_url):
             return 'doc{}_{}'.format(owner_id, gif_id)
 
 
-def upload_photo(session, image_local_path, group_id):
+@retry(reraise=True, stop=stop_after_attempt(2), wait=wait_fixed(0.3))
+def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id: str) -> list or str or None:
     log.debug('upload_photo called')
+
+    if not (isinstance(image_local_path, str) or isinstance(image_local_path, list)):
+        raise TypeError('upload_photo support only one or several photos as list')
 
     try:
         upload = vk_api.VkUpload(session)
-        photo = upload.photo_wall(
+        upload_result = upload.photo_wall(
             photos=image_local_path,
             group_id=int(group_id)
         )
@@ -61,11 +66,13 @@ def upload_photo(session, image_local_path, group_id):
         log.error('vk exception while uploading photo', exc_info=True)
         return
 
-    if photo and isinstance(photo, list):
-        owner_id, photo_id = photo[0].get('owner_id'), photo[0].get('id')
+    if upload_result and isinstance(upload_result, list):
+        result = ['photo{}_{}'.format(item.get('owner_id'), item.get('id')) for item in upload_result]
 
-        if owner_id and photo_id:
-            return 'photo{}_{}'.format(owner_id, photo_id)
+        if isinstance(image_local_path, str):
+            return result[0]
+        else:
+            return result
 
 
 def check_docs_availability(api, docs):

@@ -45,7 +45,7 @@ from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
 from scraping.models import Record, Horoscope, Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
-from services.vk.files import upload_video, upload_photo, check_docs_availability, check_video_availability
+from services.vk.files import upload_video, upload_photos, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
 from services.vk.wall import get_wall
 from services.horoscopes.core import HoroscopesPage
@@ -370,7 +370,8 @@ def post_music(login, password, app_id, group_id, record_id):
 
         paste_text_on_music_image(result_image_name, text_to_image)
 
-        attachments.append(upload_photo(session, result_image_name, group_id))
+        uploaded = upload_photos(session, result_image_name, group_id)
+        attachments.append(uploaded)
 
         post_response = api.wall.post(owner_id=f'-{group_id}',
                                       from_group=1,
@@ -440,20 +441,22 @@ def post_movie(group_id, movie_id):
         if config.ENABLE_MERGE_IMAGES_MOVIES:
             poster_file = download_file(movie.poster)
             poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
-            delete_files(image_files)
             delete_files(poster_file)
 
-            attachments.append(upload_photo(
-                session,
-                poster_and_three_images,
-                group_id)
-            )
+            uploaded = upload_photos(session, poster_and_three_images, group_id)
+            attachments.append(uploaded)
+
             delete_files(poster_and_three_images)
         else:
-            attachments.append(upload_photo(session, download_file(movie.poster), group_id))
-            for image in image_files[:2]:
-                attachments.append(upload_photo(session, image, group_id))
-            delete_files(image_files)
+            movie_poster = download_file(movie.poster)
+
+            to_upload = [movie_poster]
+            to_upload.extend(image_files[:2])
+
+            uploaded = upload_photos(session, to_upload, group_id)
+            attachments.append(uploaded)
+
+        delete_files(image_files)
 
         log.debug(f'movie {movie.title} post: got attachments {attachments}')
 
@@ -534,7 +537,8 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
-            attachments = upload_photo(session, horoscope_image_name, group_id)
+            uploaded = upload_photos(session, horoscope_image_name, group_id)
+            attachments = uploaded
             delete_files(horoscope_image_name)
             record_text = ''
         else:
@@ -545,7 +549,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
-                attachments = upload_photo(session, image_local_filename, group_id)
+                attachments = upload_photos(session, image_local_filename, group_id)
                 delete_files(image_local_filename)
 
         group_zodiac_sign = fetch_zodiac_sign(group.name)
@@ -676,7 +680,8 @@ def post_record(login, password, app_id, group_id, record_id):
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
 
-            attachments.append(upload_photo(session, image_local_filename, group_id))
+        uploaded = upload_photos(session, image_files, group_id)
+        attachments.extend(uploaded)
 
         delete_files(image_files)
 
