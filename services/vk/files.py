@@ -57,15 +57,20 @@ def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id
     if not (isinstance(image_local_path, str) or isinstance(image_local_path, list)):
         raise TypeError('upload_photo support only one or several photos as list')
 
-    try:
-        upload = vk_api.VkUpload(session)
-        upload_result = upload.photo_wall(
-            photos=image_local_path,
-            group_id=int(group_id)
-        )
-    except vk_api.VkApiError:
-        log.error('vk exception while uploading photo', exc_info=True)
-        return
+    # try:
+    #     upload = vk_api.VkUpload(session)
+    #     upload_result = upload.photo_wall(
+    #         photos=image_local_path,
+    #         group_id=int(group_id)
+    #     )
+    # except vk_api.VkApiError:
+    #     log.error('vk exception while uploading photo', exc_info=True)
+    #     return
+    upload = vk_api.VkUpload(session)
+    upload_result = upload.photo_wall(
+        photos=image_local_path,
+        group_id=int(group_id)
+    )
 
     if upload_result and isinstance(upload_result, list):
         result = ['photo{}_{}'.format(item.get('owner_id'), item.get('id')) for item in upload_result]
