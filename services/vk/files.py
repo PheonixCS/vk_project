@@ -57,6 +57,7 @@ def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id
     if not (isinstance(image_local_path, str) or isinstance(image_local_path, list)):
         raise TypeError('upload_photo support only one or several photos as list')
 
+    # FIXME may be it can be done better
     # try:
     #     upload = vk_api.VkUpload(session)
     #     upload_result = upload.photo_wall(
