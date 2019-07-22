@@ -156,7 +156,8 @@ def main():
                 continue
 
             newest_record = find_newest_record(wall['items'])
-            if is_donor_out_of_date(newest_record['date']):
+            newest_record_date = newest_record.get('date')
+            if newest_record_date and is_donor_out_of_date(newest_record_date):
                 donor.ban(reason=donor.OLD)
                 continue
 
