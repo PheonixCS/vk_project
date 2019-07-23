@@ -3,7 +3,7 @@ from django.test import TestCase
 from constance.test import override_config
 from datetime import date
 
-from scraping.core.helpers import extract_records_per_donor, is_donor_out_of_date
+from scraping.core.helpers import extract_records_per_donor, is_donor_out_of_date, find_newest_record
 
 
 class ExtractionTest(TestCase):
@@ -55,3 +55,28 @@ class OutdatedDonorsTests(TestCase):
 
         newest_record_date = 1558742400  # 25.05.2019
         self.assertTrue(is_donor_out_of_date(newest_record_date, self.date_to_compare))
+
+
+class NewestRecordTests(TestCase):
+    def test_no_records(self):
+        records = []
+        self.assertEqual(find_newest_record(records), {})
+
+    def test_pinned_record(self):
+        records = [
+            {'is_pinned': False, 'date': 1561334400},
+            {'is_pinned': False, 'date': 1557532800},
+            {'is_pinned': True, 'date': 1561507200},
+        ]
+        newest_record = find_newest_record(records)
+        self.assertEqual(len(newest_record), 1)
+        self.assertDictEqual(newest_record, {'is_pinned': False, 'date': 1561334400})
+
+    def test_default_records(self):
+        records = [
+            {'is_pinned': False, 'date': 1561334400},
+            {'is_pinned': False, 'date': 1557532800},
+        ]
+        newest_record = find_newest_record(records)
+        self.assertEqual(len(newest_record), 1)
+        self.assertDictEqual(newest_record, {'is_pinned': False, 'date': 1561334400})
