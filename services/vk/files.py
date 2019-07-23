@@ -105,7 +105,7 @@ def check_docs_availability(api, docs):
         log.error('got unexpected error in check_docs_availability', exc_info=True)
 
 
-def check_video_availability(api, owner_id, video_id):
+def check_video_availability(api, owner_id: int, video_id: int) -> bool:
     """
 
     :param api: api object
@@ -123,5 +123,8 @@ def check_video_availability(api, owner_id, video_id):
         else:
             log.info('check_video_availability failed')
             return False
+    except vk_api.ApiError as e:
+        if e.__str__().startswith('[15]'):
+            pass
     except:
         log.error('got unexpected error in check_video_availability', exc_info=True)
