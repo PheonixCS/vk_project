@@ -5,7 +5,7 @@ from typing import List
 
 
 def find_newest_record(records: List[dict]) -> dict:
-    return max(records, key=lambda x: x['date'] if not x.get('is_pinned') else 0)
+    return max(records, key=lambda x: x.get('date', 0) if not x.get('is_pinned') else 0) if records else {}
 
 
 def is_donor_out_of_date(newest_record_date: int,
