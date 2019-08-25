@@ -12,7 +12,7 @@ from posting.core.images import is_text_fit_to_width, calculate_max_len_in_chars
 log = logging.getLogger('posting.horoscopes')
 
 
-def transfer_horoscope_to_image(raw_text, font_name='bebas_neue_ru.ttf'):
+def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     log.debug('transfer_horoscope_to_image started')
     file_name = 'horoscopes{}.jpg'.format(hash(raw_text) % 1000)
 
@@ -22,14 +22,18 @@ def transfer_horoscope_to_image(raw_text, font_name='bebas_neue_ru.ttf'):
     font_body = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
                                    body_font_size)
 
-    title_text = raw_text.split('\n')[0]
-    body_text = '\n'.join(raw_text.split('\n')[1:])
+    raw_title_text = raw_text.split('\n')[0]
+    title_text = raw_title_text.upper()
+    body_text_raw = raw_text.split('\n')[1:]
+    body_text = '\n'.join(body_text_raw)
+    body_text.capitalize()
 
     img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'horoscopes_template.jpg'))
 
     paste_text_to_center(img, font_title, title_text, 'title')
+
     # TODO really bad implementation
-    while not paste_text_to_center(img, font_body, body_text, 'body'):
+    while not paste_text_to_center(img, font_body, body_text, 'body', text_align='justify'):
         body_font_size -= 5
         font_body = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
                                        body_font_size)
@@ -43,7 +47,7 @@ def transfer_horoscope_to_image(raw_text, font_name='bebas_neue_ru.ttf'):
     return file_name
 
 
-def paste_text_to_center(img_obj, font_obj, text, text_type):
+def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center'):
     white_color = (255, 255, 255)
 
     text_width = font_obj.getsize(text)[0]
@@ -67,7 +71,7 @@ def paste_text_to_center(img_obj, font_obj, text, text_type):
         wrapped_text = wrap(text, text_max_width_in_chars)
         max_text = max(wrapped_text, key=lambda line: font_obj.getsize(line)[0])
         text_width = font_obj.getsize(max_text)[0]
-        text_height = font_obj.getsize(wrapped_text[0])[1] * len(wrapped_text) + 10*(len(wrapped_text)-1)
+        text_height = font_obj.getsize(wrapped_text[0])[1] * len(wrapped_text) + 10 * (len(wrapped_text) - 1)
 
         if text_height >= custom_height:
             return 0
@@ -79,6 +83,49 @@ def paste_text_to_center(img_obj, font_obj, text, text_type):
     x = (img_obj.width - text_width - width_offset) // 2 + width_offset_left
     y = (custom_height - text_height) // 2 + height_offset_top
 
-    draw.multiline_text((x, y), text, white_color, font=font_obj, align='center', spacing=10)
+    if text_align == 'justify':
+        text_lines = text.split('\n')
+
+        space_width = font_obj.getsize(' ')[0]
+        maximum_text = max(text_lines, key=lambda line: font_obj.getsize(line)[0])
+        maximum_text_width = font_obj.getsize(maximum_text)[0]
+
+        for number, line in enumerate(text_lines):
+            text_width = font_obj.getsize(line)[0]
+            if text_width == maximum_text_width:
+                continue
+
+            words_without_spaces = line.split(' ')
+            just_words_width = font_obj.getsize(''.join(words_without_spaces))[0]
+
+            minimum_extra_width = maximum_text_width - just_words_width
+            extra_space_count = round(minimum_extra_width / space_width)
+            spaces_per_join = extra_space_count // len(words_without_spaces)
+
+            if extra_space_count < len(words_without_spaces):
+                result = ' '.join(words_without_spaces)
+            elif extra_space_count % len(words_without_spaces) == 0:
+                result = (' ' * spaces_per_join).join(words_without_spaces)
+            else:
+                over_extra_spaces = extra_space_count - spaces_per_join * len(words_without_spaces)
+
+                first_group = words_without_spaces[:over_extra_spaces]
+                second_group = words_without_spaces[over_extra_spaces:]
+                if len(first_group) == 1:
+                    temp = first_group[0] + ' ' * (spaces_per_join + over_extra_spaces)
+                else:
+                    temp = (' ' * (spaces_per_join + over_extra_spaces)).join(first_group)
+                temp_list = [temp, ]
+                temp_list.extend(second_group)
+                result = (' ' * spaces_per_join).join(temp_list)
+
+            result_width = font_obj.getsize(result)[0]
+
+            text_lines[number] = result
+        text = '\n'.join(text_lines)
+
+        draw.multiline_text((x, y), text, white_color, font=font_obj, align='left', spacing=10)
+    else:
+        draw.multiline_text((x, y), text, white_color, font=font_obj, align=text_align, spacing=10)
 
     return 1
