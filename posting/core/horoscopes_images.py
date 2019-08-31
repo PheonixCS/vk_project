@@ -82,7 +82,8 @@ def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center'
     draw = ImageDraw.Draw(img_obj)
 
     x = (img_obj.width - text_width - width_offset) // 2 + width_offset_left
-    y = (custom_height - text_height) // 2 + height_offset_top
+    # y = (custom_height - text_height) // 2 + height_offset_top
+    y = height_offset_top  # all horoscopes will be at the same height
 
     draw.multiline_text((x, y), text, white_color, font=font_obj, align=text_align, spacing=spacing)
 
