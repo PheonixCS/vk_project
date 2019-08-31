@@ -36,10 +36,11 @@ sentry_logging = LoggingIntegration(
     event_level=logging.WARNING  # Send no events from log messages
 )
 
-sentry_sdk.init(
-    dsn="https://374beeda2c78426ea8cd2cc84d176b1b@sentry.io/1290864",
-    integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
-)
+if not os.getenv('LOCAL'):
+    sentry_sdk.init(
+        dsn="https://374beeda2c78426ea8cd2cc84d176b1b@sentry.io/1290864",
+        integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
+    )
 
 LOGGING = {
     'version': 1,

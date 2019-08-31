@@ -19,4 +19,5 @@ from django.urls import path, include
 urlpatterns = [
     path('moderation/', include('moderation.urls')),
     path('admin/', admin.site.urls),
+    path('', include('stream.urls')),
 ]
