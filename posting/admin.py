@@ -90,7 +90,7 @@ class GroupAdmin(admin.ModelAdmin):
                        'is_image_mirror_enabled', 'is_changing_image_to_square_enabled', 'RGB_image_tone',
                        'is_photos_shuffle_enabled', 'is_audios_shuffle_enabled', 'is_merge_images_enabled',
                        'is_replace_russian_with_english', 'is_additional_text_enabled',
-                       'is_background_abstraction_enabled', 'is_music_genre_epithet_enabled')
+                       'is_background_abstraction_enabled', 'is_music_genre_epithet_enabled', 'is_copyright_needed')
         }),
         ('Статистика', {
             'classes': ('collapse',),

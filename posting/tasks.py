@@ -613,6 +613,10 @@ def post_record(login, password, app_id, group_id, record_id):
         gifs = record.gifs.all()
         videos = record.videos.all()
         record_text = record.text
+        copyright_text = ''
+
+        if group.is_copyright_needed or record.donor.is_copyright_needed:
+            copyright_text = f'https://vk.com/club{record.donor.id}?w=wall-{record.donor.id}_{record.record_id}'
 
         record_text = delete_hashtags_from_text(record_text)
 
@@ -722,10 +726,18 @@ def post_record(login, password, app_id, group_id, record_id):
 
             record_text = '\n'.join([record_text, text_to_add]) if record_text else text_to_add
 
-        post_response = api.wall.post(owner_id='-{}'.format(group_id),
-                                      from_group=1,
-                                      message=record_text,
-                                      attachments=','.join(attachments))
+        if copyright_text:
+            post_response = api.wall.post(owner_id='-{}'.format(group_id),
+                                          from_group=1,
+                                          message=record_text,
+                                          attachments=','.join(attachments),
+                                          copyright=copyright_text)
+        else:
+            post_response = api.wall.post(owner_id='-{}'.format(group_id),
+                                          from_group=1,
+                                          message=record_text,
+                                          attachments=','.join(attachments))
+
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
