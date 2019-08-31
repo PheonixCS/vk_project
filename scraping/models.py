@@ -22,6 +22,7 @@ class Donor(models.Model):
                                      verbose_name='Причина отключения донора')
     average_views_number = models.IntegerField(
         null=True, verbose_name='Среднее количество просмотров поста', blank=True)
+    is_copyright_needed = models.BooleanField(default=False, verbose_name='Указывать как источник в записи?')
 
     # Standard
     def save(self, *args, **kwargs):

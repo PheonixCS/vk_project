@@ -69,6 +69,7 @@ class Group(models.Model):
     is_merge_images_enabled = models.BooleanField(default=False, verbose_name='Объединять 6 изображений в одно?')
     is_replace_russian_with_english = models.BooleanField(default=False,
                                                           verbose_name='Заменять русские буквы английскими?')
+    is_copyright_needed = models.BooleanField(default=False, verbose_name='Указывать источик в записях')
 
     is_additional_text_enabled = models.BooleanField(default=False,
                                                      verbose_name='Добавлять к записи дополнительный текст?')
