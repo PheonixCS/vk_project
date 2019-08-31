@@ -154,7 +154,7 @@ def fill_image_with_text(filepath, text, font_name=config.FONT_NAME):
     draw = ImageDraw.Draw(image)
 
     # TODO make multi line custom function
-    draw.multiline_text((x, y), text, black_color, font=font)
+    draw.multiline_text((x, y), text, black_color, font=font, align='center')
 
     if filepath.endswith('.jpg'):
         image.save(filepath, 'JPEG', quality=95, progressive=True)
