@@ -16,7 +16,7 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     log.debug('transfer_horoscope_to_image started')
     file_name = 'horoscopes{}.jpg'.format(hash(raw_text) % 1000)
 
-    font_title = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
+    font_title = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf'),
                                     config.HOROSCOPES_FONT_TITLE)
     body_font_size = config.HOROSCOPES_FONT_BODY
     font_body = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
@@ -29,7 +29,7 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     body_text = '\n'.join(body_text_raw)
     body_text.capitalize()
 
-    img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'horoscopes_template.jpg'))
+    img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'horoscopes_template_new.png'))
 
     paste_text_to_center(img, font_title, title_text, 'title')
 
@@ -82,8 +82,11 @@ def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center'
     draw = ImageDraw.Draw(img_obj)
 
     x = (img_obj.width - text_width - width_offset) // 2 + width_offset_left
-    # y = (custom_height - text_height) // 2 + height_offset_top
-    y = height_offset_top  # all horoscopes will be at the same height
+
+    if text_type == 'title':
+        y = (custom_height - text_height) // 2 + height_offset_top
+    else:
+        y = height_offset_top  # all horoscopes will be at the same height
 
     draw.multiline_text((x, y), text, white_color, font=font_obj, align=text_align, spacing=spacing)
 
