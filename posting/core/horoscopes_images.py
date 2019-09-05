@@ -29,7 +29,7 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     body_text = '\n'.join(body_text_raw)
     body_text.capitalize()
 
-    img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'horoscopes_template_new.png'))
+    img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'horoscope_template_new.jpg'))
 
     paste_text_to_center(img, font_title, title_text, 'title')
 
