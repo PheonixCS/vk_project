@@ -1,4 +1,3 @@
-.PHONY: venv
 all: stop git_pull reqs migrate restart run
 
 run:
@@ -7,8 +6,6 @@ stop:
 	celery multi stop 1 --pidfile=celeryd.pid
 restart:
 	sudo systemctl restart vk_sp
-venv:
-	. venv/bin/activate
 git_pull:
 	git pull
 migrate:

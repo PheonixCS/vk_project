@@ -1,0 +1,28 @@
+server {
+    listen 80;
+    server_name 80.211.178.81 *.shapranov.org shapranov.org;
+
+    access_log /var/log/vk_sp_logs/access.log;
+    error_log  /var/log/vk_sp_logs/error.log;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    location /static/ {
+        root /home/vk_scraping_posting/vk_scraping_posting;
+    }
+
+    location /media/ {
+        root /home/vk_scraping_posting/vk_scraping_posting;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/vk_scraping_posting/vk_scraping_posting/vk_scraping_posting.sock;
+    }
+
+    location /donate {
+        return 302 https://www.donationalerts.com/r/pavelshapranov;
+    }
+
+    client_max_body_size 8m;
+}

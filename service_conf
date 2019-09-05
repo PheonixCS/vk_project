@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve vk_scraping_posting
+After=network.target
+
+[Service]
+User=vk_scraping_posting
+Group=www-data
+EnvironmentFile=/home/vk_scraping_posting/vk_scraping_posting/.local_settings
+WorkingDirectory=/home/vk_scraping_posting/vk_scraping_posting
+ExecStart=/home/vk_scraping_posting/vk_scraping_posting/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/vk_scraping_posting/vk_scraping_posting/vk_scraping_posting.sock -m 007 vk_scraping_posting.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
