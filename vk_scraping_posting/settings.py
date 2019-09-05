@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'scraping',
     'posting',
     'moderation',
-    'stream',
+    'shapranov',
 
     'constance.backends.database',
     'constance',
