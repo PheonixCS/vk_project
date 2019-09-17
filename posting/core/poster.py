@@ -2,23 +2,23 @@ import ast
 import logging
 import os
 from collections import Counter
-from typing import List
+from datetime import timedelta
 from random import shuffle
+from typing import List
 
 import requests
 from constance import config
 from django.conf import settings
 from django.db.models import Count
 from django.db.models.query import QuerySet
+from django.utils import timezone
 
-from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, fill_image_with_text, \
+from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, paste_text_on_image, \
     mirror_image
 from posting.core.mapping import countries, genres
 from posting.core.text_utilities import delete_emoji_from_text
 from posting.models import Group
 from scraping.models import Attachment
-from django.utils import timezone
-from datetime import timedelta
 
 log = logging.getLogger('posting.poster')
 
@@ -72,7 +72,7 @@ def prepare_image_for_posting(image_local_filepath, **kwargs):
         color_image_in_tone(image_local_filepath, red_tone, green_tone, blue_tone, factor)
 
     if 'text_to_fill' in keys:
-        fill_image_with_text(image_local_filepath, kwargs.get('text_to_fill'))
+        paste_text_on_image(image_local_filepath, kwargs.get('text_to_fill'))
 
 
 def prepare_audio_attachments(audios, is_shuffle=False, is_cut=False):
@@ -96,7 +96,7 @@ def find_the_best_post(records: QuerySet, best_ratio, percent=20):
 
     for i in range(1, 6):
         exact_ratio_records = [record for record in records if
-                               0 <= abs(record.males_females_ratio-best_ratio) <= i*eps]
+                               0 <= abs(record.males_females_ratio - best_ratio) <= i * eps]
 
         if exact_ratio_records:
             best_record = max(exact_ratio_records, key=lambda x: x.rate)
@@ -152,7 +152,7 @@ def find_next_element_by_last_used_id(objects, last_used_object_id):
 
 
 def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
-    divergence = divergence/100
+    divergence = divergence / 100
     records = records.order_by('-rate')
     max_male_percent = from_ratio_to_percent(best_ratio) + divergence
     min_male_percent = from_ratio_to_percent(best_ratio) - divergence
@@ -169,7 +169,7 @@ def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
 
 
 def from_ratio_to_percent(ratio):
-    result = 1 / (1+ratio)
+    result = 1 / (1 + ratio)
     return result
 
 

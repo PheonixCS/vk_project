@@ -57,11 +57,11 @@ def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center'
     if text_type == 'title':
         width_offset_left = 0
         height_offset_top = 0
-        custom_height = 150
+        custom_height = 130
     else:
         width_offset_left = 70
-        height_offset_top = 150
-        custom_height = 1080 - 150
+        height_offset_top = 180
+        custom_height = 1080 - height_offset_top
 
     width_offset = width_offset_left * 2
 

@@ -35,6 +35,16 @@ class ImagesTests(TestCase):
 
         self.assertTrue(True)
 
+    def test_old_text_on_images(self):
+        image_name = 'test_old.jpg'
+
+        img = Image.new('RGB', (500, 500), color='white')
+        img.save(image_name)
+
+        text = '20 of seasdfasdfasdfasdfasdfasdfasdfasdfasdfaptember, Text\nLol kek\nCheburek'
+
+        images.fill_image_with_text(image_name, text)
+
     def test_position_calculation(self):
         image_box = (100, 100)
         text_box = (20, 5)
