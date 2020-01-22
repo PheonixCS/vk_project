@@ -133,6 +133,13 @@ def vk_link_filter(item):
     return True
 
 
+def vk_link_filter_2(item):
+    if re.findall(r'.*vk.com/.*', item['text']):
+        log.debug('delete {} as ad: vk_link_filter2'.format(item['id']))
+        return False
+    return True
+
+
 def raffle_filter(item):
     if 'конкурс' in item['text'].lower() or 'розыгрыш' in item['text'].lower():
         log.debug('delete {} as ad: raffle filter'.format(item['id']))
@@ -150,7 +157,8 @@ def filter_out_ads(records):
         email_filter,
         article_filter,
         vk_link_filter,
-        raffle_filter
+        raffle_filter,
+        vk_link_filter_2
     )
     filtered_records = [record for record in records if all(filter(record) for filter in filters)]
     return filtered_records
