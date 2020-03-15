@@ -636,7 +636,6 @@ def post_record(login, password, app_id, group_id, record_id):
             record_text = ''
 
         # audios part
-
         audios = list(record.audios.all())
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
         prepared_audios = prepare_audio_attachments(audios,
@@ -646,7 +645,6 @@ def post_record(login, password, app_id, group_id, record_id):
         attachments.extend(prepared_audios)
 
         # images part
-
         if group.is_replace_russian_with_english and not text_to_image_condition:
             record_text = replace_russian_with_english_letters(record_text)
 
@@ -659,7 +657,7 @@ def post_record(login, password, app_id, group_id, record_id):
             shuffle(images)
             log.debug('group {} {} images shuffled'.format(group_id, len(images)))
 
-        image_files = [download_file(image.url) for image in images[::-1]]
+        image_files = [download_file(image.url) for image in images]
 
         if (
                 group.is_merge_images_enabled
@@ -730,17 +728,17 @@ def post_record(login, password, app_id, group_id, record_id):
 
             record_text = '\n'.join([record_text, text_to_add]) if record_text else text_to_add
 
+        data_to_post = {
+            'owner_id': f'-{group_id}',
+            'from_group': 1,
+            'message': record_text,
+            'attachments': ','.join(attachments)
+        }
+
         if copyright_text:
-            post_response = api.wall.post(owner_id='-{}'.format(group_id),
-                                          from_group=1,
-                                          message=record_text,
-                                          attachments=','.join(attachments),
-                                          copyright=copyright_text)
-        else:
-            post_response = api.wall.post(owner_id='-{}'.format(group_id),
-                                          from_group=1,
-                                          message=record_text,
-                                          attachments=','.join(attachments))
+            data_to_post['copyright'] = copyright_text
+
+        post_response = api.wall.post(**data_to_post)
 
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
