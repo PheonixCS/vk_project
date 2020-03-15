@@ -159,6 +159,9 @@ class Video(models.Model):
     owner_id = models.IntegerField(null=True)
     video_id = models.IntegerField(null=True)
 
+    def __str__(self):
+        return f'{self.record_id} {self.video_id}'
+
 
 class Horoscope(models.Model):
     group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='horoscopes')

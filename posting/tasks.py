@@ -243,6 +243,8 @@ def examine_groups():
                 continue
             if config.POSTING_BASED_ON_SEX:
 
+                # FIXME здесь забыли проверять, что некоторые группы мы исключаем из еженедельной проверки,
+                # и оставляем им фиксированный процент. Соответственно, статистику не обновляем.
                 if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
                     sex_statistics_weekly.delay()
                     break
@@ -285,8 +287,10 @@ def examine_groups():
                 the_best_record.status = Record.FAILED
                 the_best_record.save(update_fields=['status'])
 
+    return 'succeed'
 
-@shared_task
+
+@shared_task(time_limit=60)
 def post_music(login, password, app_id, group_id, record_id):
     log.debug(f'start posting music in group {group_id}')
 
@@ -392,7 +396,7 @@ def post_music(login, password, app_id, group_id, record_id):
     log.debug('post in group {} finished'.format(group_id))
 
 
-@shared_task
+@shared_task(time_limit=60)
 def post_movie(group_id, movie_id):
     log.debug(f'start posting movies in {group_id} group')
 
@@ -580,7 +584,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     log.debug('post horoscopes in group {} finished'.format(group_id))
 
 
-@shared_task
+@shared_task(time_limit=60)
 def post_record(login, password, app_id, group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
@@ -702,7 +706,7 @@ def post_record(login, password, app_id, group_id, record_id):
             record.fail()
             return
 
-        log.debug('got {} videos in attachments for group {}'.format(len(videos), group_id))
+        log.debug('got {} videos in attachments for group {}'.format(videos, group_id))
         for video in videos:
             if check_video_availability(api, video.owner_id, video.video_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))

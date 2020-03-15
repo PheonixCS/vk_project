@@ -15,7 +15,7 @@ from services.vk.core import create_vk_session_using_login_password
 log = logging.getLogger('moderation.tasks')
 
 
-@shared_task
+@shared_task(time_limit=5)
 def process_transactions():
     log.info('start process_transactions task')
 
@@ -40,7 +40,7 @@ def process_transactions():
     log.info('process_transactions task completed')
 
 
-@shared_task
+@shared_task(time_limit=5)
 def ban_donors_admins():
     log.info('start ban_donors_admins task')
 
@@ -71,7 +71,7 @@ def ban_donors_admins():
     log.info('ban_donors_admins task completed')
 
 
-@shared_task
+@shared_task(time_limit=180)
 def delete_old_transactions():
     hours = config.OLD_MODERATION_TRANSACTIONS_HOURS
     time_threshold = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
