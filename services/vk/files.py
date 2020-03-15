@@ -113,7 +113,7 @@ def check_video_availability(api, owner_id: int, video_id: int) -> bool:
     :param owner_id: string  representing video owner in vk way
     :return: true if video available
     """
-    log.debug('check_video_availability called')
+    log.debug(f'check_video_availability called for video {video_id}')
 
     try:
         resp = api.video.get(owner_id=owner_id, videos=f'{owner_id}_{video_id}')
@@ -121,7 +121,7 @@ def check_video_availability(api, owner_id: int, video_id: int) -> bool:
         if resp.get('items'):
             return True
         else:
-            log.info('check_video_availability failed')
+            log.warning(f'check_video_availability failed for video {video_id}')
             return False
     except vk_api.ApiError as e:
         if e.__str__().startswith('[15]'):
