@@ -209,7 +209,7 @@ def parse_horoscopes() -> None:
     log.debug('finish parse_horoscopes')
 
 
-@shared_task(time_limit=300)  # 5 minutes limit
+@shared_task(time_limit=180)  # 3 minutes limit
 def check_attachments_availability() -> None:
     log.debug('start check_attachments_availability')
 

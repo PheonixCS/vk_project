@@ -74,7 +74,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=32, hour=0, day_of_week=0)  # at 0:32 am UTC every sunday (3:32 am by MSK)
     },
     'check_attachments_availability': {
-        'task': 'scraping.tasks.check_video_availability',
-        'schedule': crontab(minute=30)  # every hour at 30 minute
+        'task': 'scraping.tasks.check_attachments_availability',
+        'schedule': crontab(minute='18, 48')  # every hour at 18 and 48 minute
     },
 }
