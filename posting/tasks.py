@@ -659,29 +659,30 @@ def post_record(login, password, app_id, group_id, record_id):
 
         image_files = [download_file(image.url) for image in images]
 
-        if (
+        merge_six_images_condition = (
                 group.is_merge_images_enabled
                 and len(images) == 6
                 and is_all_images_not_horizontal(image_files)
-        ):
+        )
+        if merge_six_images_condition:
             old_image_files = image_files
             image_files = [merge_six_images_into_one(image_files)]
             delete_files(old_image_files)
 
         for image_local_filename in image_files:
-
             if group.is_image_mirror_enabled and not is_text_on_image(image_local_filename):
                 actions_to_unique_image['mirror'] = True
 
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
 
-            percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
-            if (
-                    not group.is_merge_images_enabled
-                    and group.is_changing_image_to_square_enabled
-                    and not is_text_on_image(image_local_filename)
-            ):
+            crop_image_condition = (
+                not group.is_merge_images_enabled
+                and group.is_changing_image_to_square_enabled
+                and not is_text_on_image(image_local_filename)
+            )
+            if crop_image_condition:
+                percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
                 actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
