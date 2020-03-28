@@ -8,9 +8,9 @@ def find_newest_record(records: List[dict]) -> dict:
     return max(records, key=lambda x: x.get('date', 0) if not x.get('is_pinned') else 0) if records else {}
 
 
-def is_donor_out_of_date(newest_record_date: int,
-                         date_to_compare: date = date.today(),
-                         outdate_interval: int = config.DONOR_OUTDATE_INTERVAL) -> bool:
+def is_donor_out_of_date(newest_record_date: int, date_to_compare: date = date.today(), outdate_interval: int = None) \
+        -> bool:
+    outdate_interval = outdate_interval or config.DONOR_OUTDATE_INTERVAL
     return date_to_compare - date.fromtimestamp(newest_record_date) > timedelta(days=outdate_interval)
 
 

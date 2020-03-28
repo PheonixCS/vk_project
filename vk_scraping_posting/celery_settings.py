@@ -23,7 +23,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'delete_old_ads': {
         'task': 'posting.tasks.delete_old_ads',
-        'schedule': crontab(minute=30)  # every hour at 30 minute
+        'schedule': crontab(minute=31)  # every hour at 30 minute
     },
     'delete_old_horoscope_records': {
         'task': 'scraping.tasks.delete_old_horoscope_records',
@@ -63,7 +63,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'rate_new_posts': {
         'task': 'scraping.tasks.rate_new_posts',
-        'schedule': crontab(minute='15, 45')
+        'schedule': crontab(minute='15, 45')  # every hour at 15 and 45 minute
     },
     'parse_horoscopes': {
         'task': 'scraping.tasks.parse_horoscopes',
@@ -72,5 +72,9 @@ CELERY_BEAT_SCHEDULE = {
     'delete_old_stat': {
         'task': 'posting.tasks.delete_old_stat',
         'schedule': crontab(minute=32, hour=0, day_of_week=0)  # at 0:32 am UTC every sunday (3:32 am by MSK)
+    },
+    'check_attachments_availability': {
+        'task': 'scraping.tasks.check_video_availability',
+        'schedule': crontab(minute=30)  # every hour at 30 minute
     },
 }

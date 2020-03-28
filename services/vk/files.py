@@ -99,7 +99,7 @@ def check_docs_availability(api, docs):
         if isinstance(resp, list) and len(resp) == len(docs):
             return True
         else:
-            log.info('check_docs_availability failed')
+            log.debug('check_docs_availability failed')
             return False
     except:
         log.error('got unexpected error in check_docs_availability', exc_info=True)
@@ -121,7 +121,7 @@ def check_video_availability(api, owner_id: int, video_id: int) -> bool:
         if resp.get('items'):
             return True
         else:
-            log.warning(f'check_video_availability failed for video {video_id}')
+            log.debug(f'check_video_availability failed for video {video_id}')
             return False
     except vk_api.ApiError as e:
         if e.__str__().startswith('[15]'):

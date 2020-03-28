@@ -15,7 +15,8 @@ from scraping.core.scraper import main, save_movie_to_db, update_structured_reco
 from scraping.core.vk_helper import get_records_info, extract_records_sex
 from scraping.models import Record, Horoscope, Trailer, Movie, Donor
 from services.themoviedb.wrapper import discover_movies
-from services.vk.core import create_vk_api_using_service_token
+from services.vk.core import create_vk_api_using_service_token, create_vk_session_using_login_password
+from services.vk.files import check_video_availability
 from services.youtube.core import download_trailer
 from services.horoscopes.mailru import MailRuHoroscopes
 
@@ -143,7 +144,7 @@ def set_donors_average_view():
     log.debug('set_donors_average_view finished')
 
 
-@shared_task
+@shared_task(time_limit=300)  # 5 minutes limit
 def rate_new_posts() -> None:
     log.debug('rating started')
     threshold = datetime.now(tz=timezone.utc) - timedelta(minutes=config.NEW_RECORD_MATURITY_MINUTES)
@@ -206,3 +207,42 @@ def parse_horoscopes() -> None:
                 save_horoscope_record_to_db(group, record_text, group_sign_en)
 
     log.debug('finish parse_horoscopes')
+
+
+@shared_task(time_limit=300)  # 5 minutes limit
+def check_attachments_availability() -> None:
+    log.debug('start check_attachments_availability')
+
+    groups = Group.objects.filter(group_type__in=(Group.COMMON, Group.MOVIE_COMMON))
+    allowed_time_threshold = timezone.now() - timedelta(hours=8)
+
+    for group in groups:
+        records = Record.objects.filter(
+            rate__isnull=False,
+            status=Record.READY,
+            post_in_group_date__isnull=True,
+            failed_date__isnull=True,
+            post_in_donor_date__gt=allowed_time_threshold,
+            donor__in=group.donors.all()
+        )
+        log.debug(f'got {len(records)} records in group {group.group_id} before check_attachments_availability')
+
+        if records:
+            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            api = session.get_api()
+        else:
+            continue
+
+        filtered = 0
+        for record in records:
+            for video in record.videos.all():
+                if check_video_availability(api, video.owner_id, video.video_id):
+                    continue
+                else:
+                    record.fail()
+                    filtered += 1
+                    break
+
+        log.debug(f'filtered {filtered} records in group {group.group_id} after check_attachments_availability')
+
+    log.debug('finish check_attachments_availability')

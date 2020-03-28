@@ -54,7 +54,8 @@ def filter_out_records_with_unsuitable_attachments(records):
     return filtered_records
 
 
-def filter_out_records_with_small_images(records, min_quantity_of_pixels=config.MIN_QUANTITY_OF_PIXELS):
+def filter_out_records_with_small_images(records, min_quantity_of_pixels=None):
+    min_quantity_of_pixels = min_quantity_of_pixels or config.MIN_QUANTITY_OF_PIXELS
     filtered_records = []
     for record in records:
         attachments = record.get('attachments')

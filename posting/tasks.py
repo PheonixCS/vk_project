@@ -287,6 +287,7 @@ def examine_groups():
                 the_best_record.status = Record.FAILED
                 the_best_record.save(update_fields=['status'])
 
+    log.debug('end group examination')
     return 'succeed'
 
 
@@ -708,6 +709,7 @@ def post_record(login, password, app_id, group_id, record_id):
             record.fail()
             return
 
+        # video part
         log.debug('got {} videos in attachments for group {}'.format(videos, group_id))
         for video in videos:
             if check_video_availability(api, video.owner_id, video.video_id):
@@ -716,6 +718,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 record.fail()
                 return
 
+        # additional texts
         additional_texts = group.additional_texts.all().order_by('id')
         if group.is_additional_text_enabled and additional_texts:
             additional_text = find_next_element_by_last_used_id(group.additional_texts.all().order_by('id'),
@@ -732,6 +735,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
             record_text = '\n'.join([record_text, text_to_add]) if record_text else text_to_add
 
+        # posting part
         data_to_post = {
             'owner_id': f'-{group_id}',
             'from_group': 1,
