@@ -116,8 +116,9 @@ def expand_image_with_white_color(filepath, pixels):
     return filepath
 
 
-def fill_image_with_text(filepath, text, font_name=config.FONT_NAME):
+def fill_image_with_text(filepath, text, font_name=None):
     log.debug('fill_image_with_text called')
+    font_name = font_name or config.FONT_NAME
     if not text:
         log.debug('got no text in fill_image_with_text')
         return
@@ -452,7 +453,8 @@ def paste_text_on_image(image_name, text, position='top', color='black', size=No
     return position
 
 
-def calculate_text_size_on_image(box, percent=config.FONT_SIZE_PERCENT):
+def calculate_text_size_on_image(box, percent=None):
+    percent = percent or config.FONT_SIZE_PERCENT
     image_width, image_height = box
 
     if percent < 1:
@@ -536,3 +538,14 @@ def paste_text_on_music_image(image_name, music_text):
 
     primary_text = music_text_list[0]
     paste_text_on_image(image_name, primary_text, size=primary_size, color=primary_color)
+
+
+def sort_images_for_movies(files):
+    images = [
+        {'size': Image.open(os.path.join(settings.BASE_DIR, image)).size, 'file': image} for image in files
+    ]
+
+    width = [size[0] for size in images_sizes]
+    height = [size[1] for size in images_sizes]
+
+    return all(height >= width for width, height in zip(width, height))

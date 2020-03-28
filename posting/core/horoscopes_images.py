@@ -16,8 +16,11 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     log.debug('transfer_horoscope_to_image started')
     file_name = 'horoscopes{}.jpg'.format(hash(raw_text) % 1000)
 
-    font_title = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf'),
-                                    config.HOROSCOPES_FONT_TITLE)
+    horoscopes_font_title = config.HOROSCOPES_FONT_TITLE
+    font_title = ImageFont.truetype(
+        os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf'),
+        horoscopes_font_title
+    )
     body_font_size = config.HOROSCOPES_FONT_BODY
     font_body = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
                                    body_font_size)

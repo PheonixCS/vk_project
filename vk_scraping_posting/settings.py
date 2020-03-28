@@ -18,8 +18,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org']
 
-CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
-
 # Application definition
 
 INSTALLED_APPS = [
