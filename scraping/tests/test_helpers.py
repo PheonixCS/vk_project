@@ -57,10 +57,10 @@ class OutdatedDonorsTests(TestCase):
         self.assertTrue(is_donor_out_of_date(newest_record_date, self.date_to_compare))
 
 
-class NewestRecordTests(TestCase):
+class TestNewestRecord:
     def test_no_records(self):
         records = []
-        self.assertEqual(find_newest_record(records), {})
+        assert find_newest_record(records) == {}
 
     def test_pinned_record(self):
         records = [
@@ -69,8 +69,8 @@ class NewestRecordTests(TestCase):
             {'is_pinned': True, 'date': 1561507200},
         ]
         newest_record = find_newest_record(records)
-        self.assertEqual(len(newest_record), 1)
-        self.assertDictEqual(newest_record, {'is_pinned': False, 'date': 1561334400})
+        assert newest_record['is_pinned'] is False
+        assert newest_record['date'] == 1561334400
 
     def test_default_records(self):
         records = [
@@ -78,5 +78,5 @@ class NewestRecordTests(TestCase):
             {'is_pinned': False, 'date': 1557532800},
         ]
         newest_record = find_newest_record(records)
-        self.assertEqual(len(newest_record), 1)
-        self.assertDictEqual(newest_record, {'is_pinned': False, 'date': 1561334400})
+        assert newest_record['is_pinned'] is False
+        assert newest_record['date'] == 1561334400

@@ -124,7 +124,8 @@ class Record(models.Model):
     def fail(self):
         self.status = self.FAILED
         self.failed_date = timezone.now()
-        self.save(update_fields=['status', 'failed_date'])
+        fields_to_update = ['status', 'failed_date']
+        self.save(update_fields=fields_to_update)
 
     def __str__(self):
         return '{}'.format(self.record_id)
