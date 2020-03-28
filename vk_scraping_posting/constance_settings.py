@@ -1,6 +1,8 @@
 # Our settings that can be changed on air w/o process reload
 from collections import OrderedDict
 
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
+
 CONSTANCE_CONFIG = {
     'VK_API_VERSION': (5.74, 'VK API version'),
     'MIN_STRING_MATCH_RATIO': (0.85, 'Non documented'),

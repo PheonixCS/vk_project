@@ -1,5 +1,5 @@
-import logging
 import ast
+import logging
 import os
 from datetime import datetime, timedelta
 from random import choice, shuffle
@@ -20,8 +20,8 @@ from posting.core.images import (
     merge_six_images_into_one,
     is_text_on_image,
     paste_abstraction_on_template,
-    paste_text_on_music_image
-)
+    paste_text_on_music_image,
+    sort_images_for_movies)
 from posting.core.poster import (
     download_file,
     prepare_image_for_posting,
@@ -44,11 +44,11 @@ from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, ServiceToken, AdRecord, BackgroundAbstraction, PostingHistory
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
 from scraping.models import Record, Horoscope, Movie, Trailer, ScrapingHistory
+from services.horoscopes.core import HoroscopesPage
 from services.vk.core import create_vk_session_using_login_password, create_vk_api_using_service_token, fetch_group_id
 from services.vk.files import upload_video, upload_photos, check_docs_availability, check_video_availability
 from services.vk.stat import get_group_week_statistics
 from services.vk.wall import get_wall
-from services.horoscopes.core import HoroscopesPage
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
@@ -527,7 +527,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     if not api:
         log.error('no api was created in group {}'.format(group_id))
         return
-    
+
     main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
     group = Group.objects.get(group_id=group_id)
@@ -659,29 +659,33 @@ def post_record(login, password, app_id, group_id, record_id):
 
         image_files = [download_file(image.url) for image in images]
 
-        if (
+        if group.group_type == group.MOVIE_COMMON:
+            image_files = sort_images_for_movies(image_files)
+
+        merge_six_images_condition = (
                 group.is_merge_images_enabled
                 and len(images) == 6
                 and is_all_images_not_horizontal(image_files)
-        ):
+        )
+        if merge_six_images_condition:
             old_image_files = image_files
             image_files = [merge_six_images_into_one(image_files)]
             delete_files(old_image_files)
 
         for image_local_filename in image_files:
-
             if group.is_image_mirror_enabled and not is_text_on_image(image_local_filename):
                 actions_to_unique_image['mirror'] = True
 
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
 
-            percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
-            if (
+            crop_image_condition = (
                     not group.is_merge_images_enabled
                     and group.is_changing_image_to_square_enabled
                     and not is_text_on_image(image_local_filename)
-            ):
+            )
+            if crop_image_condition:
+                percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
                 actions_to_unique_image['crop_to_square'] = percentage_to_crop_from_edges
 
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)

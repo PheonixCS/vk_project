@@ -1,3 +1,4 @@
+import pytest
 from django.test import TestCase
 
 from posting.core.poster import prepare_audio_attachments
@@ -9,6 +10,7 @@ class Audio:
         self.audio_id = audio_id
 
 
+@pytest.mark.django_db
 class AudioAttachmentsTest(TestCase):
     def setUp(self):
         self.audios = [

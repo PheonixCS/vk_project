@@ -3,47 +3,28 @@ import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from scraping.models import Attachment, Record
-
-
-class User(models.Model):
-    login = models.CharField(max_length=64, verbose_name='Логин', unique=True)
-    password = models.CharField(max_length=64, verbose_name='Пароль')
-    url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
-    domain_or_id = models.CharField(max_length=128, verbose_name='Domain/id пользователя', blank=True, default='')
-    initials = models.CharField(max_length=128, verbose_name='ФИО', blank=True, default='')
-    app_id = models.CharField(max_length=256, verbose_name='ID приложения', null=True)
-
-    def save(self, *args, **kwargs):
-        if self.domain_or_id.isdigit():
-            self.url = 'https://vk.com/id{}'.format(self.domain_or_id)
-        elif self.domain_or_id:
-            self.url = 'https://vk.com/{}'.format(self.domain_or_id)
-        super(User, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return '{} {}'.format(self.login, self.initials)
-
-    class Meta:
-        verbose_name = 'Администратор'
-        verbose_name_plural = 'Администраторы'
-
-
-class ServiceToken(models.Model):
-    app_service_token = models.CharField(max_length=256, verbose_name='Сервисный ключ приложения', primary_key=True)
-    last_used = models.DateTimeField(null=True)
-
-    def __str__(self):
-        return self.app_service_token
-
-    class Meta:
-        verbose_name = 'Сервисный токен'
-        verbose_name_plural = 'Сервисные токены'
+from posting.models.user import User
+from scraping.models import Attachment
 
 
 class Group(models.Model):
+    COMMON = 'common'
+    MOVIE_COMMON = 'movie common'
+    MOVIE_SPECIAL = 'movie special'
+    MUSIC_COMMON = 'music common'
+    HOROSCOPES_COMMON = 'horoscopes common'
+
+    GROUP_TYPE_CHOICES = (
+        (COMMON, 'Обычная'),
+        (MOVIE_COMMON, 'Обычные фильмы'),
+        (MOVIE_SPECIAL, 'Сторонние фильмы'),
+        (MUSIC_COMMON, 'Обычная музыка'),
+        (HOROSCOPES_COMMON, 'Обычные гороскопы')
+    )
+
     domain_or_id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
     url = models.URLField(max_length=128, verbose_name='Ссылка', blank=True, default='')
+    group_type = models.CharField(choices=GROUP_TYPE_CHOICES, max_length=128, verbose_name='Тип группы', default=COMMON)
     statistic_url = models.URLField(max_length=256, verbose_name='Ссылка на статистику', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
     group_id = models.IntegerField(null=True)
@@ -101,7 +82,7 @@ class Group(models.Model):
         null=True,
         verbose_name='Недопустимые вложения для записей',
         help_text=f'Типы вложений записей, которые не нужны в этой группе. '
-                  f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
+        f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
     )
 
     def save(self, *args, **kwargs):
@@ -121,56 +102,3 @@ class Group(models.Model):
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'
-
-
-class MusicGenreEpithet(models.Model):
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='music_genre_epithets')
-    text_for_male = models.TextField(max_length=256, default='',
-                                     verbose_name='Эпитет для музыкального жанра мужского рода')
-    text_for_female = models.TextField(max_length=256, default='',
-                                       verbose_name='Эпитет для музыкального жанра женского рода')
-
-    class Meta:
-        verbose_name = 'Эпитет'
-        verbose_name_plural = 'Эпитеты'
-
-
-class AdditionalText(models.Model):
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='additional_texts')
-    text = models.TextField(max_length=1024, default='',
-                            verbose_name='Дополнительный текст, единственное число')
-    text_plural = models.TextField(max_length=1024, default='',
-                                   verbose_name='Дополнительный текст, множественное число')
-
-    class Meta:
-        verbose_name = 'Текст'
-        verbose_name_plural = 'Тексты'
-
-
-class AdRecord(models.Model):
-    ad_record_id = models.IntegerField()
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ad_records')
-    post_in_group_date = models.DateTimeField()
-
-
-class BackgroundAbstraction(models.Model):
-    picture = models.ImageField(upload_to='backgrounds')
-
-    def __str__(self):
-        return f'{self.id}'
-
-    class Meta:
-        app_label = 'posting'
-
-
-class PostingHistory(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='history')
-    record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='history')
-
-    candidates_number = models.IntegerField()
-    candidates_internal_ids = models.CharField(max_length=2500)
-
-    class Meta:
-        verbose_name = 'История постинга'
-        verbose_name_plural = 'История постинга'
