@@ -87,9 +87,9 @@ def examine_groups():
 
         if group.is_movies:
             last_hour_movies = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
-            movies_exit = last_hour_movies.exists()
+            movies_exist = last_hour_movies.exists()
         else:
-            movies_exit = False
+            movies_exist = False
 
         if group.is_horoscopes:
             last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
@@ -99,7 +99,7 @@ def examine_groups():
 
         last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
 
-        last_hour_posts_exist = last_hour_posts_common.exists() or movies_exit or horoscopes_exist
+        last_hour_posts_exist = last_hour_posts_common.exists() or movies_exist or horoscopes_exist
 
         if last_hour_posts_exist and not is_time_to_post:
             log.info(f'got posts in last hour and 5 minutes for group {group.domain_or_id}')
@@ -706,6 +706,7 @@ def post_record(login, password, app_id, group_id, record_id):
             for gif in gifs:
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
         elif gifs:
+            log.warning('Failed to post because of gif unavailability')
             record.fail()
             return
 
@@ -715,6 +716,7 @@ def post_record(login, password, app_id, group_id, record_id):
             if check_video_availability(api, video.owner_id, video.video_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
+                log.warning('Failed to post because of video unavailability')
                 record.fail()
                 return
 

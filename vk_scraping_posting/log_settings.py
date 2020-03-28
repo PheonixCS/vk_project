@@ -36,7 +36,7 @@ sentry_logging = LoggingIntegration(
     event_level=logging.WARNING  # Send no events from log messages
 )
 
-if not os.getenv('LOCAL'):
+if os.getenv('SERVER_ROLE', 'prod') == 'prod':
     sentry_sdk.init(
         dsn="https://374beeda2c78426ea8cd2cc84d176b1b@sentry.io/1290864",
         integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
