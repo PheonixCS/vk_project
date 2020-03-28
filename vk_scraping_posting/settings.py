@@ -14,7 +14,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'gDC7HL6Q7gAqkZ3mXAlLXubdJZgYZZWTP9jHTrdQ1C8hMIauhbe7ucTQ6yzfQWvx'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+server_role = os.getenv('SERVER_ROLE', 'prod')
+if server_role == 'prod':
+    DEBUG = False
+elif server_role == 'test':
+    DEBUG = True
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org']
 

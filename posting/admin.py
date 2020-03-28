@@ -4,7 +4,10 @@ from django.db.models import Sum, TextField
 from django.forms import Textarea
 from django.utils.html import format_html
 
-from .models import User, ServiceToken, Group, AdditionalText, BackgroundAbstraction, MusicGenreEpithet, PostingHistory
+from posting.models.group import Group
+from posting.models.misc import AdditionalText, BackgroundAbstraction, MusicGenreEpithet, PostingHistory
+from posting.models import ServiceToken
+from posting.models.user import User
 
 
 class MembershipInline(admin.TabularInline):
@@ -82,8 +85,8 @@ class GroupAdmin(admin.ModelAdmin):
     )
     fieldsets = (
         (None, {
-            'fields': ('domain_or_id', 'name', 'is_posting_active', 'is_horoscopes', 'is_movies', 'is_pin_enabled',
-                       'posting_time', 'user', 'callback_api_token', 'banned_origin_attachment_types')
+            'fields': ('domain_or_id', 'name', 'is_posting_active', 'group_type', 'is_horoscopes', 'is_movies',
+                       'is_pin_enabled', 'posting_time', 'user', 'callback_api_token', 'banned_origin_attachment_types')
         }),
         ('Параметры уникализации', {
             'fields': ('is_text_delete_enabled', 'is_text_filling_enabled',

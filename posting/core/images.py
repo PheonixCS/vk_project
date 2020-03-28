@@ -540,12 +540,18 @@ def paste_text_on_music_image(image_name, music_text):
     paste_text_on_image(image_name, primary_text, size=primary_size, color=primary_color)
 
 
-def sort_images_for_movies(files):
-    images = [
-        {'size': Image.open(os.path.join(settings.BASE_DIR, image)).size, 'file': image} for image in files
-    ]
+def sort_images_for_movies(images_names):
+    tmp_images_names = list(images_names)
 
-    width = [size[0] for size in images_sizes]
-    height = [size[1] for size in images_sizes]
+    for i, image_name in enumerate(tmp_images_names):
+        if is_image_vertical(image_name):
+            tmp_images_names[0], tmp_images_names[i] = tmp_images_names[i], tmp_images_names[0]
+            break
 
-    return all(height >= width for width, height in zip(width, height))
+    return tmp_images_names
+
+
+def is_image_vertical(image_name):
+    with Image.open(os.path.join(settings.BASE_DIR, image_name)) as test_image:
+        is_vertical = test_image.height >= test_image.width
+    return is_vertical
