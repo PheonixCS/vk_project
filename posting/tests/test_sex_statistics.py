@@ -1,47 +1,65 @@
-from django.test import TestCase
-from constance.test import override_config
-
 from posting.models import Group
 from posting.core.poster import get_groups_to_update_sex_statistics
 from django.utils import timezone
 from datetime import timedelta
+import pytest
 
 
-class SexStatisticsTests(TestCase):
-    def setUp(self):
-        self.group_ids = [1, 2, 3, 4, 5]
+@pytest.fixture
+def create_group():
+    groups = []
 
-    def create_groups(self, days=7):
-        for group_id in self.group_ids:
-            now_time_utc = timezone.now()
-            week_ago = now_time_utc - timedelta(days=days)
-            Group.objects.get_or_create(domain_or_id='test{}'.format(group_id),
-                                        group_id=group_id,
-                                        sex_last_update_date=week_ago)
+    def _create_group(group_id=None, days=7, **kwargs):
+        now_time_utc = timezone.now()
+        week_ago = now_time_utc - timedelta(days=days)
 
-    @override_config(EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE='[]')
-    def test_mistake_in_config(self):
-        self.create_groups()
+        group_id = group_id or len(groups) + 1
+
+        group = Group.objects.get_or_create(
+            domain_or_id='test{}'.format(group_id),
+            group_id=group_id,
+            sex_last_update_date=week_ago,
+            **kwargs
+        )
+        groups.append(Group)
+        return group
+
+    yield _create_group
+
+
+class TestSexStatistics:
+    def test_default(self, create_group):
+        create_group()
+        create_group()
+        create_group()
+
         groups = get_groups_to_update_sex_statistics()
 
-        self.assertEqual(len(groups), len(self.group_ids))
+        assert len(groups) == 3
 
-    @override_config(EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE='')
-    def test_empty_config(self):
-        self.create_groups()
+    def test_time_threshold(self, create_group):
+        create_group(days=3)
+        create_group(days=4)
+
         groups = get_groups_to_update_sex_statistics()
 
-        self.assertEqual(len(groups), len(self.group_ids))
+        assert len(groups) == 0
 
-    @override_config(EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE='[1,2]')
-    def test_default(self):
-        self.create_groups()
+    def test_wrong_group_type(self, create_group):
+        create_group(group_type=Group.MUSIC_COMMON)
+        create_group()
+        create_group()
+
         groups = get_groups_to_update_sex_statistics()
 
-        self.assertEqual(len(groups), 3)
+        assert len(groups) == 2
 
-    def test_time_threshold(self):
-        self.create_groups(days=5)
-        groups = get_groups_to_update_sex_statistics()
+    def test_excluded_groups(self, create_group):
+        create_group(group_id=1)
+        create_group(group_id=2)
+        create_group(group_id=3)
 
-        self.assertEqual(len(groups), 0)
+        groups = get_groups_to_update_sex_statistics(exclude_groups=[1, 2])
+
+        assert len(groups) == 1
+        assert groups.first().group_id == 3
