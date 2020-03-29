@@ -241,13 +241,11 @@ def examine_groups():
             log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
             if not records:
                 continue
-            if config.POSTING_BASED_ON_SEX:
 
-                # FIXME здесь забыли проверять, что некоторые группы мы исключаем из еженедельной проверки,
-                # и оставляем им фиксированный процент. Соответственно, статистику не обновляем.
+            if config.POSTING_BASED_ON_SEX and group.group_type not in (Group.MUSIC_COMMON,):
                 if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
                     sex_statistics_weekly.delay()
-                    break
+                    continue
 
                 if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
                     group_male_female_ratio = 1

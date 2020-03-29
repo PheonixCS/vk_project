@@ -202,11 +202,8 @@ def get_groups_to_update_sex_statistics(exclude_groups: List[int] = None) -> Que
     week_ago = now_time_utc - timedelta(days=6, hours=23)
 
     if not exclude_groups:
-        try:
-            exclude_groups = ast.literal_eval(config.EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE)
-        except SyntaxError:
-            exclude_groups = []
-            log.warning('sex_statistics_weekly got wrong format from config', exc_info=True)
+        excluded_types = (Group.MUSIC_COMMON,)
+        exclude_groups = Group.objects.filter(group_type__in=excluded_types).values_list('group_id', flat=True)
 
     if exclude_groups:
         groups = Group.objects.exclude(group_id__in=exclude_groups)
