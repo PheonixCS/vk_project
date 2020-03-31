@@ -116,54 +116,6 @@ def expand_image_with_white_color(filepath, pixels):
     return filepath
 
 
-def fill_image_with_text(filepath, text, font_name=None):
-    log.debug('fill_image_with_text called')
-    font_name = font_name or config.FONT_NAME
-    if not text:
-        log.debug('got no text in fill_image_with_text')
-        return
-
-    black_color = (0, 0, 0)
-
-    with Image.open(os.path.join(settings.BASE_DIR, filepath)) as temp:
-        image_width, image_height = temp.width, temp.height
-
-    # size in pixels
-    size = calculate_text_size_on_image(box=(image_width, image_height))
-
-    font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name), size)
-
-    if not is_text_fit_to_width(text, len(text), image_width - 10, font):
-        text_max_width_in_chars = calculate_max_len_in_chars(text, image_width, font)
-        text = '\n'.join(wrap(text, text_max_width_in_chars))
-
-    offset = (text.count('\n') + 1) * (size + 15)
-
-    if text.count('\n') == 0:
-        # center text
-        text_width = font.getsize(text)[0]
-        text_height = font.getsize(text)[1]
-        x, y = (image_width - text_width) // 2, (offset - text_height) // 2
-    else:
-        x, y = 5, 1
-
-    log.debug('offset = {}, size = {}, x, y = [{},{}]'.format(offset, size, x, y))
-
-    filepath = expand_image_with_white_color(filepath, offset)
-
-    image = Image.open(filepath)
-    draw = ImageDraw.Draw(image)
-
-    # TODO make multi line custom function
-    draw.multiline_text((x, y), text, black_color, font=font, align='center')
-
-    if filepath.endswith('.jpg'):
-        image.save(filepath, 'JPEG', quality=95, progressive=True)
-    else:
-        image.save(filepath)
-    log.debug('fill_image_with_text finished')
-
-
 def divergence(one, two):
     return abs(one - two) / max(one, two)
 

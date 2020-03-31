@@ -17,13 +17,12 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     file_name = 'horoscopes{}.jpg'.format(hash(raw_text) % 1000)
 
     horoscopes_font_title = config.HOROSCOPES_FONT_TITLE
-    font_title = ImageFont.truetype(
-        os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf'),
-        horoscopes_font_title
-    )
+    font_path = os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf')
+    font_title = ImageFont.truetype(font_path, horoscopes_font_title)
+
     body_font_size = config.HOROSCOPES_FONT_BODY
-    font_body = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
-                                   body_font_size)
+    font_path = os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name)
+    font_body = ImageFont.truetype(font_path, body_font_size)
 
     raw_title_text = raw_text.split('\n')[0]
     title_text = raw_title_text.upper()
@@ -39,8 +38,7 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     # TODO really bad implementation
     while not paste_text_to_center(img, font_body, body_text, 'body', text_align='center'):
         body_font_size -= 5
-        font_body = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name),
-                                       body_font_size)
+        font_body = ImageFont.truetype(font_path, body_font_size)
 
     if file_name.endswith('.jpg'):
         img.save(file_name, 'JPEG', quality=95, progressive=True)
