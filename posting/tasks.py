@@ -560,12 +560,27 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             text_to_add = generate_special_group_reference(horoscope_record.text)
             record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
 
-        post_response = api.wall.post(owner_id='-{}'.format(group_id),
-                                      from_group=1,
-                                      message=record_text,
-                                      attachments=attachments)
+        # posting part
+        data_to_post = {
+            'owner_id': '-{}'.format(group_id),
+            'from_group': 1,
+            'message': record_text,
+            'attachments': attachments
+        }
 
+        post_response = api.wall.post(**data_to_post)
         log.debug('{} in group {}'.format(post_response, group_id))
+
+        if group.group_type == Group.HOROSCOPES_COMMON:
+            try:
+                pin_response = api.wall.pin(
+                    owner_id='-{}'.format(group.group_id),
+                    post_id=post_response.get('post_id'))
+            except vk_api.VkApiError:
+                log.warning(f'Failed to pin horoscope', exc_info=True)
+            else:
+                log.debug(f'Pin horoscope result {pin_response}')
+
     except vk_api.VkApiError as error_msg:
         log.info('group {} got api error: {}'.format(group_id, error_msg))
         return

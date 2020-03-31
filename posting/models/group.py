@@ -13,13 +13,15 @@ class Group(models.Model):
     MOVIE_SPECIAL = 'movie special'
     MUSIC_COMMON = 'music common'
     HOROSCOPES_COMMON = 'horoscopes common'
+    HOROSCOPES_MAIN = 'horoscopes main'
 
     GROUP_TYPE_CHOICES = (
         (COMMON, 'Обычная'),
         (MOVIE_COMMON, 'Обычные фильмы'),
         (MOVIE_SPECIAL, 'Сторонние фильмы'),
         (MUSIC_COMMON, 'Обычная музыка'),
-        (HOROSCOPES_COMMON, 'Обычные гороскопы')
+        (HOROSCOPES_COMMON, 'Обычные гороскопы'),
+        (HOROSCOPES_MAIN, 'Основные гороскопы')
     )
 
     domain_or_id = models.CharField(max_length=32, verbose_name='Domain/id группы цели', primary_key=True)
