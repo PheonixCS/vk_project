@@ -1,0 +1,5 @@
+/var/log/vk_sp_logs/*.log {
+    daily
+    rotate 7
+    notifempty
+}

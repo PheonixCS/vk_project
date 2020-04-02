@@ -68,48 +68,33 @@ LOGGING = {
         },
         'celery': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/celery.log",
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 7,
             'formatter': 'default'
         },
         'django': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/django.log",
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 7,
             'formatter': 'default'
         },
         'moderation': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/moderation.log",
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 7,
             'formatter': 'default'
 
         },
         'scraping': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/scraping.log",
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 7,
             'formatter': 'default'
         },
         'posting': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/posting.log",
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 7,
             'formatter': 'default'
         },
         'telegram': {
@@ -118,11 +103,8 @@ LOGGING = {
         },
         '': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/other.log",
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 7,
             'formatter': 'default'
         },
     },
