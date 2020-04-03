@@ -152,19 +152,34 @@ def find_next_element_by_last_used_id(objects, last_used_object_id):
 
 
 def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
+    log.debug('start find_suitable_record')
     divergence = divergence / 100
     records = records.order_by('-rate')
     max_male_percent = from_ratio_to_percent(best_ratio) + divergence
     min_male_percent = from_ratio_to_percent(best_ratio) - divergence
 
+    log.debug(f'find_suitable_record: divergence={divergence}, '
+              f'max_male_percent={max_male_percent}, '
+              f'min_male_percent={min_male_percent} '
+              f'candidates number={len(records)}')
+
+    watched_list = []
+
     for record in records:
         male_percent = from_ratio_to_percent(record.males_females_ratio)
+        watched_list.append(f'{record.record_id}, male_percent={male_percent}')
         if min_male_percent < male_percent < max_male_percent:
+            log.debug(f'find_suitable_record: chose record {record.record_id} with '
+                      f'male_percent={male_percent}')
             best_record = record
             break
     else:
+        log.debug('find_suitable_record: first record chosen, coz nothing matched')
+        log.debug('find_suitable_record: watched list:'
+                  f'{watched_list}')
         best_record = records.first()
 
+    log.debug('finish find_suitable_record')
     return best_record
 
 
