@@ -242,8 +242,11 @@ def examine_groups():
             if not records:
                 continue
 
-            if config.POSTING_BASED_ON_SEX and group.group_type not in (Group.MUSIC_COMMON,):
-                if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
+            if config.POSTING_BASED_ON_SEX:
+                if (
+                        group.group_type not in (Group.MUSIC_COMMON,)
+                        and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
+                ):
                     sex_statistics_weekly.delay()
                     continue
 
