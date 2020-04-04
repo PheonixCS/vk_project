@@ -22,7 +22,7 @@ packaging==20.3
 phonenumbers==8.9.5
 Pillow==5.4.1
 pluggy==0.13.1
-psycopg2-binary==2.8.4.
+psycopg2-binary==2.8.4
 py==1.5.4
 pyparsing==2.4.6
 pytesseract==0.2.4
@@ -43,6 +43,5 @@ urllib3==1.22
 vine==1.1.4
 vk-api==10.0
 vk-requests==1.1.1
--e git+git@gitlab.com:Freefreelance/vk_scraping_posting.git@fc38d52293b79538108f1a3a56353e47734e854b#egg=vk_scraping_posting
 wcwidth==0.1.9
 zipp==3.1.0

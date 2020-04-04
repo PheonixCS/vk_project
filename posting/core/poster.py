@@ -16,7 +16,7 @@ from django.utils import timezone
 from posting.core.images import crop_percentage_from_image_edges, color_image_in_tone, paste_text_on_image, \
     mirror_image
 from posting.core.mapping import countries, genres
-from posting.core.text_utilities import delete_emoji_from_text
+from services.text_utilities import delete_emoji_from_text
 from posting.models import Group
 from scraping.models import Attachment
 

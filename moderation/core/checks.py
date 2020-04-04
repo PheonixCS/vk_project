@@ -5,7 +5,7 @@ from alphabet_detector import AlphabetDetector
 from urlextract import URLExtract
 from posting.models import AdRecord
 
-from posting.core.text_utilities import delete_emoji_from_text
+from services.text_utilities import delete_emoji_from_text
 
 log = logging.getLogger('moderation.core.checks')
 
