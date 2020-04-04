@@ -110,8 +110,11 @@ def post_record(login, password, app_id, group_id, record_id):
             delete_files(old_image_files)
 
         for image_local_filename in image_files:
-            if group.is_image_mirror_enabled and not is_text_on_image(image_local_filename):
-                actions_to_unique_image['mirror'] = True
+            if group.is_image_mirror_enabled:
+                if len(image_files) >= 4:
+                    actions_to_unique_image['mirror'] = True
+                elif not is_text_on_image(image_local_filename):
+                    actions_to_unique_image['mirror'] = True
 
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
