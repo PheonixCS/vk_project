@@ -1,7 +1,7 @@
 import logging
 import re
 
-log = logging.getLogger('posting.core.text_utilities')
+log = logging.getLogger('services.text_utilities')
 
 
 def replace_words(match_obj):

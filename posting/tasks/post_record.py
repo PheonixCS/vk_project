@@ -10,7 +10,7 @@ from posting.core.images import sort_images_for_movies, is_all_images_not_horizo
     is_text_on_image
 from posting.core.poster import prepare_audio_attachments, download_file, delete_files, prepare_image_for_posting, \
     find_next_element_by_last_used_id
-from posting.core.text_utilities import delete_hashtags_from_text, delete_emoji_from_text, \
+from services.text_utilities import delete_hashtags_from_text, delete_emoji_from_text, \
     replace_russian_with_english_letters
 from posting.models import Group
 from scraping.models import Record

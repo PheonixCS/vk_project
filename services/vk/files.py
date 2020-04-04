@@ -52,7 +52,7 @@ def upload_gif(session, gif_url):
 @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_fixed(3),
        before_sleep=before_sleep_log(log, logging.DEBUG))
 def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id: str) -> list or str or None:
-    log.debug('upload_photo called')
+    log.debug(f'upload_photo called with {image_local_path} for group {group_id}')
 
     if not (isinstance(image_local_path, str) or isinstance(image_local_path, list)):
         raise TypeError('upload_photo support only one or several photos as list')
@@ -73,6 +73,8 @@ def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id
         group_id=int(group_id)
     )
 
+    log.debug(f'upload_photo result for group {group_id} {upload_result}')
+
     if upload_result and isinstance(upload_result, list):
         result = ['photo{}_{}'.format(item.get('owner_id'), item.get('id')) for item in upload_result]
 
@@ -80,6 +82,8 @@ def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id
             return result[0]
         else:
             return result
+    else:
+        raise ValueError('upload_photo wrong result type')
 
 
 def check_docs_availability(api, docs):
