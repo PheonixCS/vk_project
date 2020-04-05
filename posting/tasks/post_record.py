@@ -109,12 +109,13 @@ def post_record(login, password, app_id, group_id, record_id):
             image_files = [merge_six_images_into_one(image_files)]
             delete_files(old_image_files)
 
+        check_text = len(image_files) < 4
+
         for image_local_filename in image_files:
-            if group.is_image_mirror_enabled:
-                if len(image_files) >= 4:
-                    actions_to_unique_image['mirror'] = True
-                elif not is_text_on_image(image_local_filename):
-                    actions_to_unique_image['mirror'] = True
+            image_has_text = check_text and not is_text_on_image(image_local_filename)
+
+            if group.is_image_mirror_enabled and not image_has_text:
+                actions_to_unique_image['mirror'] = True
 
             if group.RGB_image_tone:
                 actions_to_unique_image['rgb_tone'] = group.RGB_image_tone
@@ -122,7 +123,7 @@ def post_record(login, password, app_id, group_id, record_id):
             crop_image_condition = (
                     not group.is_merge_images_enabled
                     and group.is_changing_image_to_square_enabled
-                    and not is_text_on_image(image_local_filename)
+                    and not image_has_text
             )
             if crop_image_condition:
                 percentage_to_crop_from_edges = config.PERCENTAGE_TO_CROP_FROM_EDGES
