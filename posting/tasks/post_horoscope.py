@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from posting.core.horoscopes import generate_special_group_reference
 from posting.core.horoscopes_images import transfer_horoscope_to_image
-from posting.core.poster import delete_files, download_file
+from posting.core.files import download_file, delete_files
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from posting.models import Group
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups

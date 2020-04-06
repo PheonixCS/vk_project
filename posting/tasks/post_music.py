@@ -8,7 +8,8 @@ from django.utils import timezone
 
 from posting.core.images import paste_abstraction_on_template, paste_text_on_music_image
 from posting.core.poster import prepare_audio_attachments, get_music_compilation_artist, get_music_compilation_genre, \
-    find_next_element_by_last_used_id, download_file, delete_files
+    find_next_element_by_last_used_id
+from posting.core.files import download_file, delete_files
 from services.text_utilities import delete_emoji_from_text
 from posting.models import Group, BackgroundAbstraction
 from scraping.models import Record

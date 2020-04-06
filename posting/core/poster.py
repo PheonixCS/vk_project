@@ -1,12 +1,10 @@
 import ast
 import logging
-import os
 from collections import Counter
 from datetime import timedelta
 from random import shuffle
 from typing import List
 
-import requests
 from constance import config
 from django.conf import settings
 from django.db.models import Count
@@ -21,41 +19,6 @@ from posting.models import Group
 from scraping.models import Attachment
 
 log = logging.getLogger('posting.poster')
-
-
-def download_file(url, extension=None):
-    log.debug('download_file called')
-    local_filename = url.split('/')[-1]
-    if extension:
-        local_filename += '.{}'.format(extension)
-
-    r = requests.get(url)
-    with open(local_filename, 'wb') as f:
-        f.write(r.content)
-
-    log.debug('{} file downloaded'.format(local_filename))
-    return local_filename
-
-
-def delete_files(file_paths):
-    log.debug('delete_files called with {} files'.format(len(file_paths)))
-
-    if isinstance(file_paths, list):
-        for file in file_paths:
-            try:
-                os.remove(file)
-            except FileNotFoundError as exc:
-                log.error('Fail to delete file {}'.format(exc))
-                continue
-    elif isinstance(file_paths, str):
-        try:
-            os.remove(file_paths)
-        except FileNotFoundError as exc:
-            log.error('Fail to delete file {}'.format(exc))
-    else:
-        log.warning('delete_files got wrong type')
-        return
-    log.debug('delete_files finished')
 
 
 def prepare_image_for_posting(image_local_filepath, **kwargs):

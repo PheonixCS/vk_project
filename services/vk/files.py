@@ -2,7 +2,7 @@ import logging
 
 import vk_api
 
-from posting.core.poster import download_file
+from posting.core.files import download_file
 from tenacity import retry, stop_after_attempt, wait_fixed, before_sleep_log
 
 log = logging.getLogger('services.vk.files')
