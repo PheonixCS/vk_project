@@ -8,8 +8,9 @@ from django.utils import timezone
 
 from posting.core.images import sort_images_for_movies, is_all_images_not_horizontal, merge_six_images_into_one, \
     is_text_on_image
-from posting.core.poster import prepare_audio_attachments, download_file, delete_files, prepare_image_for_posting, \
+from posting.core.poster import prepare_audio_attachments, prepare_image_for_posting, \
     find_next_element_by_last_used_id
+from posting.core.files import download_file, delete_files
 from services.text_utilities import delete_hashtags_from_text, delete_emoji_from_text, \
     replace_russian_with_english_letters
 from posting.models import Group

@@ -7,7 +7,8 @@ from constance import config
 from django.utils import timezone
 
 from posting.core.images import merge_poster_and_three_images
-from posting.core.poster import get_country_name_by_code, download_file, delete_files
+from posting.core.poster import get_country_name_by_code
+from posting.core.files import download_file, delete_files
 from posting.models import Group
 from scraping.models import Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password
