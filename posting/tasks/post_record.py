@@ -193,7 +193,7 @@ def post_record(login, password, app_id, group_id, record_id):
 
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
-        log.info('group {} got api error: {}'.format(group_id, error_msg))
+        log.error('group {} got api error: {}'.format(group_id, error_msg))
         record.fail()
         return
     except:
