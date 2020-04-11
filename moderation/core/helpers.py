@@ -5,6 +5,7 @@ from django.db.models import Q
 
 from moderation.models import WebhookTransaction, Comment, Attachment
 from posting.models import Group
+from typing import List
 
 log = logging.getLogger('moderation.core.helpers')
 
@@ -18,8 +19,8 @@ def get_transactions_to_process():
 
 
 def prepare_id_white_list(white_list):
-    white_list = re.sub('(id)', '', white_list)
-    white_list = re.sub('[^\s\d]+', '-', white_list)
+    white_list = re.sub(r'(id)', '', white_list)
+    white_list = re.sub(r'[^\s\d]+', '-', white_list)
     return list(map(int, white_list.split()))
 
 
@@ -69,3 +70,16 @@ def save_comment_to_db(transaction):
             type=attachment['type'],
             body=attachment[attachment['type']]
         )
+
+
+def group_transactions_by_group_id(transactions: List[WebhookTransaction]) -> dict:
+    result = dict()
+
+    for tr in transactions:
+        group_id = tr.body.get('group_id')
+        if group_id:
+            tr_by_group = result.get(group_id, [])
+            tr_by_group.append(tr)
+            result[group_id] = tr_by_group
+
+    return result
