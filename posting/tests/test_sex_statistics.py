@@ -21,7 +21,7 @@ def create_group():
             sex_last_update_date=week_ago,
             **kwargs
         )
-        groups.append(Group)
+        groups.append(group)
         return group
 
     yield _create_group
