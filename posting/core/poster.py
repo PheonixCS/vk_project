@@ -128,19 +128,24 @@ def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
 
     watched_list = []
 
-    for record in records:
+    for i, record in enumerate(records):
         male_percent = from_ratio_to_percent(record.males_females_ratio)
         watched_list.append(f'{record.record_id}, male_percent={male_percent}')
         if min_male_percent < male_percent < max_male_percent:
             log.debug(f'find_suitable_record: chose record {record.record_id} with '
                       f'male_percent={male_percent}')
             best_record = record
+            candidate_number = i + 1
             break
     else:
         log.debug('find_suitable_record: first record chosen, coz nothing matched')
         log.debug('find_suitable_record: watched list:'
                   f'{watched_list}')
         best_record = records.first()
+        candidate_number = 1
+
+    best_record.candidate_number = candidate_number
+    best_record.save(update_fields=['candidate_number'])
 
     log.debug('finish find_suitable_record')
     return best_record

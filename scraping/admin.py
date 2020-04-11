@@ -61,7 +61,8 @@ class RecordAdmin(admin.ModelAdmin):
         'post_in_group_url_field',
         'post_in_group_date',
         'post_audience_ratio',
-        'group_audience_ratio'
+        'group_audience_ratio',
+        'candidate_number',
     ]
     search_fields = [
         'group_url', 'id'
@@ -86,6 +87,11 @@ class RecordAdmin(admin.ModelAdmin):
         if obj.males_count and obj.females_count:
             return '{}% М {}% Ж'.format(round(obj.males_count / (obj.males_count + obj.females_count) * 100),
                                         round(obj.females_count / (obj.males_count + obj.females_count) * 100))
+        if not obj.males_count:
+            return '0% М 100% Ж'
+
+        if not obj.females_count:
+            return '100% М 0% Ж'
 
     def group_audience_ratio(self, obj):
         try:
