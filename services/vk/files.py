@@ -8,6 +8,12 @@ from tenacity import retry, stop_after_attempt, wait_fixed, before_sleep_log
 log = logging.getLogger('services.vk.files')
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def upload_video(session, video_local_path, group_id, name, description):
     log.debug('upload_video called')
 
@@ -65,10 +71,12 @@ def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id
         files_to_upload.extend(image_local_path)
 
     upload = vk_api.VkUpload(session)
-    upload_result = upload.photo_wall(
-        photos=files_to_upload,
-        group_id=int(group_id)
-    )
+    upload_result = []
+    for chunk in chunks(files_to_upload, 3):
+        upload_result.extend(upload.photo_wall(
+            photos=chunk,
+            group_id=int(group_id)
+        ))
 
     log.debug(f'upload_photo result for group {group_id} {upload_result}')
 
