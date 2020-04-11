@@ -101,6 +101,7 @@ class Record(models.Model):
     males_females_ratio = models.FloatField(default=1.0, verbose_name='Соотношение мужчин к женщинам в лайках')
     unknown_count = models.IntegerField(default=0, verbose_name='Лайков от неопределенного пола')
     status = models.IntegerField(choices=STATUS_CHOICES, default=NEW, verbose_name='Статус записи')
+    candidate_number = models.IntegerField(null=True, verbose_name='Идекс по рейтингу', editable=False)
 
     def save(self, *args, **kwargs):
         if self.record_id:
