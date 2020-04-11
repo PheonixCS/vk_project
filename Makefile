@@ -1,7 +1,7 @@
 all: stop git_pull reqs migrate restart run
 
 run:
-	celery -A vk_scraping_posting worker --concurrency=4 -l info -B --detach
+	celery -A vk_scraping_posting worker -l info -B --detach
 stop:
 	celery multi stopwait 1 --pidfile=celeryd.pid
 restart:
