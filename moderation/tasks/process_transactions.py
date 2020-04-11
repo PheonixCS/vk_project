@@ -31,7 +31,7 @@ def process_transactions():
             log.warning('group {} no api created!'.format(group_id))
             return None
 
-        for transaction in grouped_transaction[group_id]
+        for transaction in grouped_transaction[group_id]:
             try:
                 process_comment(api, transaction.body)
                 save_comment_to_db(transaction)
