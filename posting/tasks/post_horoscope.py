@@ -46,8 +46,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
-            uploaded = upload_photos(session, horoscope_image_name, group_id)
-            attachments = uploaded
+            attachments.extend(upload_photos(session, horoscope_image_name, group_id))
             delete_files(horoscope_image_name)
             record_text = ''
         else:
@@ -58,7 +57,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
-                attachments = upload_photos(session, image_local_filename, group_id)
+                attachments.extend(upload_photos(session, image_local_filename, group_id))
                 delete_files(image_local_filename)
 
         group_zodiac_sign = fetch_zodiac_sign(group.name)
@@ -71,7 +70,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             'owner_id': '-{}'.format(group_id),
             'from_group': 1,
             'message': record_text,
-            'attachments': attachments
+            'attachments': ','.join(attachments)
         }
 
         post_response = api.wall.post(**data_to_post)

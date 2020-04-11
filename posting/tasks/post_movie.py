@@ -69,8 +69,7 @@ def post_movie(group_id, movie_id):
             poster_and_three_images = merge_poster_and_three_images(poster_file, image_files)
             delete_files(poster_file)
 
-            uploaded = upload_photos(session, poster_and_three_images, group_id)
-            attachments.append(uploaded)
+            attachments.extend(upload_photos(session, poster_and_three_images, group_id))
 
             delete_files(poster_and_three_images)
         else:
@@ -79,8 +78,7 @@ def post_movie(group_id, movie_id):
             to_upload = [movie_poster]
             to_upload.extend(image_files[:2])
 
-            uploaded = upload_photos(session, to_upload, group_id)
-            attachments.extend(uploaded)
+            attachments.extend(upload_photos(session, to_upload, group_id))
 
         delete_files(image_files)
 

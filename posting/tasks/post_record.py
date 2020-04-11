@@ -133,13 +133,8 @@ def post_record(login, password, app_id, group_id, record_id):
             prepare_image_for_posting(image_local_filename, **actions_to_unique_image)
 
         if image_files:
-            uploaded = upload_photos(session, image_files, group_id)
-            if isinstance(uploaded, list) and len(uploaded) == 1:
-                attachments.append(uploaded[0])
-            else:
-                attachments.extend(uploaded)
-
-        delete_files(image_files)
+            attachments.extend(upload_photos(session, image_files, group_id))
+            delete_files(image_files)
 
         # gif part
         log.debug('got {} gifs for group {}'.format(len(gifs), group_id))

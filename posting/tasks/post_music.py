@@ -104,13 +104,15 @@ def post_music(login, password, app_id, group_id, record_id):
 
         paste_text_on_music_image(result_image_name, text_to_image)
 
-        uploaded = upload_photos(session, result_image_name, group_id)
-        attachments.append(uploaded)
+        attachments.extend(upload_photos(session, result_image_name, group_id))
 
-        post_response = api.wall.post(owner_id=f'-{group_id}',
-                                      from_group=1,
-                                      message=record_text,
-                                      attachments=','.join(attachments))
+        data_to_post = {
+            'owner_id': f'-{group_id}',
+            'from_group': 1,
+            'message': record_text,
+            'attachments': ','.join(attachments)
+        }
+        post_response = api.wall.post(**data_to_post)
 
         delete_files(image_file_paths)
 

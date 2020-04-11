@@ -51,25 +51,22 @@ def upload_gif(session, gif_url):
 
 @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_fixed(3),
        before_sleep=before_sleep_log(log, logging.DEBUG))
-def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id: str) -> list or str or None:
+def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id: str) -> list:
     log.debug(f'upload_photo called with {image_local_path} for group {group_id}')
+
+    files_to_upload = []
 
     if not (isinstance(image_local_path, str) or isinstance(image_local_path, list)):
         raise TypeError('upload_photo support only one or several photos as list')
 
-    # FIXME may be it can be done better
-    # try:
-    #     upload = vk_api.VkUpload(session)
-    #     upload_result = upload.photo_wall(
-    #         photos=image_local_path,
-    #         group_id=int(group_id)
-    #     )
-    # except vk_api.VkApiError:
-    #     log.error('vk exception while uploading photo', exc_info=True)
-    #     return
+    if isinstance(image_local_path, str):
+        files_to_upload.append(image_local_path)
+    else:
+        files_to_upload.extend(image_local_path)
+
     upload = vk_api.VkUpload(session)
     upload_result = upload.photo_wall(
-        photos=image_local_path,
+        photos=files_to_upload,
         group_id=int(group_id)
     )
 
@@ -77,13 +74,13 @@ def upload_photos(session: vk_api.VkApi, image_local_path: list or str, group_id
 
     if upload_result and isinstance(upload_result, list):
         result = ['photo{}_{}'.format(item.get('owner_id'), item.get('id')) for item in upload_result]
-
-        if isinstance(image_local_path, str):
-            return result[0]
-        else:
-            return result
     else:
         raise ValueError('upload_photo wrong result type')
+
+    if len(files_to_upload) != len(result):
+        raise ValueError('upload_photo got wrong quantity of images after upload')
+
+    return result
 
 
 def check_docs_availability(api, docs):
