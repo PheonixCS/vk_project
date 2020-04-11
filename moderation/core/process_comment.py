@@ -9,8 +9,6 @@ import moderation.core.checks as checks
 from moderation.core.helpers import prepare_id_white_list, is_moderation_needed
 from moderation.core.vk_helpers import delete_comment, ban_user
 from moderation.models import ModerationRule, Comment
-from posting.models import Group
-from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('moderation.core.process_comment')
 
@@ -69,12 +67,10 @@ def check_for_reason_for_ban_and_get_comments_to_delete(event_object):
     return '', []
 
 
-def process_comment(comment):
+def process_comment(api, comment):
     log.info('start handling comment {} in {} by {}'.format(comment['object']['id'],
                                                             comment['group_id'],
                                                             comment['object']['from_id']))
-
-    group = Group.objects.select_related('user').filter(group_id=comment['group_id']).first()
 
     moderation_rule = ModerationRule.objects.first()
     white_list = prepare_id_white_list(moderation_rule.id_white_list)
@@ -82,16 +78,8 @@ def process_comment(comment):
     if not is_moderation_needed(comment['object']['from_id'], comment['group_id'], white_list):
         return False
 
-    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
-    if not session:
-        return None
-    api = session.get_api()
-    if not api:
-        log.warning('group {} no api created!'.format(comment['group_id']))
-        return None
-
     words_stop_list = set(moderation_rule.words_stop_list.split())
-    words_in_text = re.sub("[^\w]", " ", comment['object']['text']).split()
+    words_in_text = re.sub(r'[^\w]', ' ', comment['object']['text']).split()
 
     all_checks = (checks.is_post_ad(comment['object']['post_id'], comment['group_id']),
                   checks.is_stop_words_in_text(words_stop_list, words_in_text),
