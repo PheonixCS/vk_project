@@ -42,7 +42,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute='*')  # every minute
     },
     'ban_donors_admins': {
-        'task': 'moderation.tasks.ban_donors_admins',
+        'task': 'moderation.tasks.ban_donors_admins.ban_donors_admins',
         'schedule': crontab(minute=0, hour=0)  # at 0:00 am UTC (3:00 am by MSK)
     },
     'sex_statistics_weekly': {
@@ -50,7 +50,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=0, day_of_week=0)  # at 0:00 am UTC every sunday (3:00 am by MSK)
     },
     'download_youtube_trailers': {
-        'task': 'scraping.tasks.download_youtube_trailers.download_youtube_trailers',
+        'task': 'scraping.tasks.downloadam _youtube_trailers.download_youtube_trailers',
         'schedule': crontab(minute='10, 40')
     },
     'scrap_new_movies': {
