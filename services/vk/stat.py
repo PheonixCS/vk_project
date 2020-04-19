@@ -25,6 +25,7 @@ def fetch_liked_user_ids(api, group_id, post_id):
             owner_id=f'-{group_id}',
             item_id=post_id,
             filter='likes',
+            count=1000,
             extended=1,  # needed for user type, we need just profile
             api_version=config.VK_API_VERSION
             )
