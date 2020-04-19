@@ -114,14 +114,14 @@ def find_next_element_by_last_used_id(objects, last_used_object_id):
     return next((obj for obj in objects if obj.id > last_used_object_id), objects[0])
 
 
-def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
+def find_suitable_record(records: QuerySet, best_ratio, divergence=20, group_id=None):
     log.debug('start find_suitable_record')
     divergence = divergence / 100
     records = records.order_by('-rate')
     max_male_percent = from_ratio_to_percent(best_ratio) + divergence
     min_male_percent = from_ratio_to_percent(best_ratio) - divergence
 
-    log.debug(f'find_suitable_record: divergence={divergence}, '
+    log.debug(f'find_suitable_record for {group_id}: divergence={divergence}, '
               f'max_male_percent={max_male_percent}, '
               f'min_male_percent={min_male_percent} '
               f'candidates number={len(records)}')
@@ -130,16 +130,21 @@ def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
 
     for i, record in enumerate(records):
         male_percent = from_ratio_to_percent(record.males_females_ratio)
-        watched_list.append(f'{record.record_id}, male_percent={male_percent}')
+
+        watched_list.append(f'{record.donor_url} {record.record_id}, male_percent={male_percent}')
+
         if min_male_percent < male_percent < max_male_percent:
-            log.debug(f'find_suitable_record: chose record {record.record_id} with '
+            log.debug(f'find_suitable_record for {group_id}: chose record {record.record_id} with '
                       f'male_percent={male_percent}')
             best_record = record
             candidate_number = i + 1
+
+            log.debug(f'find_suitable_record for {group_id}: watched list: {watched_list}')
+
             break
     else:
-        log.debug('find_suitable_record: first record chosen, coz nothing matched')
-        log.debug('find_suitable_record: watched list:'
+        log.debug(f'find_suitable_record for {group_id}: first record chosen, coz nothing matched')
+        log.debug(f'find_suitable_record for {group_id}: watched list:'
                   f'{watched_list}')
         best_record = records.first()
         candidate_number = 1
@@ -147,7 +152,7 @@ def find_suitable_record(records: QuerySet, best_ratio, divergence=20):
     best_record.candidate_number = candidate_number
     best_record.save(update_fields=['candidate_number'])
 
-    log.debug('finish find_suitable_record')
+    log.debug(f'finish find_suitable_record for {group_id}')
     return best_record
 
 
