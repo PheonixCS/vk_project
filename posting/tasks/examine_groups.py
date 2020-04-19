@@ -224,7 +224,8 @@ def examine_groups():
                 the_best_record = find_suitable_record(
                     records,
                     group_male_female_ratio,
-                    config.RECORDS_SELECTION_PERCENT
+                    config.RECORDS_SELECTION_PERCENT,
+                    group.group_id
                 )
             else:
                 the_best_record = max(records, key=lambda x: x.rate)
