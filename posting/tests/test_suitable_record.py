@@ -1,67 +1,60 @@
-# #
-#
-# from django.test import TestCase
-# from posting.core import poster
-#
-#
-# class Record:
-#     def __init__(self, rate, ratio):
-#         self.rate = rate
-#         self.males_females_ratio = ratio
-#
-#     def __str__(self):
-#         return '{}_{}'.format(self.rate, self.males_females_ratio)
-#
-#
-# class SuitableRecordTest(TestCase):
-#     def test_exact_record(self):
-#         records = [
-#             Record(500, 40/60),
-#             Record(600, 50/60),
-#             Record(700, 40/60),
-#             Record(800, 40/60),
-#             Record(900, 40/60)
-#         ]
-#         best_record = poster.find_suitable_record(records, 40/60)
-#
-#         self.assertEqual(best_record.rate, 900)
-#
-#     def test_no_suitable(self):
-#         records = [
-#             Record(500, 70/30),
-#             Record(600, 70/30),
-#             Record(700, 70/30),
-#         ]
-#         best_record = poster.find_suitable_record(records, 40/60)
-#
-#         self.assertEqual(best_record.rate, 700)
-#
-#     def test_in_range(self):
-#         records = [
-#             Record(500, 70/30),
-#             Record(600, 49/51),
-#             Record(700, 70/30),
-#         ]
-#         best_record = poster.find_suitable_record(records, 40/60)
-#
-#         self.assertEqual(best_record.rate, 600)
-#
-#     def test_custom_range_no_suitable(self):
-#         records = [
-#             Record(500, 70/30),
-#             Record(600, 70/30),
-#             Record(700, 70/30),
-#         ]
-#         best_record = poster.find_suitable_record(records, 40/60, 10)
-#
-#         self.assertEqual(best_record.rate, 700)
-#
-#     def test_custom_range_suitable(self):
-#         records = [
-#             Record(500, 70/30),
-#             Record(600, 70/30),
-#             Record(700, 49/51),
-#         ]
-#         best_record = poster.find_suitable_record(records, 40/60, 10)
-#
-#         self.assertEqual(best_record.rate, 700)
+from posting.core.poster import find_suitable_record
+import pytest
+from scraping.models import Record, Donor
+
+from posting.models import Group
+
+pytestmark = pytest.mark.django_db(transaction=True, reset_sequences=True)
+
+
+@pytest.fixture(scope='function')
+def create_record():
+    group = Group.objects.create(group_id=1)
+    donor = Donor.objects.create(id='1')
+
+    def _create_record(*args, **kwargs):
+        res = Record.objects.create(group=group, donor=donor, *args, **kwargs)
+
+        return res
+
+    yield _create_record
+
+    group.delete()
+    donor.delete()
+    Record.objects.all().delete()
+
+
+def test_common_records(create_record):
+    create_record(rate=100, females_count=10, males_count=10)
+    create_record(rate=200, females_count=10, males_count=10)
+    create_record(rate=300, females_count=10, males_count=10)
+
+    records = Record.objects.all()
+
+    result = find_suitable_record(records, (0.5, 0.5), divergence=0)
+
+    assert result.id == 3
+
+
+def test_default_record(create_record):
+    create_record(rate=101, females_count=30, males_count=70)
+    create_record(rate=100, females_count=40, males_count=60)
+    create_record(rate=100, females_count=40, males_count=60)
+
+    records = Record.objects.all()
+
+    result = find_suitable_record(records, (0.5, 0.5), divergence=0)
+
+    assert result.id == 1
+
+
+def test_percent_record(create_record):
+    create_record(rate=200, females_count=30, males_count=70)
+    create_record(rate=150, females_count=30, males_count=70)
+    create_record(rate=100, females_count=40, males_count=60)
+
+    records = Record.objects.all()
+
+    result = find_suitable_record(records, (0.5, 0.5), divergence=10)
+
+    assert result.id == 1
