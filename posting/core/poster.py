@@ -114,12 +114,12 @@ def find_next_element_by_last_used_id(objects, last_used_object_id):
     return next((obj for obj in objects if obj.id > last_used_object_id), objects[0])
 
 
-def find_suitable_record(records: QuerySet, best_ratio, divergence=20, group_id=None):
+def find_suitable_record(records: QuerySet, percents, divergence=20, group_id=None):
     log.debug('start find_suitable_record')
     divergence = divergence / 100
     records = records.order_by('-rate')
-    max_male_percent = from_ratio_to_percent(best_ratio) + divergence
-    min_male_percent = from_ratio_to_percent(best_ratio) - divergence
+    max_male_percent = percents[0] + divergence
+    min_male_percent = percents[0] - divergence
 
     log.debug(f'find_suitable_record for {group_id}: divergence={divergence}, '
               f'max_male_percent={max_male_percent}, '
@@ -129,7 +129,7 @@ def find_suitable_record(records: QuerySet, best_ratio, divergence=20, group_id=
     watched_list = []
 
     for i, record in enumerate(records):
-        male_percent = from_ratio_to_percent(record.males_females_ratio)
+        male_percent = record.get_auditory_percents()[0]
 
         watched_list.append(f'{record.donor_url} {record.record_id}, male_percent={male_percent}')
 
@@ -154,11 +154,6 @@ def find_suitable_record(records: QuerySet, best_ratio, divergence=20, group_id=
 
     log.debug(f'finish find_suitable_record for {group_id}')
     return best_record
-
-
-def from_ratio_to_percent(ratio):
-    result = 1 / (1 + ratio)
-    return result
 
 
 def filter_banned_records(records: QuerySet, banned_types: list) -> QuerySet:

@@ -101,6 +101,17 @@ class Group(models.Model):
     def __str__(self):
         return '{} {}'.format(self.domain_or_id, self.name)
 
+    def get_auditory_percents(self):
+        sum_of_auditory = (self.male_weekly_average_count + self.female_weekly_average_count)
+
+        if sum_of_auditory == 0:
+            return 0.5, 0.5
+
+        male_percent = self.male_weekly_average_count / sum_of_auditory
+        female_percent = 1 - male_percent
+
+        return male_percent, female_percent
+
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'

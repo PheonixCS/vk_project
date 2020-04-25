@@ -216,14 +216,11 @@ def examine_groups():
                     sex_statistics_weekly.delay()
                     continue
 
-                if group.male_weekly_average_count == 0 or group.female_weekly_average_count == 0:
-                    group_male_female_ratio = 1
-                else:
-                    group_male_female_ratio = group.male_weekly_average_count / group.female_weekly_average_count
+                male_percent, female_percent = group.get_auditory_percents()
 
                 the_best_record = find_suitable_record(
                     records,
-                    group_male_female_ratio,
+                    (male_percent, female_percent),
                     config.RECORDS_SELECTION_PERCENT,
                     group.group_id
                 )

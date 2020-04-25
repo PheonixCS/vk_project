@@ -128,6 +128,17 @@ class Record(models.Model):
         fields_to_update = ['status', 'failed_date']
         self.save(update_fields=fields_to_update)
 
+    def get_auditory_percents(self):
+        sum_of_auditory = (self.males_count + self.females_count)
+
+        if sum_of_auditory == 0:
+            return 0.5, 0.5
+
+        male_percent = self.males_count / sum_of_auditory
+        female_percent = 1 - male_percent
+
+        return male_percent, female_percent
+
     def __str__(self):
         return '{}'.format(self.record_id)
 
