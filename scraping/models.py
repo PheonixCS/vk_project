@@ -183,6 +183,9 @@ class Horoscope(models.Model):
     post_in_group_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
 
+    # https://trello.com/c/uB0RQBvE/244
+    copyright_text = models.CharField(max_length=256, null=True)
+
 
 class Movie(models.Model):
     group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, related_name='movies', null=True)

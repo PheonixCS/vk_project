@@ -71,9 +71,12 @@ def save_horoscope_record_to_db(group, text, zodiac_sign):
 
 
 # FIXME need tests
-def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str) -> None:
+def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str, group_id: int, record_id: int) -> None:
     log.info('save_horoscope_record_to_db called')
     main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
+
+    # https://trello.com/c/uB0RQBvE/244
+    copyright_text = f'https://vk.com/club{group_id}?w=wall-{group_id}_{record_id}'
 
     for group_id in main_horoscope_ids:
 
@@ -84,6 +87,7 @@ def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str) -> N
             zodiac_sign=horoscope.zodiac_sign,
             defaults={
                 'text': horoscope.text,
+                'copyright_text': copyright_text
             }
         )
         if created:
