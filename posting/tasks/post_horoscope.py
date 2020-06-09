@@ -65,6 +65,10 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             text_to_add = generate_special_group_reference(horoscope_record.text)
             record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
 
+        # https://trello.com/c/uB0RQBvE/24
+        if group.group_type == Group.HOROSCOPES_MAIN:
+            record_text = ''
+
         # posting part
         data_to_post = {
             'owner_id': '-{}'.format(group_id),
@@ -73,8 +77,14 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             'attachments': ','.join(attachments)
         }
 
+        # https://trello.com/c/uB0RQBvE/24
+        if group.group_type == Group.HOROSCOPES_MAIN:
+            data_to_post['copyright'] = horoscope_record.copyright_text
+
         post_response = api.wall.post(**data_to_post)
         log.debug('{} in group {}'.format(post_response, group_id))
+
+        record_id = post_response.get('post_id')
 
         if group.group_type == Group.HOROSCOPES_COMMON:
             try:
@@ -98,6 +108,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
     horoscope_record.save()
 
     if group_id not in main_horoscope_ids:
-        save_horoscope_for_main_groups(horoscope_record, attachments)
+        save_horoscope_for_main_groups(horoscope_record, attachments, int(group_id), int(record_id))
 
     log.debug('post horoscopes in group {} finished'.format(group_id))
