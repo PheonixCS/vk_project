@@ -61,10 +61,6 @@ def examine_groups():
                 else:
                     is_time_to_post = False
 
-            # https://trello.com/c/uB0RQBvE/244
-            if group.group_type == Group.HOROSCOPES_MAIN:
-
-
         else:
             is_time_to_post = group.posting_time.minute == now_minute
 
