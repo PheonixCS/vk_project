@@ -58,9 +58,10 @@ def examine_groups():
 
         # https://trello.com/c/uB0RQBvE/244
         if group.group_type == Group.HOROSCOPES_COMMON:
+            hour_ago_threshold -= timedelta(hours=1)
             if is_time_to_post and now_time_utc.hour % 2 == 0:
                 log.debug('Horoscopes time to post')
-                hour_ago_threshold -= timedelta(hours=1)
+                is_time_to_post = True
             else:
                 log.debug('Not horoscopes time to post')
                 is_time_to_post = False
