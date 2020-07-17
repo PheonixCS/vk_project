@@ -57,14 +57,15 @@ def examine_groups():
             is_time_to_post = group.posting_time.minute == now_minute
 
         # https://trello.com/c/uB0RQBvE/244
-        if group.group_type == Group.HOROSCOPES_COMMON:
-            hour_ago_threshold -= timedelta(hours=1)
-            if is_time_to_post and now_time_utc.hour % 2 == 0:
-                log.debug('Horoscopes time to post')
-                is_time_to_post = True
-            else:
-                log.debug('Not horoscopes time to post')
-                is_time_to_post = False
+        # https://trello.com/c/uA5o3XuR/247
+        # if group.group_type == Group.HOROSCOPES_COMMON:
+        #     hour_ago_threshold -= timedelta(hours=1)
+        #     if is_time_to_post and now_time_utc.hour % 2 == 0:
+        #         log.debug('Horoscopes time to post')
+        #         is_time_to_post = True
+        #     else:
+        #         log.debug('Not horoscopes time to post')
+        #         is_time_to_post = False
 
         if group.is_movies:
             last_hour_movies = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
