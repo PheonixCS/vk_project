@@ -86,6 +86,9 @@ class Group(models.Model):
         help_text=f'Типы вложений записей, которые не нужны в этой группе. '
         f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
     )
+    #
+    # posting_interval = models.PositiveIntegerField(default=60)
+    # posting_minute_base = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():

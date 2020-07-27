@@ -32,6 +32,7 @@ def examine_groups():
 
     now_time_utc = timezone.now()
     now_minute = now_time_utc.minute
+    now_hour = now_time_utc.hour
 
     ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
     hour_ago_threshold = now_time_utc - timedelta(hours=1)
