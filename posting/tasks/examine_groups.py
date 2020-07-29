@@ -68,7 +68,7 @@ def examine_groups():
         #         log.debug('Not horoscopes time to post')
         #         is_time_to_post = False
 
-        # https://trello.com/c/uB0RQBvE/244
+        # https://trello.com/c/uB0RQBvE/248
         if config.NEW_POSTING_INTERVALS_ENABLE and group.group_type == Group.HOROSCOPES_COMMON:
             is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
 
