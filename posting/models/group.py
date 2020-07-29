@@ -2,6 +2,7 @@ import datetime
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from posting.models.user import User
 from scraping.models import Attachment
@@ -76,8 +77,6 @@ class Group(models.Model):
     female_weekly_average_count = models.IntegerField(default=0,
                                                       verbose_name='Среднее количество женщин за неделю')
     sex_last_update_date = models.DateTimeField(null=True)
-    # banned_origin_attachment_types = models.IntegerField(
-    #     choices=Attachment.TYPE_CHOICES, blank=True, null=True)
     banned_origin_attachment_types = ArrayField(
         models.CharField(choices=Attachment.TYPE_CHOICES, blank=True, null=True, max_length=16),
         blank=True,
@@ -86,9 +85,19 @@ class Group(models.Model):
         help_text=f'Типы вложений записей, которые не нужны в этой группе. '
         f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
     )
-    #
-    # posting_interval = models.PositiveIntegerField(default=60)
-    # posting_minute_base = models.PositiveIntegerField(default=0)
+
+    posting_interval = models.IntegerField(
+        default=60,
+        validators=[MaxValueValidator(1410), MinValueValidator(30)],
+        verbose_name='Интервал постинга',
+        help_text='Количество минут между постингом. Минимально - 30 минут. Максимально - 1410 (сутки).'
+    )
+    posting_minute_base = models.IntegerField(
+        default=0,
+        validators=[MaxValueValidator(59), MinValueValidator(0)],
+        verbose_name='Минута отчета',
+        help_text='С этой минуты будет начинаться отчёт постинга.'
+    )
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
@@ -114,6 +123,19 @@ class Group(models.Model):
         female_percent = 1 - male_percent
 
         return male_percent, female_percent
+
+    def return_posting_time_list(self):
+        result = []
+
+        minutes = self.posting_minute_base
+
+        while minutes < 1440:
+            hour = minutes // 60
+            posting_minute = minutes % 60
+            result.append((hour, posting_minute))
+            minutes += self.posting_interval
+
+        return result
 
     class Meta:
         verbose_name = 'Сообщество'
