@@ -72,6 +72,11 @@ def examine_groups():
         if config.NEW_POSTING_INTERVALS_ENABLE and group.group_type == Group.HOROSCOPES_COMMON:
             is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
             hour_ago_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
+            log.info(
+                f'Now time: {is_time_to_post}{hour_ago_threshold}\n'
+                f'is_time_to_post {is_time_to_post}\n',
+                f'hour_ago_threshold {hour_ago_threshold}'
+            )
 
         if group.is_movies:
             last_hour_movies = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
