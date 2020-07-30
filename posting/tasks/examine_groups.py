@@ -35,11 +35,11 @@ def examine_groups():
     now_hour = now_time_utc.hour
 
     ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
-    hour_ago_threshold = now_time_utc - timedelta(hours=1)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
     week_ago = now_time_utc - timedelta(days=7)
 
     for group in groups_to_post_in:
+        hour_ago_threshold = now_time_utc - timedelta(hours=1)
         log.debug('working with group {}'.format(group.domain_or_id))
         log.debug(f'{config.NEW_POSTING_INTERVALS_ENABLE} and {group.group_type == Group.HOROSCOPES_COMMON} \
         and {now_time_utc - hour_ago_threshold}')
