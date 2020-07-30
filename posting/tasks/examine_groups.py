@@ -41,7 +41,8 @@ def examine_groups():
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
-        log.debug(f'{config.NEW_POSTING_INTERVALS_ENABLE} and {group.group_type == Group.HOROSCOPES_COMMON}')
+        log.debug(f'{config.NEW_POSTING_INTERVALS_ENABLE} and {group.group_type == Group.HOROSCOPES_COMMON} \
+        and {now_time_utc - hour_ago_threshold}')
 
         last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
         if last_hour_ads.exists():
@@ -75,8 +76,8 @@ def examine_groups():
             is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
             hour_ago_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
             log.debug(
-                f'Now time: {is_time_to_post}{hour_ago_threshold}\n' +
-                f'is_time_to_post {is_time_to_post}\n' +
+                f'Now time: {is_time_to_post}{hour_ago_threshold} ' +
+                f'is_time_to_post {is_time_to_post} ' +
                 f'hour_ago_threshold {hour_ago_threshold}'
             )
 
