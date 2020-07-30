@@ -71,11 +71,12 @@ def examine_groups():
 
         # https://trello.com/c/uB0RQBvE/248
         if config.NEW_POSTING_INTERVALS_ENABLE and group.group_type == Group.HOROSCOPES_COMMON:
+            log.debug('Test')
             is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
             hour_ago_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
             log.debug(
-                f'Now time: {is_time_to_post}{hour_ago_threshold}\n',
-                f'is_time_to_post {is_time_to_post}\n',
+                f'Now time: {is_time_to_post}{hour_ago_threshold}\n' +
+                f'is_time_to_post {is_time_to_post}\n' +
                 f'hour_ago_threshold {hour_ago_threshold}'
             )
 
@@ -96,7 +97,9 @@ def examine_groups():
         last_hour_posts_exist = last_hour_posts_common.exists() or movies_exist or horoscopes_exist
 
         if last_hour_posts_exist and not is_time_to_post:
-            log.info(f'got posts in last hour and 5 minutes for group {group.domain_or_id}')
+            log.info(
+                f'got posts since {hour_ago_threshold} ({now_time_utc - hour_ago_threshold} ago) '
+                f'for group {group.domain_or_id}')
             continue
         else:
             if not config.IS_DEV and is_ads_posted_recently(group):
