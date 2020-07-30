@@ -41,6 +41,7 @@ def examine_groups():
 
     for group in groups_to_post_in:
         log.debug('working with group {}'.format(group.domain_or_id))
+        log.debug(f'{config.NEW_POSTING_INTERVALS_ENABLE} and {group.group_type == Group.HOROSCOPES_COMMON}')
 
         last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
         if last_hour_ads.exists():
