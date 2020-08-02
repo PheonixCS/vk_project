@@ -124,16 +124,16 @@ class Group(models.Model):
 
         return male_percent, female_percent
 
-    def return_posting_time_list(self):
+    def return_posting_time_list(self, base_minute=None, interval=None):
+        minutes = base_minute or self.posting_minute_base
+        interval = interval or self.posting_interval
         result = []
-
-        minutes = self.posting_minute_base
 
         while minutes < 1440:
             hour = minutes // 60
             posting_minute = minutes % 60
             result.append((hour, posting_minute))
-            minutes += self.posting_interval
+            minutes += interval
 
         return result
 
