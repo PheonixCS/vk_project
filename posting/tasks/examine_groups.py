@@ -188,7 +188,7 @@ def examine_groups():
 
         common_condition = (
                 (is_time_to_post or not last_hour_posts_exist)
-                and not group.group_type != group.MOVIE_SPECIAL
+                and not group.group_type != Group.MOVIE_SPECIAL
         )
         if common_condition:
             log.debug(f'{group.domain_or_id} in common condition')
