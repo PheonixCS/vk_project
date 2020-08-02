@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 from random import choice
+from typing import List, Tuple
 
 from celery import shared_task
 from constance import config
@@ -15,7 +16,6 @@ from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, pos
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.core import HoroscopesPage
 from services.vk.core import create_vk_session_using_login_password, fetch_group_id
-from typing import List, Tuple
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
@@ -28,73 +28,26 @@ def examine_groups():
         user__isnull=False,
         is_posting_active=True
     ).distinct()
-
-    log.debug('got {} groups'.format(len(groups_to_post_in)))
-
-    now_time_utc = timezone.now()
-    now_minute = now_time_utc.minute
-    now_hour = now_time_utc.hour
-
-    ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
+    log.debug(f'Got {len(groups_to_post_in)} groups')
 
     for group in groups_to_post_in:
-        log.debug(f'working with group {group.domain_or_id}')
+        log.debug(f'Working with group {group.domain_or_id}')
 
-        last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
-        if last_hour_ads.exists():
-            log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
+        ads = are_any_ads_posted_recently(group)
+        if ads:
+            log.info(f'Got recent ads in group {group.domain_or_id}. Skip posting.')
             continue
 
-        # https://trello.com/c/uB0RQBvE/248
-        is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
-        posting_pause_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
-        log.debug(f'is_time_to_post: {is_time_to_post}, posting_pause_threshold: {posting_pause_threshold}')
-
-        # https://trello.com/c/uB0RQBvE/244
-        if group.group_type == Group.HOROSCOPES_MAIN and group.horoscopes.filter(post_in_group_date__isnull=True):
-            # в мужских гороскопах нужно постить на минуту позже.
-            if group.group_id == 29062628:
-                now_minute -= 1
-
-            interval = config.HOROSCOPES_POSTING_INTERVAL - 1
-            is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list(interval=interval)
-            posting_pause_threshold = now_time_utc - timedelta(minutes=interval)
-
-        if group.group_type == group.MOVIE_SPECIAL:
-            last_hour_movies = Movie.objects.filter(post_in_group_date__gt=posting_pause_threshold)
-            movies_exist = last_hour_movies.exists()
-        else:
-            movies_exist = False
-
-        if group.group_type in (Group.HOROSCOPES_COMMON, Group.HOROSCOPES_MAIN):
-            last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
-            horoscopes_exist = last_hour_horoscopes.exists()
-        else:
-            horoscopes_exist = False
-
-        last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
-
-        last_hour_posts_exist = last_hour_posts_common.exists() or movies_exist or horoscopes_exist
-
+        is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
         if last_hour_posts_exist and not is_time_to_post:
-            log.info(
-                f'got posts since {posting_pause_threshold} ({now_time_utc - posting_pause_threshold} ago) '
-                f'for group {group.domain_or_id}')
+            log.info(f'Got recent posts in group {group.domain_or_id}. Skip posting.')
             continue
-        else:
-            if not config.IS_DEV and is_ads_posted_recently(group):
-                log.info(f'pass group {group.domain_or_id} because ad post was published recently')
-                continue
 
+        # FIXME move this group id stuff somewhere
         if not group.group_id:
-            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
-            if not session:
+            group_id = fetch_group_id_from_vk(group)
+            if not group_id:
                 continue
-            api = session.get_api()
-            if not api:
-                continue
-            group.group_id = fetch_group_id(api, group.domain_or_id)
-            group.save(update_fields=['group_id'])
 
         movies_condition = (
                 group.group_type == group.MOVIE_SPECIAL
@@ -104,11 +57,12 @@ def examine_groups():
             log.debug(f'{group.domain_or_id} in movies condition')
 
             movie = find_movie_id_to_post()
-
             if movie:
                 post_movie.post_movie.delay(group.group_id, movie)
             else:
                 log.warning('Got no movie to post')
+
+            continue
 
         horoscope_condition = (
                 group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON)
@@ -119,11 +73,12 @@ def examine_groups():
             log.debug(f'{group.domain_or_id} in horoscopes condition')
 
             horoscope_record = find_horoscope_record_to_post(group)
-
             if horoscope_record:
                 post_horoscope.post_horoscope.delay(group.group_id, horoscope_record.id)
             else:
                 log.warning('Got no horoscope records to post')
+
+            continue
 
         common_condition = (
                 (is_time_to_post or not last_hour_posts_exist)
@@ -133,7 +88,6 @@ def examine_groups():
             log.debug(f'{group.domain_or_id} in common condition')
 
             the_best_record, records = find_common_record_to_post(group)
-
             if the_best_record:
                 the_best_record.set_posting()
                 log.debug(f'record {the_best_record} got max rate for group {group.group_id}')
@@ -151,11 +105,69 @@ def examine_groups():
                     telegram.critical('Неожиданная ошибка при подготовке к постингу')
                     the_best_record.set_failed()
 
+            continue
+
+        log.warning(f'Group {group.group_id} did not meet any of the posting condition!')
+
     log.debug('end group examination')
     return 'succeed'
 
 
-def find_common_record_to_post(group) -> Tuple[Record or None, List[Record] or None]:
+def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
+    now_time_utc = timezone.now()
+    now_minute = now_time_utc.minute
+    now_hour = now_time_utc.hour
+
+    # https://trello.com/c/uB0RQBvE/248
+    is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
+    posting_pause_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
+    log.debug(f'is_time_to_post: {is_time_to_post}, posting_pause_threshold: {posting_pause_threshold}')
+
+    # https://trello.com/c/uB0RQBvE/244
+    if group.group_type == Group.HOROSCOPES_MAIN and group.horoscopes.filter(post_in_group_date__isnull=True):
+        # в мужских гороскопах нужно постить на минуту позже.
+        if group.group_id == 29062628:
+            now_minute -= 1
+
+        interval = config.HOROSCOPES_POSTING_INTERVAL - 1
+        is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list(interval=interval)
+        posting_pause_threshold = now_time_utc - timedelta(minutes=interval)
+
+    if group.group_type == group.MOVIE_SPECIAL:
+        last_hour_movies = Movie.objects.filter(post_in_group_date__gt=posting_pause_threshold)
+        movies_exist = last_hour_movies.exists()
+    else:
+        movies_exist = False
+
+    if group.group_type in (Group.HOROSCOPES_COMMON, Group.HOROSCOPES_MAIN):
+        last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
+        horoscopes_exist = last_hour_horoscopes.exists()
+    else:
+        horoscopes_exist = False
+
+    last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
+    last_hour_posts_exist = last_hour_posts_common.exists() or movies_exist or horoscopes_exist
+
+    return is_time_to_post, last_hour_posts_exist
+
+
+def fetch_group_id_from_vk(group: Group) -> int or None:
+    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+    if not session:
+        return None
+
+    api = session.get_api()
+    if not api:
+        return None
+
+    group_id = fetch_group_id(api, group.domain_or_id)
+    group.group_id = group_id
+    group.save(update_fields=['group_id'])
+
+    return group_id
+
+
+def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Record] or None]:
     now_time_utc = timezone.now()
     week_ago = now_time_utc - timedelta(days=7)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
@@ -181,9 +193,9 @@ def find_common_record_to_post(group) -> Tuple[Record or None, List[Record] or N
     )
 
     if group.banned_origin_attachment_types:
-        candidates = filter_banned_records(candidates, group.banned_origin_attachment_types)
+        candidates = filter_banned_records(candidates, list(group.banned_origin_attachment_types))
 
-    log.debug('got {} ready to post records to group {}'.format(len(candidates), group.group_id))
+    log.debug(f'got {len(candidates)} ready to post records to group {group.group_id}')
     if not candidates:
         return None, []
 
@@ -209,9 +221,10 @@ def find_common_record_to_post(group) -> Tuple[Record or None, List[Record] or N
     return the_best_record, candidates
 
 
-def find_horoscope_record_to_post(group):
+def find_horoscope_record_to_post(group: Group) -> Horoscope or None:
     horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
     horoscope_record = None
+
     if horoscope_records.exists():
 
         horoscope_signs = HoroscopesPage.get_signs()
@@ -225,9 +238,10 @@ def find_horoscope_record_to_post(group):
     return horoscope_record
 
 
-def find_movie_id_to_post():
+def find_movie_id_to_post() -> int or None:
     now_time_utc = timezone.now()
     posted_movies = Movie.objects.filter(post_in_group_date__isnull=False)
+
     if posted_movies:
         last_posted_movie = posted_movies.latest('post_in_group_date')
         last_movie_rating = last_posted_movie.rating
@@ -235,6 +249,7 @@ def find_movie_id_to_post():
     else:
         log.warning('got no posted movies')
         last_movie_rating = None
+
     for _ in range(len(get_movies_rating_intervals())):
         next_rating_interval = get_next_interval_by_movie_rating(last_movie_rating)
         log.debug(f'next rating interval {next_rating_interval}')
@@ -273,3 +288,19 @@ def find_movie_id_to_post():
     else:
         movie = None
     return movie
+
+
+def are_any_ads_posted_recently(group: Group) -> bool:
+    now_time_utc = timezone.now()
+    ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
+
+    result = False
+
+    last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
+    if last_hour_ads.exists():
+        return result
+
+    if not config.IS_DEV and is_ads_posted_recently(group):
+        return result
+
+    return result
