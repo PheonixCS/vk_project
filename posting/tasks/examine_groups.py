@@ -39,67 +39,47 @@ def examine_groups():
     week_ago = now_time_utc - timedelta(days=7)
 
     for group in groups_to_post_in:
-        hour_ago_threshold = now_time_utc - timedelta(hours=1)
-        log.debug('working with group {}'.format(group.domain_or_id))
-        log.debug(f'{config.NEW_POSTING_INTERVALS_ENABLE} and {group.group_type == Group.HOROSCOPES_COMMON} \
-        and {now_time_utc - hour_ago_threshold}')
+        log.debug(f'working with group {group.domain_or_id}')
 
         last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
         if last_hour_ads.exists():
             log.debug(f'got ads in last hour and 5 minutes for group {group.domain_or_id}. Skip.')
             continue
 
-        if group.is_horoscopes and group.horoscopes.filter(post_in_group_date__isnull=True):
-            # https://trello.com/c/uB0RQBvE/244
+        # https://trello.com/c/uB0RQBvE/248
+        is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
+        posting_pause_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
+        log.debug(f'is_time_to_post: {is_time_to_post}, posting_pause_threshold: {posting_pause_threshold}')
+
+        # https://trello.com/c/uB0RQBvE/244
+        if group.group_type == Group.HOROSCOPES_MAIN and group.horoscopes.filter(post_in_group_date__isnull=True):
             # в мужских гороскопах нужно постить на минуту позже.
             if group.group_id == 29062628:
                 now_minute -= 1
 
-            is_time_to_post = abs(now_minute - group.posting_time.minute) % config.HOROSCOPES_POSTING_INTERVAL == 0
-        else:
-            is_time_to_post = group.posting_time.minute == now_minute
+            interval = config.HOROSCOPES_POSTING_INTERVAL - 1
+            is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list(interval=interval)
+            posting_pause_threshold = now_time_utc - timedelta(minutes=interval)
 
-        # https://trello.com/c/uB0RQBvE/244
-        # https://trello.com/c/uA5o3XuR/247
-        # if group.group_type == Group.HOROSCOPES_COMMON:
-        #     hour_ago_threshold -= timedelta(hours=1)
-        #     if is_time_to_post and now_time_utc.hour % 2 == 0:
-        #         log.debug('Horoscopes time to post')
-        #         is_time_to_post = True
-        #     else:
-        #         log.debug('Not horoscopes time to post')
-        #         is_time_to_post = False
-
-        # https://trello.com/c/uB0RQBvE/248
-        if config.NEW_POSTING_INTERVALS_ENABLE and group.group_type == Group.HOROSCOPES_COMMON:
-            log.debug('Test')
-            is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
-            hour_ago_threshold = now_time_utc - timedelta(minutes=group.posting_interval)
-            log.debug(
-                f'Now time: {is_time_to_post}{hour_ago_threshold} ' +
-                f'is_time_to_post {is_time_to_post} ' +
-                f'hour_ago_threshold {hour_ago_threshold}'
-            )
-
-        if group.is_movies:
-            last_hour_movies = Movie.objects.filter(post_in_group_date__gt=hour_ago_threshold)
+        if group.group_type == group.MOVIE_SPECIAL:
+            last_hour_movies = Movie.objects.filter(post_in_group_date__gt=posting_pause_threshold)
             movies_exist = last_hour_movies.exists()
         else:
             movies_exist = False
 
-        if group.is_horoscopes:
-            last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
+        if group.group_type in (Group.HOROSCOPES_COMMON, Group.HOROSCOPES_MAIN):
+            last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
             horoscopes_exist = last_hour_horoscopes.exists()
         else:
             horoscopes_exist = False
 
-        last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=hour_ago_threshold)
+        last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
 
         last_hour_posts_exist = last_hour_posts_common.exists() or movies_exist or horoscopes_exist
 
         if last_hour_posts_exist and not is_time_to_post:
             log.info(
-                f'got posts since {hour_ago_threshold} ({now_time_utc - hour_ago_threshold} ago) '
+                f'got posts since {posting_pause_threshold} ({now_time_utc - posting_pause_threshold} ago) '
                 f'for group {group.domain_or_id}')
             continue
         else:
@@ -118,7 +98,7 @@ def examine_groups():
             group.save(update_fields=['group_id'])
 
         movies_condition = (
-                group.is_movies
+                group.group_type == group.MOVIE_SPECIAL
                 and (is_time_to_post or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
         )
         if movies_condition:
@@ -177,7 +157,7 @@ def examine_groups():
                 log.warning('got no movie')
 
         horoscope_condition = (
-                group.is_horoscopes
+                group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON)
                 and is_time_to_post
                 and group.horoscopes.filter(post_in_group_date__isnull=True)
         )
@@ -208,7 +188,7 @@ def examine_groups():
 
         common_condition = (
                 (is_time_to_post or not last_hour_posts_exist)
-                and not group.is_movies
+                and not group.group_type != group.MOVIE_SPECIAL
         )
         if common_condition:
             log.debug(f'{group.domain_or_id} in common condition')

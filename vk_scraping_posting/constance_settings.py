@@ -55,7 +55,7 @@ CONSTANCE_CONFIG = {
                             str),
     'DONOR_OUTDATE_INTERVAL': (30, 'Donor considered outdated if last post was N days ago', int),
     'STATS_STORING_TIME': (30, 'Statistics storing time in days', int),
-    'NEW_POSTING_INTERVALS_ENABLE': (False, 'New posting intervals logic', bool)
+    'NEW_POSTING_INTERVALS_ENABLE': (True   , 'New posting intervals logic', bool)
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
