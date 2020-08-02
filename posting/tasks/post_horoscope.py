@@ -20,10 +20,10 @@ telegram = logging.getLogger('telegram')
 
 
 @shared_task
-def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
+def post_horoscope(group_id: int, horoscope_record_id: int):
     log.debug('start posting horoscopes in {} group'.format(group_id))
-
-    session = create_vk_session_using_login_password(login, password, app_id)
+    group = Group.objects.get(group_id=group_id)
+    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
     if not session:
         log.error('session not created in group {}'.format(group_id))
         return
@@ -35,7 +35,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
     main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
-    group = Group.objects.get(group_id=group_id)
     horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
@@ -46,7 +45,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
-            attachments.extend(upload_photos(session, horoscope_image_name, group_id))
+            attachments.extend(upload_photos(session, horoscope_image_name, str(group_id)))
             delete_files(horoscope_image_name)
             record_text = ''
         else:
@@ -57,7 +56,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
-                attachments.extend(upload_photos(session, image_local_filename, group_id))
+                attachments.extend(upload_photos(session, image_local_filename, str(group_id)))
                 delete_files(image_local_filename)
 
         group_zodiac_sign = fetch_zodiac_sign(group.name)

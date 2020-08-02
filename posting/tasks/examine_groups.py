@@ -15,6 +15,7 @@ from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, pos
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.core import HoroscopesPage
 from services.vk.core import create_vk_session_using_login_password, fetch_group_id
+from typing import List, Tuple
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
@@ -35,8 +36,6 @@ def examine_groups():
     now_hour = now_time_utc.hour
 
     ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
-    allowed_time_threshold = now_time_utc - timedelta(hours=8)
-    week_ago = now_time_utc - timedelta(days=7)
 
     for group in groups_to_post_in:
         log.debug(f'working with group {group.domain_or_id}')
@@ -104,57 +103,12 @@ def examine_groups():
         if movies_condition:
             log.debug(f'{group.domain_or_id} in movies condition')
 
-            posted_movies = Movie.objects.filter(post_in_group_date__isnull=False)
-            if posted_movies:
-                last_posted_movie = posted_movies.latest('post_in_group_date')
-                last_movie_rating = last_posted_movie.rating
-                log.debug(f'last posted movie id: {last_posted_movie.id or None}')
-            else:
-                log.warning('got no posted movies')
-                last_movie_rating = None
-
-            for _ in range(len(get_movies_rating_intervals())):
-                next_rating_interval = get_next_interval_by_movie_rating(last_movie_rating)
-                log.debug(f'next rating interval {next_rating_interval}')
-
-                new_movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
-                                                 rating__in=next_rating_interval,
-                                                 post_in_group_date__isnull=True).last()
-                if not new_movie:
-                    log.debug('Got no new movie')
-                    old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
-                    old_movies_ids = list(Movie.objects.filter(
-                        trailers__vk_url__isnull=False,
-                        post_in_group_date__lte=old_movie_threshold,
-                        rating__in=next_rating_interval
-                    ).values_list('id', flat=True))
-
-                    try:
-                        old_movie = choice(old_movies_ids)
-                    except IndexError:
-                        log.debug('old_movies_ids is empty')
-                        old_movie = None
-
-                    if not old_movie:
-                        log.warning('Got no movies in last interval!')
-                    else:
-                        log.debug('Found old movie')
-                        movie = old_movie
-                        break
-                else:
-                    log.debug('Found new movie')
-                    movie = new_movie.id
-                    break
-
-                last_movie_rating = next_rating_interval[0]
-
-            else:
-                movie = None
+            movie = find_movie_id_to_post()
 
             if movie:
                 post_movie.post_movie.delay(group.group_id, movie)
             else:
-                log.warning('got no movie')
+                log.warning('Got no movie to post')
 
         horoscope_condition = (
                 group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON)
@@ -164,27 +118,12 @@ def examine_groups():
         if horoscope_condition:
             log.debug(f'{group.domain_or_id} in horoscopes condition')
 
-            horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
-            if horoscope_records.exists():
+            horoscope_record = find_horoscope_record_to_post(group)
 
-                horoscope_signs = HoroscopesPage.get_signs()
-                for sign in horoscope_signs:
-                    records_filter = horoscope_records.filter(zodiac_sign=sign)
-                    if records_filter:
-                        horoscope_record = records_filter.last()
-                        break
-                else:
-                    horoscope_record = horoscope_records.last()
-
-                post_horoscope.post_horoscope.delay(group.user.login,
-                                                    group.user.password,
-                                                    group.user.app_id,
-                                                    group.group_id,
-                                                    horoscope_record.id
-                                                    )
-                continue
+            if horoscope_record:
+                post_horoscope.post_horoscope.delay(group.group_id, horoscope_record.id)
             else:
-                log.warning('got no horoscopes records')
+                log.warning('Got no horoscope records to post')
 
         common_condition = (
                 (is_time_to_post or not last_hour_posts_exist)
@@ -193,76 +132,144 @@ def examine_groups():
         if common_condition:
             log.debug(f'{group.domain_or_id} in common condition')
 
-            donors = group.donors.all()
-            if not donors:
-                log.warning(f'Group {group.domain_or_id} got no donors but in common condition!')
-                continue
+            the_best_record, records = find_common_record_to_post(group)
 
-            if len(donors) > 1:
-                # find last record id and its donor id
-                last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
-                if last_record:
-                    donors = donors.exclude(pk=last_record.donor_id)
+            if the_best_record:
+                the_best_record.set_posting()
+                log.debug(f'record {the_best_record} got max rate for group {group.group_id}')
 
-            records = Record.objects.filter(
-                rate__isnull=False,
-                status=Record.READY,
-                post_in_group_date__isnull=True,
-                failed_date__isnull=True,
-                post_in_donor_date__gt=allowed_time_threshold,
-                donor__in=donors
-            )
+                save_posting_history(group=group, record=the_best_record,
+                                     candidates=records.exclude(pk=the_best_record.id))
 
-            if group.banned_origin_attachment_types:
-                records = filter_banned_records(records, group.banned_origin_attachment_types)
-
-            log.debug('got {} ready to post records to group {}'.format(len(records), group.group_id))
-            if not records:
-                continue
-
-            if config.POSTING_BASED_ON_SEX:
-                if (
-                        group.group_type not in (Group.MUSIC_COMMON,)
-                        and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
-                ):
-                    sex_statistics_weekly.delay()
-                    continue
-
-                male_percent, female_percent = group.get_auditory_percents()
-
-                the_best_record = find_suitable_record(
-                    records,
-                    (male_percent, female_percent),
-                    config.RECORDS_SELECTION_PERCENT,
-                    group.group_id
-                )
-            else:
-                the_best_record = max(records, key=lambda x: x.rate)
-
-            the_best_record.status = Record.POSTING
-            the_best_record.save(update_fields=['status'])
-            log.debug('record {} got max rate for group {}'.format(the_best_record, group.group_id))
-
-            save_posting_history(group=group, record=the_best_record, candidates=records.exclude(pk=the_best_record.id))
-
-            try:
-                if group.is_background_abstraction_enabled:
-                    post_music.post_music.delay(group.user.login,
-                                                group.user.password,
-                                                group.user.app_id,
-                                                group.group_id,
-                                                the_best_record.id)
-                else:
-                    post_record.post_record.delay(group.user.login,
-                                                  group.user.password,
-                                                  group.user.app_id,
-                                                  group.group_id,
-                                                  the_best_record.id)
-            except:
-                log.error('got unexpected exception in examine_groups', exc_info=True)
-                telegram.critical('Неожиданная ошибка при подготовке к постингу')
-                the_best_record.status = Record.FAILED
-                the_best_record.save(update_fields=['status'])
+                try:
+                    if group.is_background_abstraction_enabled:
+                        post_music.post_music.delay(group.group_id, the_best_record.id)
+                    else:
+                        post_record.post_record.delay(group.group_id, the_best_record.id)
+                except:
+                    log.error('got unexpected exception in examine_groups', exc_info=True)
+                    telegram.critical('Неожиданная ошибка при подготовке к постингу')
+                    the_best_record.set_failed()
 
     log.debug('end group examination')
     return 'succeed'
+
+
+def find_common_record_to_post(group) -> Tuple[Record or None, List[Record] or None]:
+    now_time_utc = timezone.now()
+    week_ago = now_time_utc - timedelta(days=7)
+    allowed_time_threshold = now_time_utc - timedelta(hours=8)
+
+    donors = group.donors.all()
+    if not donors:
+        log.warning(f'Group {group.domain_or_id} got no donors but in common condition!')
+        return None, []
+
+    if len(donors) > 1:
+        # find last record id and its donor id
+        last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
+        if last_record:
+            donors = donors.exclude(pk=last_record.donor_id)
+
+    candidates = Record.objects.filter(
+        rate__isnull=False,
+        status=Record.READY,
+        post_in_group_date__isnull=True,
+        failed_date__isnull=True,
+        post_in_donor_date__gt=allowed_time_threshold,
+        donor__in=donors
+    )
+
+    if group.banned_origin_attachment_types:
+        candidates = filter_banned_records(candidates, group.banned_origin_attachment_types)
+
+    log.debug('got {} ready to post records to group {}'.format(len(candidates), group.group_id))
+    if not candidates:
+        return None, []
+
+    if config.POSTING_BASED_ON_SEX:
+        if (
+                group.group_type not in (Group.MUSIC_COMMON,)
+                and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
+        ):
+            sex_statistics_weekly.delay()
+            return None, []
+
+        male_percent, female_percent = group.get_auditory_percents()
+
+        the_best_record = find_suitable_record(
+            candidates,
+            (male_percent, female_percent),
+            config.RECORDS_SELECTION_PERCENT,
+            group.group_id
+        )
+    else:
+        the_best_record = max(candidates, key=lambda x: x.rate)
+
+    return the_best_record, candidates
+
+
+def find_horoscope_record_to_post(group):
+    horoscope_records = group.horoscopes.filter(post_in_group_date__isnull=True)
+    horoscope_record = None
+    if horoscope_records.exists():
+
+        horoscope_signs = HoroscopesPage.get_signs()
+        for sign in horoscope_signs:
+            records_filter = horoscope_records.filter(zodiac_sign=sign)
+            if records_filter:
+                horoscope_record = records_filter.last()
+                break
+        else:
+            horoscope_record = horoscope_records.last()
+    return horoscope_record
+
+
+def find_movie_id_to_post():
+    now_time_utc = timezone.now()
+    posted_movies = Movie.objects.filter(post_in_group_date__isnull=False)
+    if posted_movies:
+        last_posted_movie = posted_movies.latest('post_in_group_date')
+        last_movie_rating = last_posted_movie.rating
+        log.debug(f'last posted movie id: {last_posted_movie.id or None}')
+    else:
+        log.warning('got no posted movies')
+        last_movie_rating = None
+    for _ in range(len(get_movies_rating_intervals())):
+        next_rating_interval = get_next_interval_by_movie_rating(last_movie_rating)
+        log.debug(f'next rating interval {next_rating_interval}')
+
+        new_movie = Movie.objects.filter(trailers__status=Trailer.DOWNLOADED_STATUS,
+                                         rating__in=next_rating_interval,
+                                         post_in_group_date__isnull=True).last()
+        if not new_movie:
+            log.debug('Got no new movie')
+            old_movie_threshold = now_time_utc - timedelta(days=config.OLD_MOVIES_TIME_THRESHOLD)
+            old_movies_ids = list(Movie.objects.filter(
+                trailers__vk_url__isnull=False,
+                post_in_group_date__lte=old_movie_threshold,
+                rating__in=next_rating_interval
+            ).values_list('id', flat=True))
+
+            try:
+                old_movie = choice(old_movies_ids)
+            except IndexError:
+                log.debug('old_movies_ids is empty')
+                old_movie = None
+
+            if not old_movie:
+                log.warning('Got no movies in last interval!')
+            else:
+                log.debug('Found old movie')
+                movie = old_movie
+                break
+        else:
+            log.debug('Found new movie')
+            movie = new_movie.id
+            break
+
+        last_movie_rating = next_rating_interval[0]
+
+    else:
+        movie = None
+    return movie

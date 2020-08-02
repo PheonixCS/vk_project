@@ -23,28 +23,28 @@ telegram = logging.getLogger('telegram')
 
 
 @shared_task(time_limit=60)
-def post_record(login, password, app_id, group_id, record_id):
+def post_record(group_id, record_id):
     log.debug('start posting in {} group'.format(group_id))
 
     group = Group.objects.get(group_id=group_id)
     record = Record.objects.get(pk=record_id)
 
     try:
-        session = create_vk_session_using_login_password(login, password, app_id)
+        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
         api = session.get_api()
     except:
         log.error('got unexpected exception in post_record for group {}'.format(group_id), exc_info=True)
-        record.fail()
+        record.set_failed()
         return
 
     if not session:
         log.error('session not created in group {}'.format(group_id))
-        record.fail()
+        record.set_failed()
         return
 
     if not api:
         log.error('no api was created in group {}'.format(group_id))
-        record.fail()
+        record.set_failed()
         return
 
     try:
@@ -143,7 +143,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 attachments.append('doc{}_{}'.format(gif.owner_id, gif.gif_id))
         elif gifs:
             log.warning('Failed to post because of gif unavailability')
-            record.fail()
+            record.set_failed()
             return
 
         # video part
@@ -153,7 +153,7 @@ def post_record(login, password, app_id, group_id, record_id):
                 attachments.append('video{}_{}'.format(video.owner_id, video.video_id))
             else:
                 log.warning('Failed to post because of video unavailability')
-                record.fail()
+                record.set_failed()
                 return
 
         # additional texts
@@ -189,20 +189,21 @@ def post_record(login, password, app_id, group_id, record_id):
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.VkApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))
-        record.fail()
+        record.set_failed()
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
         telegram.critical('Неожиданная ошибка при обычном постинге')
-        record.fail()
+        record.set_failed()
         return
-
-    fields = ['post_in_group_id', 'post_in_group_date', 'group', 'status']
 
     record.post_in_group_id = post_response.get('post_id', 0)
     record.post_in_group_date = timezone.now()
     record.group = group
     record.status = Record.POSTED
+    record.change_status_time = timezone.now()
+
+    fields = ['post_in_group_id', 'post_in_group_date', 'group', 'status', 'change_status_time']
     record.save(update_fields=fields)
 
-    log.debug('post in group {} finished'.format(group_id))
+    log.debug(f'Post in group {group_id} <{group.name}> finished')
