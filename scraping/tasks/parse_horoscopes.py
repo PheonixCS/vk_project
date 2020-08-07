@@ -20,7 +20,9 @@ def parse_horoscopes() -> None:
 
     parsed = horoscope_page.parse()
     log.debug(f'parsed {len(parsed)} horoscopes')
-    groups_with_horoscope_posting = Group.objects.filter(is_horoscopes=True)
+
+    groups_with_horoscope_posting = Group.objects.filter(
+        group_type__in=(Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON))
     log.debug(f'got {len(groups_with_horoscope_posting)} groups for posting')
 
     for group in groups_with_horoscope_posting:
@@ -32,8 +34,8 @@ def parse_horoscopes() -> None:
                 log.warning(f'{group_sign_en} not in {parsed.keys()}')
                 continue
             else:
-                additional_text = '{}, {}'.format(tomorrow_date_ru, group_sign_ru)
-                record_text = '{}\n{}'.format(additional_text, parsed[group_sign_en])
+                additional_text = f'{tomorrow_date_ru}, {group_sign_ru}'
+                record_text = f'{additional_text}\n{parsed[group_sign_en]}'
                 save_horoscope_record_to_db(group, record_text, group_sign_en)
 
     log.debug('finish parse_horoscopes')

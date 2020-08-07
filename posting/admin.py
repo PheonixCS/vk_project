@@ -85,7 +85,7 @@ class GroupAdmin(admin.ModelAdmin):
     )
     fieldsets = (
         (None, {
-            'fields': ('domain_or_id', 'name', 'is_posting_active', 'group_type', 'is_horoscopes', 'is_movies',
+            'fields': ('domain_or_id', 'name', 'is_posting_active', 'group_type',
                        'is_pin_enabled', 'posting_time', 'posting_interval', 'posting_minute_base',
                        'user', 'callback_api_token', 'banned_origin_attachment_types')
         }),
