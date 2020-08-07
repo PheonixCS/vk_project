@@ -1,11 +1,12 @@
-#
-import os
 import logging
+import os
+from random import randint
+from textwrap import wrap
+from time import time
 
 from PIL import ImageFont, Image, ImageDraw
-from django.conf import settings
-from textwrap import wrap
 from constance import config
+from django.conf import settings
 
 from posting.core.images import is_text_fit_to_width, calculate_max_len_in_chars
 
@@ -14,7 +15,7 @@ log = logging.getLogger('posting.horoscopes')
 
 def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     log.debug('transfer_horoscope_to_image started')
-    file_name = 'horoscopes{}.jpg'.format(hash(raw_text) % 1000)
+    file_name = f'horoscopes{randint(1, int(time())):0<10}.jpg'
 
     horoscopes_font_title = config.HOROSCOPES_FONT_TITLE
     font_path = os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf')
@@ -45,7 +46,7 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     else:
         img.save(file_name)
 
-    log.debug('transfer_horoscope_to_image finished, file {}'.format(file_name))
+    log.debug(f'transfer_horoscope_to_image finished, file {file_name}')
     return file_name
 
 

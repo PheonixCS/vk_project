@@ -65,7 +65,7 @@ def save_horoscope_record_to_db(group, text, zodiac_sign):
         }
     )
     if created:
-        log.info('horoscope created')
+        log.info(f'horoscope created for group {group.group_id}')
 
     return created
 
