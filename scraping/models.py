@@ -95,20 +95,23 @@ class Record(models.Model):
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
     post_in_group_date = models.DateTimeField(null=True, verbose_name='Дата постинга в сообществе')
     post_in_group_id = models.IntegerField(null=True)
-    failed_date = models.DateTimeField(null=True)
+
     females_count = models.IntegerField(default=0, verbose_name='Лайков от женщин')
     males_count = models.IntegerField(default=0, verbose_name='Лайков от мужчин')
     males_females_ratio = models.FloatField(default=1.0, verbose_name='Соотношение мужчин к женщинам в лайках')
     unknown_count = models.IntegerField(default=0, verbose_name='Лайков от неопределенного пола')
-    status = models.IntegerField(choices=STATUS_CHOICES, default=NEW, verbose_name='Статус записи')
     candidate_number = models.IntegerField(null=True, verbose_name='Идекс по рейтингу', editable=False)
+
+    status = models.IntegerField(choices=STATUS_CHOICES, default=NEW, verbose_name='Статус записи')
+    change_status_time = models.DateTimeField(null=True)
+    failed_date = models.DateTimeField(null=True)
 
     def save(self, *args, **kwargs):
         if self.record_id:
             self.donor_url = f'https://vk.com/wall-{self.donor_id}_{self.record_id}'
         if self.post_in_group_id:
             self.group_url = f'https://vk.com/wall-{self.group_id}_{self.post_in_group_id}'
-        
+
         if 'update_fields' in kwargs.keys():
             kwargs['update_fields'].append('group_url')
 
@@ -122,10 +125,18 @@ class Record(models.Model):
 
         return sum([gif_count, image_count, video_count, audio_count])
 
-    def fail(self):
+    def set_failed(self):
         self.status = self.FAILED
         self.failed_date = timezone.now()
+
         fields_to_update = ['status', 'failed_date']
+        self.save(update_fields=fields_to_update)
+
+    def set_posting(self):
+        self.status = self.POSTING
+        self.change_status_time = timezone.now()
+
+        fields_to_update = ['status', 'change_status_time']
         self.save(update_fields=fields_to_update)
 
     def get_auditory_percents(self):
@@ -273,4 +284,3 @@ class ScrapingHistory(models.Model):
     class Meta:
         verbose_name = 'История скрапинга'
         verbose_name_plural = 'История скрапинга'
-
