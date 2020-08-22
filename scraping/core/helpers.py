@@ -29,7 +29,7 @@ def distribute_donors_between_accounts(donors, accounts):
     return accounts_with_donors
 
 
-def find_url_of_biggest_image(image_dict):
+def find_url_of_biggest_image(image_dict: dict) -> str:
     photos_keys = [key for key in image_dict if key.startswith('photo_')]
     key_of_max_size_photo = max(photos_keys, key=lambda x: int(x.split('_')[1]))
     return image_dict[key_of_max_size_photo]
