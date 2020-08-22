@@ -51,7 +51,7 @@ def post_record(login, password, app_id, group_id, record_id):
         attachments = []
         actions_to_unique_image = {}
 
-        images = list(record.images.all())
+        images = sorted(list(record.images.all()), key=lambda x: x.index_number)
         gifs = record.gifs.all()
         videos = record.videos.all()
         record_text = record.text
