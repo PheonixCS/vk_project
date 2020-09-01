@@ -17,7 +17,7 @@ from posting.models import Group
 from scraping.models import Record
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos, check_docs_availability, check_video_availability
-from services.vk.vars import ADVERTISEMENT_ERROR
+from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 from posting.core.vk_helper import create_ad_record
 
 log = logging.getLogger('posting.scheduled')
@@ -189,10 +189,10 @@ def post_record(group_id, record_id):
         post_response = api.wall.post(**data_to_post)
 
         log.debug('{} in group {}'.format(post_response, group_id))
-    except vk_api.VkApiError as error_msg:
+    except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))
 
-        if ADVERTISEMENT_ERROR in error_msg:
+        if error_msg.code == ADVERTISEMENT_ERROR_CODE:
             record.set_ready()
             create_ad_record(-1, group, timezone.now())
         else:
