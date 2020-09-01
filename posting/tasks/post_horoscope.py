@@ -15,7 +15,7 @@ from posting.models import Group
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
-from services.vk.vars import ADVERTISEMENT_ERROR
+from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
@@ -97,10 +97,10 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
             else:
                 log.debug(f'Pin horoscope result {pin_response}')
 
-    except vk_api.VkApiError as error_msg:
+    except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))
 
-        if ADVERTISEMENT_ERROR in error_msg:
+        if error_msg.code == ADVERTISEMENT_ERROR_CODE:
             create_ad_record(-1, group, timezone.now())
 
         return
