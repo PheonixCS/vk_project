@@ -28,6 +28,7 @@ def is_ads_posted_recently(group):
 
 
 def create_ad_record(ad_record_id: int, group: Group, timestamp: datetime) -> AdRecord:
+    log.debug('create_ad_record add')
     result = AdRecord.objects.get_or_create(
         ad_record_id=ad_record_id,
         group=group,
