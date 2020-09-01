@@ -48,7 +48,7 @@ def pin_best_post():
             log.debug('got {} wall records in last 24 hours'.format(len(records)))
 
             try:
-                best = max(records, key=lambda item: item['likes']['count'])
+                best = max(records, key=lambda item: item['views']['count'])
             except KeyError:
                 log.error('failed to fetch best record', exc_info=True)
                 continue
