@@ -9,11 +9,13 @@ from django.utils import timezone
 from posting.core.horoscopes import generate_special_group_reference
 from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.files import download_file, delete_files
+from posting.core.vk_helper import create_ad_record
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from posting.models import Group
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
+from services.vk.vars import ADVERTISEMENT_ERROR
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
@@ -96,7 +98,11 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
                 log.debug(f'Pin horoscope result {pin_response}')
 
     except vk_api.VkApiError as error_msg:
-        log.info('group {} got api error: {}'.format(group_id, error_msg))
+        log.error('group {} got api error: {}'.format(group_id, error_msg))
+
+        if ADVERTISEMENT_ERROR in error_msg:
+            create_ad_record(-1, group, timezone.now())
+
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)

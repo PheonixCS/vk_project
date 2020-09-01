@@ -139,6 +139,13 @@ class Record(models.Model):
         fields_to_update = ['status', 'change_status_time']
         self.save(update_fields=fields_to_update)
 
+    def set_ready(self):
+        self.status = self.READY
+        self.change_status_time = timezone.now()
+
+        fields_to_update = ['status', 'change_status_time']
+        self.save(update_fields=fields_to_update)
+
     def get_auditory_percents(self):
         sum_of_auditory = (self.males_count + self.females_count)
 
