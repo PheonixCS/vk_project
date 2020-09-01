@@ -1,14 +1,13 @@
 import logging
 from datetime import datetime, timedelta
 
+import vk_api
 from constance import config
 from django.utils import timezone
-from vk_api.exceptions import ApiError
 from vk_requests.api import API
 from vk_requests.exceptions import VkAPIError
 
-from posting.core.vk_helper import create_ad_record
-from posting.models import Group
+from posting.models import Group, AdRecord
 from .vars import *
 
 log = logging.getLogger('services.vk.wall')
@@ -43,13 +42,16 @@ def get_wall(api, group_id, count=20):
         log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None, reason
 
-    except ApiError as error_msg:
+    except vk_api.ApiError as error_msg:
         reason = error_msg.error
 
         if error_msg.code == RATE_LIMIT_CODE:
             # FIXME пока создаём фейковую запись, но в будущем надо просто блочить
             group = Group.objects.get(group_id=group_id)
-            create_ad_record(-1, group, timezone.now())
+            AdRecord.objects.get_or_create(
+                ad_record_id=-1,
+                group=group,
+                post_in_group_date=timezone.now())
 
         log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None, reason
