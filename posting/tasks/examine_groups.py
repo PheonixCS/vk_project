@@ -290,17 +290,15 @@ def find_movie_id_to_post() -> int or None:
     return movie
 
 
-def are_any_ads_posted_recently(group: Group) -> bool:
+def are_any_ads_posted_recently(group: Group) -> bool: 
     now_time_utc = timezone.now()
     ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
 
-    result = False
-
     last_hour_ads = AdRecord.objects.filter(group=group, post_in_group_date__gt=ads_time_threshold)
     if last_hour_ads.exists():
-        return result
+        return True
 
     if not config.IS_DEV and is_ads_posted_recently(group):
-        return result
+        return True
 
-    return result
+    return False
