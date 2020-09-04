@@ -195,7 +195,7 @@ def post_record(group_id, record_id):
         if error_msg.code == ADVERTISEMENT_ERROR_CODE:
             record.set_ready()
             now = timezone.now()
-            _result = create_ad_record(int(now.timestamp()) + group.group_id, group, now)
+            _result = create_ad_record(-1, group, now)
             log.debug(f'create_ad_record result = {_result}')
         else:
             record.set_failed()
