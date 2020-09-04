@@ -85,7 +85,8 @@ def post_music(group_id, record_id):
 
         # image
         image_file_paths = []
-        record_original_image = record.images.first()
+        images = sorted(list(record.images.all()), key=lambda x: x.index_number)
+        record_original_image = images[0]
         abstractions = BackgroundAbstraction.objects.all().order_by('id')
         template_image = os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', 'disc_template.png')
 

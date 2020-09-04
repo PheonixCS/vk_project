@@ -73,10 +73,11 @@ def save_record_to_db(donor, record):
 
             if any('photo' in d for d in record['attachments']):
                 images = [item for item in record['attachments'] if item['type'] == 'photo']
-                for image in images:
+                for i, image in enumerate(images):
                     Image.objects.create(
                         record=obj,
-                        url=find_url_of_biggest_image(image['photo'])
+                        url=find_url_of_biggest_image(image['photo']),
+                        index_number=i
                     )
 
             if any('audio' in d for d in record['attachments']):
@@ -125,7 +126,7 @@ def save_movie_to_db(movie):
     return created
 
 
-def main():
+def main_scraper():
     log.info('start main scrapper')
 
     tokens = [token.app_service_token for token in ServiceToken.objects.all()]
@@ -142,8 +143,10 @@ def main():
             log.info('account {} does not have any donor'.format(account))
             continue
 
-        api = create_vk_api_using_service_token(account['token'])
+        account_token = account['token']
+        api = create_vk_api_using_service_token(account_token)
         if not api:
+            log.warning(f'Could not create api for {account_token}')
             continue
 
         for donor in account['donors']:
