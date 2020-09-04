@@ -1,9 +1,10 @@
-#
 import re
 
 from posting.models import Group
 import logging
 from scraping.models import Horoscope, Attachment
+from django.utils import timezone
+from datetime import timedelta
 
 log = logging.getLogger('scraping.core.horoscopes')
 
@@ -95,3 +96,19 @@ def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str, grou
                 vk_attachment_id=image_vk_url
             )
     log.info('save_horoscope_for_main_groups finished')
+
+
+def are_horoscopes_for_main_groups_ready():
+    main_horoscopes = Group.objects.filter(group_type=Group.HOROSCOPES_MAIN)
+    start_of_a_day = timezone.now().replace(hour=0, minute=0, second=0)
+
+    result = []
+
+    for group in main_horoscopes:
+        horoscopes = Horoscope.objects.filter(group=group, add_to_db_date__gte=start_of_a_day)
+
+        result.append(len(horoscopes) == 12)
+
+    are_ready = all(result) if result else False
+    log.info(f'are_horoscopes_for_main_groups_ready result is {are_ready}')
+    return are_ready

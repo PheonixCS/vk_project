@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import pytest
@@ -8,7 +9,13 @@ from posting.models import Group
 
 @pytest.fixture(autouse=True)
 def enable_db_access_for_all_tests(transactional_db):
+    logging.disable(logging.CRITICAL)
     pass
+
+
+@pytest.fixture(autouse=True)
+def disable_logging():
+    logging.disable(logging.CRITICAL)
 
 
 @pytest.fixture
