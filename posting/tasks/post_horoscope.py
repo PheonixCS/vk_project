@@ -71,11 +71,12 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
             record_text = ''
 
         # posting part
+        attachments_string = ','.join(attachments)
         data_to_post = {
             'owner_id': '-{}'.format(group_id),
             'from_group': 1,
             'message': record_text,
-            'attachments': ','.join(attachments)
+            'attachments': attachments_string
         }
 
         # https://trello.com/c/uB0RQBvE/24
@@ -112,7 +113,7 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
     horoscope_record.post_in_group_date = timezone.now()
     horoscope_record.save()
 
-    if group_id not in main_horoscope_ids:
-        save_horoscope_for_main_groups(horoscope_record, attachments, int(group_id), int(record_id))
+    if group.group_type == Group.HOROSCOPES_COMMON:
+        save_horoscope_for_main_groups(horoscope_record, attachments_string, int(group_id), int(record_id))
 
     log.debug('post horoscopes in group {} finished'.format(group_id))

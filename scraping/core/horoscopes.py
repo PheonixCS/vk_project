@@ -1,12 +1,11 @@
 #
 import re
-import ast
 
-from scraping.core.scraper import log
-from scraping.models import Horoscope, Attachment
 from posting.models import Group
+import logging
+from scraping.models import Horoscope, Attachment
 
-from constance import config
+log = logging.getLogger('scraping.core.horoscopes')
 
 
 def fetch_zodiac_sign(text):
@@ -70,18 +69,15 @@ def save_horoscope_record_to_db(group, text, zodiac_sign):
     return created
 
 
-# FIXME need tests
 def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str, group_id: int, record_id: int) -> None:
-    log.info('save_horoscope_record_to_db called')
-    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
+    log.info('save_horoscope_for_main_groups called')
+    main_horoscopes = Group.objects.filter(group_type=Group.HOROSCOPES_MAIN)
+    log.debug(f'Main horoscopes: {main_horoscopes}')
 
     # https://trello.com/c/uB0RQBvE/244
     copyright_text = f'https://vk.com/club{group_id}?w=wall-{group_id}_{record_id}'
 
-    for group_id in main_horoscope_ids:
-
-        group = Group.objects.get(group_id=group_id)
-
+    for group in main_horoscopes:
         horoscope_obj, created = Horoscope.objects.get_or_create(
             group=group,
             zodiac_sign=horoscope.zodiac_sign,
@@ -98,3 +94,4 @@ def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str, grou
                 h_record=horoscope_obj,
                 vk_attachment_id=image_vk_url
             )
+    log.info('save_horoscope_for_main_groups finished')
