@@ -40,6 +40,8 @@ def delete_old_ads():
             ignore_ad_ids = []
 
             for ad in ads:
+                if ad.ad_record_id == -1:
+                    continue
                 try:
                     resp = api.wall.delete(owner_id='-{}'.format(group.group_id),
                                            post_id=ad.ad_record_id)
