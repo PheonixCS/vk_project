@@ -42,7 +42,7 @@ def check_attachments_availability() -> None:
                 if check_video_availability(api, video.owner_id, video.video_id):
                     continue
                 else:
-                    record.fail()
+                    record.set_failed()
                     filtered += 1
                     break
 

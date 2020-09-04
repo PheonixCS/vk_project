@@ -1,6 +1,7 @@
 import logging
 import os
 
+import vk_api
 from celery import shared_task
 from constance import config
 from django.conf import settings
@@ -10,25 +11,27 @@ from posting.core.images import paste_abstraction_on_template, paste_text_on_mus
 from posting.core.poster import prepare_audio_attachments, get_music_compilation_artist, get_music_compilation_genre, \
     find_next_element_by_last_used_id
 from posting.core.files import download_file, delete_files
+from posting.core.vk_helper import create_ad_record
 from services.text_utilities import delete_emoji_from_text
 from posting.models import Group, BackgroundAbstraction
 from scraping.models import Record
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
+from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
 
 
 @shared_task(time_limit=60)
-def post_music(login, password, app_id, group_id, record_id):
+def post_music(group_id, record_id):
     log.debug(f'start posting music in group {group_id}')
 
     group = Group.objects.get(group_id=group_id)
     record = Record.objects.get(pk=record_id)
 
     try:
-        session = create_vk_session_using_login_password(login, password, app_id)
+        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
         if not session:
             return
         api = session.get_api()
@@ -96,7 +99,7 @@ def post_music(login, password, app_id, group_id, record_id):
             group.save(update_fields=['last_used_background_abstraction_id'])
             image_to_template = abstraction.picture
         else:
-            record.fail()
+            record.set_failed()
             return
 
         result_image_name = paste_abstraction_on_template(template_image, image_to_template)
@@ -121,8 +124,19 @@ def post_music(login, password, app_id, group_id, record_id):
         record.group = group
         record.status = Record.POSTED
         record.save()
+
+    except vk_api.ApiError as error_msg:
+        log.error('group {} got api error: {}'.format(group_id, error_msg))
+
+        if error_msg.code == ADVERTISEMENT_ERROR_CODE:
+            record.set_ready()
+            create_ad_record(-1, group, timezone.now())
+        else:
+            record.set_failed()
+
+        return
     except:
         log.error('got unexpected error in post music', exc_info=True)
         telegram.critical('Неожиданная ошибка при постинге музыки')
-        record.fail()
+        record.set_failed()
     log.debug('post in group {} finished'.format(group_id))

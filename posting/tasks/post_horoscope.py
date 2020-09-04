@@ -9,21 +9,23 @@ from django.utils import timezone
 from posting.core.horoscopes import generate_special_group_reference
 from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.files import download_file, delete_files
+from posting.core.vk_helper import create_ad_record
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from posting.models import Group
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
+from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
 
 
 @shared_task
-def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
+def post_horoscope(group_id: int, horoscope_record_id: int):
     log.debug('start posting horoscopes in {} group'.format(group_id))
-
-    session = create_vk_session_using_login_password(login, password, app_id)
+    group = Group.objects.get(group_id=group_id)
+    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
     if not session:
         log.error('session not created in group {}'.format(group_id))
         return
@@ -35,7 +37,6 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
     main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
-    group = Group.objects.get(group_id=group_id)
     horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
@@ -46,7 +47,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
-            attachments.extend(upload_photos(session, horoscope_image_name, group_id))
+            attachments.extend(upload_photos(session, horoscope_image_name, str(group_id)))
             delete_files(horoscope_image_name)
             record_text = ''
         else:
@@ -57,7 +58,7 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
 
             if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
                 image_local_filename = download_file(horoscope_record.image_url)
-                attachments.extend(upload_photos(session, image_local_filename, group_id))
+                attachments.extend(upload_photos(session, image_local_filename, str(group_id)))
                 delete_files(image_local_filename)
 
         group_zodiac_sign = fetch_zodiac_sign(group.name)
@@ -96,8 +97,12 @@ def post_horoscope(login, password, app_id, group_id, horoscope_record_id):
             else:
                 log.debug(f'Pin horoscope result {pin_response}')
 
-    except vk_api.VkApiError as error_msg:
-        log.info('group {} got api error: {}'.format(group_id, error_msg))
+    except vk_api.ApiError as error_msg:
+        log.error('group {} got api error: {}'.format(group_id, error_msg))
+
+        if error_msg.code == ADVERTISEMENT_ERROR_CODE:
+            create_ad_record(-1, group, timezone.now())
+
         return
     except:
         log.error('caught unexpected exception in group {}'.format(group_id), exc_info=True)
