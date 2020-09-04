@@ -1,9 +1,11 @@
-from scraping.models import Horoscope
+from datetime import timedelta
+
 import pytest
 from django.utils import timezone
-from datetime import timedelta
+
 from posting.models import Group
 from scraping.core.horoscopes import save_horoscope_for_main_groups
+from scraping.models import Horoscope
 
 
 @pytest.fixture
