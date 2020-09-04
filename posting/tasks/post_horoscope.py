@@ -1,4 +1,3 @@
-import ast
 import logging
 
 import vk_api
@@ -34,8 +33,6 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
     if not api:
         log.error('no api was created in group {}'.format(group_id))
         return
-
-    main_horoscope_ids = ast.literal_eval(config.MAIN_HOROSCOPES_IDS)
 
     horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))

@@ -48,14 +48,11 @@ CONSTANCE_CONFIG = {
     'NEW_RECORD_MATURITY_MINUTES': (120, 'How old must be a record when we rate it', int),
     'CUT_ONE_AUDIO_ATTACHMENT': (False, 'Cut one random audio attachment from posts'),
     'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE': ('[42440233, 28446706, 23639186]',
-                                              'Don\'t update sex statistic for list of groups',
-                                              str),
-    'MAIN_HOROSCOPES_IDS': ('[29062628, 29038248]',
-                            'Main horoscope groups',
-                            str),
+                                                  'Don\'t update sex statistic for list of groups',
+                                                  str),
     'DONOR_OUTDATE_INTERVAL': (30, 'Donor considered outdated if last post was N days ago', int),
     'STATS_STORING_TIME': (30, 'Statistics storing time in days', int),
-    'NEW_POSTING_INTERVALS_ENABLE': (True   , 'New posting intervals logic', bool)
+    'NEW_POSTING_INTERVALS_ENABLE': (True, 'New posting intervals logic', bool)
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -69,7 +66,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',
-        'HOROSCOPES_FONT_TITLE', 'HOROSCOPES_FONT_BODY', 'MAIN_HOROSCOPES_IDS'
+        'HOROSCOPES_FONT_TITLE', 'HOROSCOPES_FONT_BODY',
     )),
     ('Movies', (
         'TMDB_API_KEY', 'TMDB_SEARCH_START_YEAR', 'TMDB_NEW_MOVIES_OFFSET', 'TMDB_MIN_TRAILERS_COUNT',
