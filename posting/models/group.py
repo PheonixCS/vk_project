@@ -30,7 +30,7 @@ class Group(models.Model):
     group_type = models.CharField(choices=GROUP_TYPE_CHOICES, max_length=128, verbose_name='Тип группы', default=COMMON)
     statistic_url = models.URLField(max_length=256, verbose_name='Ссылка на статистику', blank=True, default='')
     name = models.CharField(max_length=128, verbose_name='Название', blank=True, default='')
-    group_id = models.IntegerField(null=True)
+    group_id = models.IntegerField(null=True, blank=False)
     is_posting_active = models.BooleanField(default=True, verbose_name='Постинг активен?')
     is_pin_enabled = models.BooleanField(default=True, verbose_name='Закреплять лучшие посты?')
     posting_time = models.TimeField(verbose_name='Время постинга', default=datetime.time(00, 00))

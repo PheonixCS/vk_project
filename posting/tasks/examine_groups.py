@@ -13,6 +13,7 @@ from posting.core.posting_history import save_posting_history
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, AdRecord
 from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, post_music, post_record
+from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.core import HoroscopesPage
 from services.vk.core import create_vk_session_using_login_password, fetch_group_id
@@ -33,8 +34,7 @@ def examine_groups():
     for group in groups_to_post_in:
         log.debug(f'Working with group {group.domain_or_id}')
 
-        ads = are_any_ads_posted_recently(group)
-        if ads:
+        if are_any_ads_posted_recently(group):
             log.info(f'Got recent ads in group {group.domain_or_id}. Skip posting.')
             continue
 
@@ -43,17 +43,7 @@ def examine_groups():
             log.info(f'Got recent posts in group {group.domain_or_id}. Skip posting.')
             continue
 
-        # FIXME move this group id stuff somewhere
-        if not group.group_id:
-            group_id = fetch_group_id_from_vk(group)
-            if not group_id:
-                continue
-
-        movies_condition = (
-                group.group_type == group.MOVIE_SPECIAL
-                and (is_time_to_post or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
-        )
-        if movies_condition:
+        if is_movies_condition(group, is_time_to_post, last_hour_posts_exist):
             log.debug(f'{group.domain_or_id} in movies condition')
 
             movie = find_movie_id_to_post()
@@ -64,12 +54,7 @@ def examine_groups():
 
             continue
 
-        horoscope_condition = (
-                group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON)
-                and is_time_to_post
-                and group.horoscopes.filter(post_in_group_date__isnull=True)
-        )
-        if horoscope_condition:
+        if is_horoscopes_conditions(group, is_time_to_post):
             log.debug(f'{group.domain_or_id} in horoscopes condition')
 
             horoscope_record = find_horoscope_record_to_post(group)
@@ -80,11 +65,7 @@ def examine_groups():
 
             continue
 
-        common_condition = (
-                (is_time_to_post or not last_hour_posts_exist)
-                and not group.group_type == Group.MOVIE_SPECIAL
-        )
-        if common_condition:
+        if is_common_condition(group, is_time_to_post, last_hour_posts_exist):
             log.debug(f'{group.domain_or_id} in common condition')
 
             the_best_record, records = find_common_record_to_post(group)
@@ -111,6 +92,34 @@ def examine_groups():
 
     log.debug('end group examination')
     return 'succeed'
+
+
+def is_common_condition(group, is_time_to_post, last_hour_posts_exist):
+    return (
+            (is_time_to_post or not last_hour_posts_exist)
+            and not group.group_type == Group.MOVIE_SPECIAL
+    )
+
+
+def is_horoscopes_conditions(group, is_time_to_post):
+    if group.group_type == Group.HOROSCOPES_MAIN:
+        condition_for_main = are_horoscopes_for_main_groups_ready()
+    else:
+        condition_for_main = True
+
+    return (
+            group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON)
+            and is_time_to_post
+            and group.horoscopes.filter(post_in_group_date__isnull=True)
+            and condition_for_main
+    )
+
+
+def is_movies_condition(group, is_time_to_post, last_hour_posts_exist):
+    return (
+            group.group_type == group.MOVIE_SPECIAL
+            and (is_time_to_post or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
+    )
 
 
 def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
@@ -290,7 +299,7 @@ def find_movie_id_to_post() -> int or None:
     return movie
 
 
-def are_any_ads_posted_recently(group: Group) -> bool: 
+def are_any_ads_posted_recently(group: Group) -> bool:
     now_time_utc = timezone.now()
     ads_time_threshold = now_time_utc - timedelta(hours=1, minutes=5)
 

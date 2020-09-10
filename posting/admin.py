@@ -59,7 +59,6 @@ class GroupChangeList(ChangeList):
 class GroupAdmin(admin.ModelAdmin):
     exclude = (
         'url',
-        'group_id',
         'donors',
         'statistic_url',
         'statistics_last_update_date'
@@ -75,6 +74,7 @@ class GroupAdmin(admin.ModelAdmin):
     )
     list_display = (
         'domain_or_id',
+        'group_id',
         'vk_url_field',
         'members_count',
         'members_growth',
@@ -85,7 +85,7 @@ class GroupAdmin(admin.ModelAdmin):
     )
     fieldsets = (
         (None, {
-            'fields': ('domain_or_id', 'name', 'is_posting_active', 'group_type',
+            'fields': ('domain_or_id', 'name', 'group_id', 'is_posting_active', 'group_type',
                        'is_pin_enabled', 'posting_time', 'posting_interval', 'posting_minute_base',
                        'user', 'callback_api_token', 'banned_origin_attachment_types')
         }),
