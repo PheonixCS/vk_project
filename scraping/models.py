@@ -4,6 +4,8 @@ from django.db import models
 from django.db.models import Count
 from django.utils import timezone
 
+from services.horoscopes.vars import SIGNS_EN
+
 
 class Donor(models.Model):
     OLD = 1
@@ -204,6 +206,17 @@ class Horoscope(models.Model):
 
     # https://trello.com/c/uB0RQBvE/244
     copyright_text = models.CharField(max_length=256, null=True)
+
+    # https://trello.com/c/8oKiFb1P/249
+    index = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        # for https://trello.com/c/8oKiFb1P/249
+        self.index = SIGNS_EN[::-1].index(self.zodiac_sign)
+        return super(Horoscope, self).save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['index']
 
 
 class Movie(models.Model):

@@ -6,6 +6,12 @@ from django.utils import timezone
 from scraping.models import Horoscope
 
 
+@pytest.fixture(autouse=True)
+def disable_logging():
+    import logging
+    logging.disable(logging.CRITICAL)
+
+
 @pytest.fixture
 def create_horoscope():
     records = []
