@@ -5,6 +5,7 @@ import pytest
 from django.utils import timezone
 
 from posting.models import Group
+from scraping.models import Donor, Record
 
 
 @pytest.fixture(autouse=True)
@@ -38,3 +39,39 @@ def create_group():
         return group
 
     yield _create_group
+
+
+@pytest.fixture
+def create_donor():
+    donors = []
+
+    def _create_donor(donor_id=None, **kwargs):
+        donor_id = donor_id or len(donors) + 1
+
+        donor, created = Donor.objects.get_or_create(
+            id='test{}'.format(donor_id),
+            **kwargs
+        )
+        donors.append(donor)
+        return donor
+
+    yield _create_donor
+
+
+@pytest.fixture
+def create_record():
+    records = []
+
+    def _create_record(group, donor, **kwargs):
+        record_id = len(records) + 1
+
+        group, created = Group.objects.get_or_create(
+            donor=donor,
+            group=group,
+            record_id=record_id,
+            **kwargs
+        )
+        records.append(group)
+        return group
+
+    yield _create_record
