@@ -109,7 +109,10 @@ class Group(models.Model):
         super(Group, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '{} {}'.format(self.domain_or_id, self.name)
+        return '{} {} {}'.format(self.domain_or_id, self.name, self.url)
+
+    def __repr__(self):
+        return '{} {} {}'.format(self.domain_or_id, self.name, self.url)
 
     def get_auditory_percents(self):
         sum_of_auditory = (self.male_weekly_average_count + self.female_weekly_average_count)

@@ -32,19 +32,19 @@ def examine_groups():
     log.debug(f'Got {len(groups_to_post_in)} groups')
 
     for group in groups_to_post_in:
-        log.debug(f'Working with group {group.domain_or_id}')
+        log.debug(f'Working with group {group}')
 
         if are_any_ads_posted_recently(group):
-            log.info(f'Got recent ads in group {group.domain_or_id}. Skip posting.')
+            log.info(f'Got recent ads in group {group}. Skip posting.')
             continue
 
         is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
         if last_hour_posts_exist and not is_time_to_post:
-            log.info(f'Got recent posts in group {group.domain_or_id}. Skip posting.')
+            log.info(f'Got recent posts in group {group}. Skip posting.')
             continue
 
         if is_movies_condition(group, is_time_to_post, last_hour_posts_exist):
-            log.debug(f'{group.domain_or_id} in movies condition')
+            log.debug(f'{group} in movies condition')
 
             movie = find_movie_id_to_post()
             if movie:
@@ -55,7 +55,7 @@ def examine_groups():
             continue
 
         if is_horoscopes_conditions(group, is_time_to_post):
-            log.debug(f'{group.domain_or_id} in horoscopes condition')
+            log.debug(f'{group} in horoscopes condition')
 
             horoscope_record = find_horoscope_record_to_post(group)
             if horoscope_record:
@@ -66,15 +66,17 @@ def examine_groups():
             continue
 
         if is_common_condition(group, is_time_to_post, last_hour_posts_exist):
-            log.debug(f'{group.domain_or_id} in common condition')
+            log.debug(f'{group} in common condition')
 
-            the_best_record, records = find_common_record_to_post(group)
+            the_best_record, candidates = find_common_record_to_post(group)
+            log.info(f'Group {group} got {len(candidates)} candidates')
+
             if the_best_record:
                 the_best_record.set_posting()
-                log.debug(f'record {the_best_record} got max rate for group {group.group_id}')
+                log.info(f'record {the_best_record} got max rate for group {group}')
 
                 save_posting_history(group=group, record=the_best_record,
-                                     candidates=records.exclude(pk=the_best_record.id))
+                                     candidates=candidates.exclude(pk=the_best_record.id))
 
                 try:
                     if group.is_background_abstraction_enabled:
@@ -85,10 +87,12 @@ def examine_groups():
                     log.error('got unexpected exception in examine_groups', exc_info=True)
                     telegram.critical('Неожиданная ошибка при подготовке к постингу')
                     the_best_record.set_failed()
+            else:
+                log.warning(f'Group {group} has no records to post')
 
             continue
 
-        log.warning(f'Group {group.group_id} did not meet any of the posting condition!')
+        log.warning(f'Group {group} did not meet any of the posting condition!')
 
     log.debug('end group examination')
     return 'succeed'
@@ -208,7 +212,6 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
     if group.banned_origin_attachment_types:
         candidates = filter_banned_records(candidates, list(group.banned_origin_attachment_types))
 
-    log.debug(f'got {len(candidates)} ready to post records to group {group.group_id}')
     if not candidates:
         return None, []
 

@@ -160,7 +160,10 @@ class Record(models.Model):
         return male_percent, female_percent
 
     def __str__(self):
-        return '{}'.format(self.record_id)
+        return f'{self.record_id} - donor: {self.donor.id}, url {self.donor_url}'
+
+    def __repr__(self):
+        return f'{self.record_id} - donor: {self.donor.id}, url {self.donor_url}'
 
     class Meta:
         verbose_name = 'Пост'
