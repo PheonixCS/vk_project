@@ -15,7 +15,7 @@ from posting.models import Group, AdRecord
 from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, post_music, post_record
 from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
-from services.horoscopes.core import HoroscopesPage
+from services.horoscopes.vars import SIGNS_EN
 from services.vk.core import create_vk_session_using_login_password, fetch_group_id
 
 log = logging.getLogger('posting.scheduled')
@@ -243,11 +243,10 @@ def find_horoscope_record_to_post(group: Group) -> Horoscope or None:
 
     if horoscope_records.exists():
 
-        horoscope_signs = HoroscopesPage.get_signs()
-        for sign in horoscope_signs:
+        for sign in SIGNS_EN[::-1]:
             records_filter = horoscope_records.filter(zodiac_sign=sign)
             if records_filter:
-                horoscope_record = records_filter.last()
+                horoscope_record = records_filter.first()
                 break
         else:
             horoscope_record = horoscope_records.first()
