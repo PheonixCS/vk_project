@@ -1,4 +1,4 @@
-# test for records filtration
+# test for records filtration (filter_banned_records)
 from django.test import TestCase
 
 from posting.core import poster
@@ -6,6 +6,7 @@ from posting.models import Group
 from scraping.models import Record, Gif, Image, Video, Audio, Donor
 
 
+# FIXME to pytest
 class FiltrationTests(TestCase):
     def create_record(self, image_count=0, audio_count=0, video_count=0, gif_count=0):
         group, created = Group.objects.get_or_create(domain_or_id='test')

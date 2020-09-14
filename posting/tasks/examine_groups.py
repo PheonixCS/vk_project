@@ -179,7 +179,11 @@ def fetch_group_id_from_vk(group: Group) -> int or None:
 def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Record] or None]:
     now_time_utc = timezone.now()
     week_ago = now_time_utc - timedelta(days=7)
+    today_start = now_time_utc.replace(hour=0, minute=0, second=0)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
+
+    if allowed_time_threshold > today_start:
+        allowed_time_threshold = today_start
 
     donors = group.donors.all()
     if not donors:

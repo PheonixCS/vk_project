@@ -23,9 +23,9 @@ def disable_logging():
 def create_group():
     groups = []
 
-    def _create_group(group_id=None, days=7, **kwargs):
+    def _create_group(group_id=None, sex_last_update_days=7, **kwargs):
         now_time_utc = timezone.now()
-        week_ago = now_time_utc - timedelta(days=days)
+        week_ago = now_time_utc - timedelta(days=sex_last_update_days)
 
         group_id = group_id or len(groups) + 1
 
@@ -65,7 +65,7 @@ def create_record():
     def _create_record(group, donor, **kwargs):
         record_id = len(records) + 1
 
-        group, created = Group.objects.get_or_create(
+        group, created = Record.objects.get_or_create(
             donor=donor,
             group=group,
             record_id=record_id,
