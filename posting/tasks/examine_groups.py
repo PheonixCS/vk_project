@@ -243,7 +243,7 @@ def find_horoscope_record_to_post(group: Group) -> Horoscope or None:
                 horoscope_record = records_filter.last()
                 break
         else:
-            horoscope_record = horoscope_records.last()
+            horoscope_record = horoscope_records.first()
     return horoscope_record
 
 
