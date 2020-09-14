@@ -18,7 +18,7 @@ class Block(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     active_before = models.DateTimeField()
     reason = models.CharField(null=False, choices=REASONS, max_length=64)
-    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, null=False)
+    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, null=False, related_name='blocks')
 
     def activate(self, group, reason, period_in_hours):
         fields = ['reason', 'active_before', 'is_active', 'group']
@@ -38,14 +38,10 @@ class Block(models.Model):
 
         self.save(update_fields=fields)
 
-    def check_for_deactivation(self):
-        need_deactivation = False
-
+    def is_block_active(self):
         if self.is_active and timezone.now() >= self.active_before:
-            need_deactivation = True
             self.deactivate()
-
-        return need_deactivation
+        return self.is_active
 
     def __str__(self):
         return \

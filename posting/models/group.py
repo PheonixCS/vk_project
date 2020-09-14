@@ -138,6 +138,16 @@ class Group(models.Model):
 
         return result
 
+    def is_blocked(self):
+        for block in self.blocks:
+            if block.is_block_active():
+                result = True
+                break
+        else:
+            result = False
+
+        return result
+
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'

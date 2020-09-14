@@ -33,6 +33,9 @@ def examine_groups():
 
     for group in groups_to_post_in:
         log.debug(f'Working with group {group}')
+        if group.is_blocked():
+            log.info(f'Group {group} blocked for inner reasons. Skip posting.')
+            continue
 
         if are_any_ads_posted_recently(group):
             log.info(f'Got recent ads in group {group}. Skip posting.')
