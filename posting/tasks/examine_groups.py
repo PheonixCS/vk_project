@@ -48,7 +48,7 @@ def examine_groups():
         if last_hour_posts_exist and not is_time_to_post:
             log.info(f'Got recent posts in group {group}. Skip posting, set block.')
 
-            interval = (group.get_next_posting_time() - timezone.now()).minutes
+            interval = (group.get_next_posting_time() - timezone.now()).seconds // 60
             block_result = group.set_block(Block.RECENT_POSTS, period_in_minutes=interval)
             log.info(f'Set block {block_result}')
 
