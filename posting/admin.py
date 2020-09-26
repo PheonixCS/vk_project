@@ -186,9 +186,14 @@ class PostingHistoryAdmin(admin.ModelAdmin):
     #     return ','.join(links)
 
 
+class BlockAdmin(admin.ModelAdmin):
+    readonly_fields = ('created_at',)
+    list_display = ('is_active', 'group', 'reason', 'active_before')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(ServiceToken)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(BackgroundAbstraction, BackgroundAbstractionAdmin)
 admin.site.register(PostingHistory, PostingHistoryAdmin)
-admin.site.register(Block)
+admin.site.register(Block, BlockAdmin)
