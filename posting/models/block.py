@@ -7,24 +7,26 @@ class Block(models.Model):
     AD = 'ad'
     LACK_OF_RECORDS = 'lack of records'
     RATE_LIMIT = 'rate limit'
+    RECENT_POSTS = 'recent posts'
 
     REASONS = (
         (AD, 'ad'),
         (LACK_OF_RECORDS, 'lack of records'),
         (RATE_LIMIT, 'rate limit'),
+        (RECENT_POSTS, 'recent posts'),
     )
 
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    active_before = models.DateTimeField()
-    reason = models.CharField(null=False, choices=REASONS, max_length=64)
-    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, null=False, related_name='blocks')
+    active_before = models.DateTimeField(null=True, blank=False)
+    reason = models.CharField(null=True, choices=REASONS, max_length=64, blank=False)
+    group = models.ForeignKey('posting.Group', on_delete=models.CASCADE, null=True, related_name='blocks', blank=False)
 
-    def activate(self, group, reason, period_in_hours):
+    def activate(self, group, reason, period_in_minutes):
         fields = ['reason', 'active_before', 'is_active', 'group']
         now = timezone.now()
 
-        self.active_before = now + timedelta(hours=period_in_hours)
+        self.active_before = now + timedelta(minutes=period_in_minutes)
         self.reason = reason
         self.group = group
         self.is_active = True

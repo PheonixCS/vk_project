@@ -7,7 +7,7 @@ from django.utils import timezone
 from vk_requests.api import API
 from vk_requests.exceptions import VkAPIError
 
-from posting.models import Group, AdRecord
+from posting.models import Group, Block
 from .vars import *
 
 log = logging.getLogger('services.vk.wall')
@@ -48,10 +48,8 @@ def get_wall(api, group_id, count=20):
         if error_msg.code == RATE_LIMIT_CODE:
             # FIXME пока создаём фейковую запись, но в будущем надо просто блочить
             group = Group.objects.get(group_id=group_id)
-            AdRecord.objects.get_or_create(
-                ad_record_id=-1,
-                group=group,
-                post_in_group_date=timezone.now())
+            block_result = group.set_block(reason=Block.RATE_LIMIT, period_in_minutes=5)
+            log.info(f'Set block {block_result}')
 
         log.error('group {} got api error: {}'.format(group_id, error_msg))
         return None, reason

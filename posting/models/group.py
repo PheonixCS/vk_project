@@ -5,6 +5,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 from posting.models.user import User
+from posting.models.block import Block
 from scraping.models import Attachment
 
 
@@ -147,6 +148,12 @@ class Group(models.Model):
             result = False
 
         return result
+
+    def set_block(self, reason, period_in_minutes):
+        new_block = Block.objects.create()
+        new_block.activate(self, reason=reason, period_in_minutes=period_in_minutes)
+
+        return new_block
 
     class Meta:
         verbose_name = 'Сообщество'
