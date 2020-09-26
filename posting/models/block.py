@@ -8,12 +8,14 @@ class Block(models.Model):
     LACK_OF_RECORDS = 'lack of records'
     RATE_LIMIT = 'rate limit'
     RECENT_POSTS = 'recent posts'
+    POSTING = 'posting'
 
     REASONS = (
         (AD, 'ad'),
         (LACK_OF_RECORDS, 'lack of records'),
         (RATE_LIMIT, 'rate limit'),
         (RECENT_POSTS, 'recent posts'),
+        (POSTING, 'posting'),
     )
 
     is_active = models.BooleanField(default=False)

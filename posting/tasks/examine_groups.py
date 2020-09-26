@@ -57,6 +57,8 @@ def examine_groups():
             movie = find_movie_id_to_post()
             if movie:
                 post_movie.post_movie.delay(group.group_id, movie)
+                block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                log.info(f'Set block {block_result}')
             else:
                 log.warning('Got no movie to post')
                 block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
@@ -70,6 +72,8 @@ def examine_groups():
             horoscope_record = find_horoscope_record_to_post(group)
             if horoscope_record:
                 post_horoscope.post_horoscope.delay(group.group_id, horoscope_record.id)
+                block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                log.info(f'Set block {block_result}')
             else:
                 log.warning('Got no horoscope records to post')
                 block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
@@ -95,6 +99,9 @@ def examine_groups():
                         post_music.post_music.delay(group.group_id, the_best_record.id)
                     else:
                         post_record.post_record.delay(group.group_id, the_best_record.id)
+
+                    block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                    log.info(f'Set block {block_result}')
                 except:
                     log.error('got unexpected exception in examine_groups', exc_info=True)
                     telegram.critical('Неожиданная ошибка при подготовке к постингу')

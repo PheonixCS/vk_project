@@ -13,7 +13,7 @@ from posting.core.poster import prepare_audio_attachments, get_music_compilation
 from posting.core.files import download_file, delete_files
 from posting.core.vk_helper import create_ad_record
 from services.text_utilities import delete_emoji_from_text
-from posting.models import Group, BackgroundAbstraction
+from posting.models import Group, BackgroundAbstraction, Block
 from scraping.models import Record
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
@@ -125,6 +125,9 @@ def post_music(group_id, record_id):
         record.group = group
         record.status = Record.POSTED
         record.save()
+
+        posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+        posting_block.deactivate()
 
     except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))

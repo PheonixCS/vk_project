@@ -10,7 +10,7 @@ from posting.core.horoscopes_images import transfer_horoscope_to_image
 from posting.core.files import download_file, delete_files
 from posting.core.vk_helper import create_ad_record
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
-from posting.models import Group
+from posting.models import Group, Block
 from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
@@ -94,6 +94,9 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
                 log.warning(f'Failed to pin horoscope', exc_info=True)
             else:
                 log.debug(f'Pin horoscope result {pin_response}')
+
+                posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+        posting_block.deactivate()
 
     except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))

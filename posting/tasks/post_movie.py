@@ -9,7 +9,7 @@ from django.utils import timezone
 from posting.core.images import merge_poster_and_three_images
 from posting.core.poster import get_country_name_by_code
 from posting.core.files import download_file, delete_files
-from posting.models import Group
+from posting.models import Group, Block
 from scraping.models import Movie, Trailer
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos, upload_video
@@ -127,6 +127,9 @@ def post_movie(group_id, movie_id):
         movie.post_in_group_date = timezone.now()
         movie.group = Group.objects.get(group_id=group_id)
         movie.save(update_fields=['post_in_group_date', 'group'])
+
+        posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+        posting_block.deactivate()
 
         log.debug(f'{post_response} in group {group_id}')
     except:

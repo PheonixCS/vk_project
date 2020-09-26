@@ -13,7 +13,7 @@ from posting.core.poster import prepare_audio_attachments, prepare_image_for_pos
 from posting.core.files import download_file, delete_files
 from services.text_utilities import delete_hashtags_from_text, delete_emoji_from_text, \
     replace_russian_with_english_letters
-from posting.models import Group
+from posting.models import Group, Block
 from scraping.models import Record
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos, check_docs_availability, check_video_availability
@@ -187,6 +187,9 @@ def post_record(group_id, record_id):
             data_to_post['copyright'] = copyright_text
 
         post_response = api.wall.post(**data_to_post)
+
+        posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+        posting_block.deactivate()
 
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.ApiError as error_msg:
