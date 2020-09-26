@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 from posting.models.user import User
 from posting.models.block import Block
+from django.utils import timezone
 from scraping.models import Attachment
 
 
@@ -154,6 +155,19 @@ class Group(models.Model):
         new_block.activate(self, reason=reason, period_in_minutes=period_in_minutes)
 
         return new_block
+
+    def get_next_posting_time(self) -> datetime.datetime:
+        now = timezone.now()
+        posting_time_intervals = self.return_posting_time_list()
+        result = now
+
+        for item in posting_time_intervals:
+            item_time = now.replace(hour=item[0], minute=item[1], second=0, microsecond=0)
+            result = item_time
+            if item_time >= now:
+                break
+
+        return result
 
     class Meta:
         verbose_name = 'Сообщество'

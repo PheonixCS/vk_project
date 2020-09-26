@@ -29,6 +29,8 @@ class Block(models.Model):
         now = timezone.now()
 
         self.active_before = now + timedelta(minutes=period_in_minutes)
+        self.active_before.replace(second=0, microsecond=0)
+
         self.reason = reason
         self.group = group
         self.is_active = True
@@ -49,11 +51,13 @@ class Block(models.Model):
 
     def __str__(self):
         return \
-            f'Block {self.id} {self.is_active is True} for group {self.group} before {self.active_before}'
+            f'Block {self.id} {self.is_active is True} for group {self.group} ' \
+            f'before {self.active_before}, {self.reason}'
 
     def __repr__(self):
         return \
-            f'Block {self.id} {self.is_active is True} for group {self.group} before {self.active_before}'
+            f'Block {self.id} {self.is_active is True} for group {self.group} ' \
+            f'before {self.active_before}, {self.reason}'
 
     class Meta:
         verbose_name = 'Блокировка'
