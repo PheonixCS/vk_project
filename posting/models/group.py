@@ -140,7 +140,7 @@ class Group(models.Model):
         return result
 
     def is_blocked(self):
-        for block in self.blocks:
+        for block in self.blocks.all():
             if block.is_block_active():
                 result = True
                 break
