@@ -77,4 +77,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'scraping.tasks.check_attachments_availability.check_attachments_availability',
         'schedule': crontab(minute='18, 48')  # every hour at 18 and 48 minute
     },
+    'delete_old_blocks': {
+        'task': 'posting.tasks.delete_old_blocks.delete_old_blocks',
+        'schedule': crontab(minute=0, hour=21)  # at 21:00 am UTC every day, (00:00 by MSK)
+    },
 }

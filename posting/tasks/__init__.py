@@ -8,3 +8,4 @@ from .post_music import *
 from .post_record import *
 from .sex_statistics_weekly import *
 from .update_statistics import *
+from .delete_old_blocks import *
