@@ -188,7 +188,7 @@ class PostingHistoryAdmin(admin.ModelAdmin):
 
 class BlockAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
-    list_display = ('is_active', 'group', 'reason', 'active_before')
+    list_display = ('pk', 'is_active', 'group', 'reason', 'active_before')
 
 
 admin.site.register(User, UserAdmin)
