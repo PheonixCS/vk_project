@@ -11,7 +11,7 @@ from posting.core.poster import get_movies_rating_intervals, get_next_interval_b
     find_suitable_record
 from posting.core.posting_history import save_posting_history
 from posting.core.vk_helper import is_ads_posted_recently
-from posting.models import Group, AdRecord
+from posting.models import Group, AdRecord, Block
 from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, post_music, post_record
 from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
@@ -33,14 +33,22 @@ def examine_groups():
 
     for group in groups_to_post_in:
         log.debug(f'Working with group {group}')
+        if group.is_blocked():
+            blocks = Block.objects.filter(is_active=True, group=group).values_list('reason', flat=True)
+            log.info(f'Group {group} blocked for inner reasons {blocks}. Skip posting.')
+            continue
 
         if are_any_ads_posted_recently(group):
-            log.info(f'Got recent ads in group {group}. Skip posting.')
+            log.info(f'Got recent ads in group {group}. Skip posting, set block.')
+            block_result = group.set_block(reason=Block.AD, period_in_minutes=64)
+            log.info(f'Set block {block_result}')
             continue
 
         is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
         if last_hour_posts_exist and not is_time_to_post:
-            log.info(f'Got recent posts in group {group}. Skip posting.')
+            log.info(f'Got recent posts in group {group}. Skip posting, set block.')
+            block_result = group.set_block(Block.RECENT_POSTS, period_in_minutes=group.posting_interval)
+            log.info(f'Set block {block_result}')
             continue
 
         if is_movies_condition(group, is_time_to_post, last_hour_posts_exist):
@@ -49,8 +57,12 @@ def examine_groups():
             movie = find_movie_id_to_post()
             if movie:
                 post_movie.post_movie.delay(group.group_id, movie)
+                block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                log.info(f'Set block {block_result}')
             else:
                 log.warning('Got no movie to post')
+                block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
+                log.info(f'Set block {block_result}')
 
             continue
 
@@ -60,8 +72,12 @@ def examine_groups():
             horoscope_record = find_horoscope_record_to_post(group)
             if horoscope_record:
                 post_horoscope.post_horoscope.delay(group.group_id, horoscope_record.id)
+                block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                log.info(f'Set block {block_result}')
             else:
                 log.warning('Got no horoscope records to post')
+                block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
+                log.info(f'Set block {block_result}')
 
             continue
 
@@ -83,12 +99,17 @@ def examine_groups():
                         post_music.post_music.delay(group.group_id, the_best_record.id)
                     else:
                         post_record.post_record.delay(group.group_id, the_best_record.id)
+
+                    block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                    log.info(f'Set block {block_result}')
                 except:
                     log.error('got unexpected exception in examine_groups', exc_info=True)
                     telegram.critical('Неожиданная ошибка при подготовке к постингу')
                     the_best_record.set_failed()
             else:
                 log.warning(f'Group {group} has no records to post')
+                block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
+                log.info(f'Set block {block_result}')
 
             continue
 

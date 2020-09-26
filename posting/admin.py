@@ -4,10 +4,16 @@ from django.db.models import Sum, TextField
 from django.forms import Textarea
 from django.utils.html import format_html
 
-from posting.models.group import Group
-from posting.models.misc import AdditionalText, BackgroundAbstraction, MusicGenreEpithet, PostingHistory
-from posting.models import ServiceToken
-from posting.models.user import User
+from posting.models import (
+    Group,
+    ServiceToken,
+    AdditionalText,
+    BackgroundAbstraction,
+    MusicGenreEpithet,
+    PostingHistory,
+    User,
+    Block
+)
 
 
 class MembershipInline(admin.TabularInline):
@@ -185,3 +191,4 @@ admin.site.register(ServiceToken)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(BackgroundAbstraction, BackgroundAbstractionAdmin)
 admin.site.register(PostingHistory, PostingHistoryAdmin)
+admin.site.register(Block)

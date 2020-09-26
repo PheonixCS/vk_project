@@ -13,8 +13,8 @@ class TestSexStatistics:
         assert len(groups) == 3
 
     def test_time_threshold(self, create_group):
-        create_group(days=3)
-        create_group(days=4)
+        create_group(sex_last_update_days=3)
+        create_group(sex_last_update_days=4)
 
         groups = get_groups_to_update_sex_statistics()
 
