@@ -128,8 +128,9 @@ def post_movie(group_id, movie_id):
         movie.group = Group.objects.get(group_id=group_id)
         movie.save(update_fields=['post_in_group_date', 'group'])
 
-        posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
-        posting_block.deactivate()
+        if config.BLOCKS_ACTIVE:
+            posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+            posting_block.deactivate()
 
         log.debug(f'{post_response} in group {group_id}')
     except:
