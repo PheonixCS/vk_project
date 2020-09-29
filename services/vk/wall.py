@@ -79,15 +79,19 @@ def get_ad_in_last_hour(api, group_id):
 
     try:
         wall, error = get_wall(api, group_id)
-        records = [record for record in wall['items']
-                   if record.get('marked_as_ads', False) and
-                   datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
+        if wall is None:
+            log.warning(f'get_ad_in_last_hour failed with reason {error}')
+            return True
+        else:
+            records = [record for record in wall['items']
+                       if record.get('marked_as_ads', False) and
+                       datetime.fromtimestamp(record['date'], tz=timezone.utc) >= time_threshold]
 
-        if records and records[0].get('id', None) and records[0].get('date', None):
-            ad = {'id': records[0].get('id'),
-                  'date': records[0].get('date')}
-            log.debug('got ad with id {} in group {}'.format(ad['id'], group_id))
-            return ad
+            if records and records[0].get('id', None) and records[0].get('date', None):
+                ad = {'id': records[0].get('id'),
+                      'date': records[0].get('date')}
+                log.debug('got ad with id {} in group {}'.format(ad['id'], group_id))
+                return ad
     except VkAPIError as error_msg:
         log.error('got unexpected error in get_ad_in_last_hour {}'.format(error_msg))
 

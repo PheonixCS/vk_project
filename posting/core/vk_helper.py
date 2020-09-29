@@ -23,8 +23,11 @@ def is_ads_posted_recently(group):
     if api:
         ad_record = get_ad_in_last_hour(api, group.domain_or_id)
         if ad_record:
-            create_ad_record(ad_record['id'], group, datetime.fromtimestamp(ad_record['date'], tz=timezone.utc))
-            return True
+            if isinstance(ad_record, bool):
+                return True
+            else:
+                create_ad_record(ad_record['id'], group, datetime.fromtimestamp(ad_record['date'], tz=timezone.utc))
+                return True
 
 
 def create_ad_record(ad_record_id: int, group: Group, timestamp: datetime) -> AdRecord:
