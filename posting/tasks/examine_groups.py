@@ -36,8 +36,7 @@ def examine_groups():
         if group.is_blocked():
             blocks = Block.objects.filter(is_active=True, group=group).values_list('reason', flat=True)
             log.info(f'Group {group} blocked for inner reasons {blocks}. Skip posting.')
-            if config.BLOCKS_ACTIVE:
-                continue
+            continue
 
         if are_any_ads_posted_recently(group):
             log.info(f'Got recent ads in group {group}. Skip posting, set block.')
