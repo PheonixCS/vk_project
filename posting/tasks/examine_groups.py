@@ -109,8 +109,9 @@ def examine_groups():
                     else:
                         post_record.post_record.delay(group.group_id, the_best_record.id)
 
-                    block_result = group.set_block(Block.POSTING, period_in_minutes=5)
-                    log.info(f'Set block {block_result}')
+                    if config.BLOCKS_ACTIVE:
+                        block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                        log.info(f'Set block {block_result}')
                 except:
                     log.error('got unexpected exception in examine_groups', exc_info=True)
                     telegram.critical('Неожиданная ошибка при подготовке к постингу')
