@@ -41,17 +41,19 @@ def examine_groups():
 
         if are_any_ads_posted_recently(group):
             log.info(f'Got recent ads in group {group}. Skip posting, set block.')
-            block_result = group.set_block(reason=Block.AD, period_in_minutes=64)
-            log.info(f'Set block {block_result}')
+            if config.BLOCKS_ACTIVE:
+                block_result = group.set_block(reason=Block.AD, period_in_minutes=64)
+                log.info(f'Set block {block_result}')
             continue
 
         is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
         if last_hour_posts_exist and not is_time_to_post:
             log.info(f'Got recent posts in group {group}. Skip posting, set block.')
 
-            interval = (group.get_next_posting_time() - timezone.now()).seconds // 60
-            block_result = group.set_block(Block.RECENT_POSTS, period_in_minutes=interval)
-            log.info(f'Set block {block_result}')
+            if config.BLOCKS_ACTIVE:
+                interval = (group.get_next_posting_time() - timezone.now()).seconds // 60
+                block_result = group.set_block(Block.RECENT_POSTS, period_in_minutes=interval)
+                log.info(f'Set block {block_result}')
 
             continue
 
@@ -61,12 +63,14 @@ def examine_groups():
             movie = find_movie_id_to_post()
             if movie:
                 post_movie.post_movie.delay(group.group_id, movie)
-                block_result = group.set_block(Block.POSTING, period_in_minutes=5)
-                log.info(f'Set block {block_result}')
+                if config.BLOCKS_ACTIVE:
+                    block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                    log.info(f'Set block {block_result}')
             else:
                 log.warning('Got no movie to post')
-                block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
-                log.info(f'Set block {block_result}')
+                if config.BLOCKS_ACTIVE:
+                    block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
+                    log.info(f'Set block {block_result}')
 
             continue
 
@@ -76,12 +80,14 @@ def examine_groups():
             horoscope_record = find_horoscope_record_to_post(group)
             if horoscope_record:
                 post_horoscope.post_horoscope.delay(group.group_id, horoscope_record.id)
-                block_result = group.set_block(Block.POSTING, period_in_minutes=5)
-                log.info(f'Set block {block_result}')
+                if config.BLOCKS_ACTIVE:
+                    block_result = group.set_block(Block.POSTING, period_in_minutes=5)
+                    log.info(f'Set block {block_result}')
             else:
                 log.warning('Got no horoscope records to post')
-                block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
-                log.info(f'Set block {block_result}')
+                if config.BLOCKS_ACTIVE:
+                    block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
+                    log.info(f'Set block {block_result}')
 
             continue
 

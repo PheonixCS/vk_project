@@ -95,8 +95,9 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
             else:
                 log.debug(f'Pin horoscope result {pin_response}')
 
-                posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
-        posting_block.deactivate()
+                if config.BLOCKS_ACTIVE:
+                    posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+                    posting_block.deactivate()
 
     except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))

@@ -188,8 +188,9 @@ def post_record(group_id, record_id):
 
         post_response = api.wall.post(**data_to_post)
 
-        posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
-        posting_block.deactivate()
+        if config.BLOCKS_ACTIVE:
+            posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+            posting_block.deactivate()
 
         log.debug('{} in group {}'.format(post_response, group_id))
     except vk_api.ApiError as error_msg:
