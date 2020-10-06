@@ -25,6 +25,8 @@ class Donor(models.Model):
     average_views_number = models.IntegerField(
         null=True, verbose_name='Среднее количество просмотров поста', blank=True)
     is_copyright_needed = models.BooleanField(default=False, verbose_name='Указывать как источник в записи?')
+    # https://trello.com/c/CuUnkYgq/256
+    ignore_posts_with_copyright = models.BooleanField(default=False, verbose_name='Игнорировать посты с источником')
 
     # Standard
     def save(self, *args, **kwargs):

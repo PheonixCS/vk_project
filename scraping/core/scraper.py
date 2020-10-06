@@ -203,6 +203,10 @@ def filter_records(donor, records):
     records = filter_out_records_with_unsuitable_attachments(records)
     save_filter_stats(donor, 'bad attachments', origin - len(records))
 
+    # filter copyright https://trello.com/c/CuUnkYgq/256
+    if donor.ignore_posts_with_copyright:
+        records = [record for record in records if record.get('copyright') is None]
+
     log.debug('got {} records after all filters in donor {}'.format(len(records), donor.id))
     return records
 
