@@ -25,3 +25,22 @@ class MailRuHoroscopes(HoroscopesPage):
         self.text_locator = 'div', {'class': 'article__text'}
 
 
+class WomenHoroscopes(HoroscopesPage):
+    def __init__(self):
+        super().__init__('https://goroskop365.ru/')
+        self.signs_map = {
+            'arises': '/zavtra/aries/',  # Овен
+            'taurus': '/zavtra/taurus/',  # Телец
+            'gemini': '/zavtra/gemini/',  # Близнецы
+            'cancer': '/zavtra/cancer/',  # Рак
+            'leo': '/zavtra/leo/',  # Лев
+            'virgo': '/zavtra/virgo/',  # Дева
+            'libra': '/zavtra/libra/',  # Весы
+            'scorpio': '/zavtra/scorpio/',  # Скорпион
+            'sagittarius': '/zavtra/sagittarius/',  # Стрелец
+            'capricorn': '/zavtra/capricorn/',  # Козерог
+            'aquarius': '/zavtra/aquarius/',  # Водолеи
+            'pisces': '/zavtra/pisces/'  # Рыбы
+        }
+
+        self.text_locator = '.content_wrapper.horoborder > p'

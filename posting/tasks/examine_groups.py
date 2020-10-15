@@ -174,8 +174,10 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
             now_minute -= 1
 
         interval = config.HOROSCOPES_POSTING_INTERVAL - 1
-        is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list(interval=interval)
-        posting_pause_threshold = now_time_utc - timedelta(minutes=interval)
+        time_list = group.return_posting_time_list(interval=interval)
+        is_time_to_post = (now_hour, now_minute) in time_list
+        log.debug(f'time_list {time_list}\n-->is_time_to_post {is_time_to_post}')
+        posting_pause_threshold = now_time_utc - timedelta(minutes=interval-1)
 
     if group.group_type == group.MOVIE_SPECIAL:
         last_hour_movies = Movie.objects.filter(post_in_group_date__gt=posting_pause_threshold)

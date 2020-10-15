@@ -35,7 +35,7 @@ class HoroscopesPage:
             'User-Agent': self.update_user_agent()
         }
 
-    def parse(self) -> dict:
+    def parse(self, by_selector=False) -> dict:
         log.info(f'started parsing {self.host}')
         result = {}
 
@@ -58,7 +58,7 @@ class HoroscopesPage:
                 log.warning(f'Some requests error while parsing horoscopes, {url}, {error}')
                 continue
 
-            text = self._collect_data(response.text)
+            text = self._collect_data(response.text, by_selector=by_selector)
 
             if not text:
                 log.warning(f'Could not find data, {url}, locator: {self.text_locator}')
@@ -76,22 +76,26 @@ class HoroscopesPage:
         log.info(f'finish parsing {self.host}')
         return result
 
-    def _collect_data(self, page_text):
+    def _collect_data(self, page_text, by_selector=False):
         soup = BeautifulSoup(page_text, self.parser)
 
-        try:
-            node = soup.findAll(*self.text_locator)
-        except Exception:
-            log.warning('parsing exception', exc_info=True)
-            return None
-
-        if node:
-            text = ''
-            for child in node:
-                text += ''.join(child.findAll(text=True))
-            return text
+        if by_selector:
+            node = soup.select_one(self.text_locator)
+            return node.text
         else:
-            return None
+            try:
+                node = soup.findAll(*self.text_locator)
+            except Exception:
+                log.warning('parsing exception', exc_info=True)
+                return None
+
+            if node:
+                text = ''
+                for child in node:
+                    text += ''.join(child.findAll(text=True))
+                return text
+            else:
+                return None
 
     @staticmethod
     def update_user_agent():
