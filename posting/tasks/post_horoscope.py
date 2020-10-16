@@ -58,11 +58,6 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
                 attachments.extend(upload_photos(session, image_local_filename, str(group_id)))
                 delete_files(image_local_filename)
 
-        group_zodiac_sign = fetch_zodiac_sign(group.name)
-        if not group_zodiac_sign:
-            text_to_add = generate_special_group_reference(horoscope_record.text)
-            record_text = '\n'.join([text_to_add, record_text]) if record_text else text_to_add
-
         # https://trello.com/c/uB0RQBvE/24
         if group.group_type == Group.HOROSCOPES_MAIN:
             record_text = ''
