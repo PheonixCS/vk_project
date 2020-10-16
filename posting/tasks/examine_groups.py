@@ -139,7 +139,7 @@ def is_common_condition(group, is_time_to_post, last_hour_posts_exist):
 
 def is_horoscopes_conditions(group, is_time_to_post):
     if group.group_type == Group.HOROSCOPES_MAIN:
-        condition_for_main = are_horoscopes_for_main_groups_ready()
+        condition_for_main = are_horoscopes_for_main_groups_ready(group)
     else:
         condition_for_main = True
 
