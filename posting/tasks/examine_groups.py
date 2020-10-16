@@ -118,8 +118,9 @@ def examine_groups():
                     the_best_record.set_failed()
             else:
                 log.warning(f'Group {group} has no records to post')
-                block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
-                log.info(f'Set block {block_result}')
+                if config.BLOKS_ACTIVE:
+                    block_result = group.set_block(Block.LACK_OF_RECORDS, period_in_minutes=20)
+                    log.info(f'Set block {block_result}')
 
             continue
 
