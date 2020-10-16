@@ -103,7 +103,7 @@ def are_horoscopes_for_main_groups_ready(group=None):
     if not group:
         main_horoscopes = Group.objects.filter(group_type=Group.HOROSCOPES_MAIN)
     else:
-        main_horoscopes = group
+        main_horoscopes = [group, ]
     start_of_a_day = timezone.now().replace(hour=0, minute=0, second=0)
 
     result = []
