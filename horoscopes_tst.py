@@ -1,5 +1,4 @@
-from services.horoscopes.mailru import WomenHoroscopes
+from posting.core.horoscopes_images import paste_horoscopes_rates
 
 if __name__ == '__main__':
-    horoscope = WomenHoroscopes().parse(by_selector=True)
-    print(horoscope['arises'])
+    paste_horoscopes_rates('horoscope.jpg')

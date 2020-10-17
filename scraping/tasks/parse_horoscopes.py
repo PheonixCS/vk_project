@@ -44,7 +44,8 @@ def parse_horoscopes() -> None:
     women_horoscopes_group = Group.objects.get(group_id=29038248)
 
     for sign, value in parsed.items():
-        additional_text = f'{tomorrow_date_ru}, {sign}'
+        sign_ru = horoscopes_translate(sign, to_lang='ru')
+        additional_text = f'{tomorrow_date_ru}, {sign_ru}'
         record_text = f'{additional_text}\n{value}'
         save_horoscope_record_to_db(women_horoscopes_group, record_text, sign)
 
