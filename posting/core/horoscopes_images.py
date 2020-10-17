@@ -139,6 +139,6 @@ def paste_horoscopes_rates(horoscope_image_name: str, font_name: str='museo_cyrl
 
     base.save(horoscope_image_name, 'JPEG', quality=95, progressive=True)
 
-    return 'test.jpg'
+    return horoscope_image_name
 
 
