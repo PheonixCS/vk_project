@@ -6,7 +6,7 @@ from constance import config
 from django.utils import timezone
 
 from posting.core.horoscopes import generate_special_group_reference
-from posting.core.horoscopes_images import transfer_horoscope_to_image
+from posting.core.horoscopes_images import transfer_horoscope_to_image, paste_horoscopes_rates
 from posting.core.files import download_file, delete_files
 from posting.core.vk_helper import create_ad_record
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
@@ -44,6 +44,11 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
+
+            # https://trello.com/c/YfqFDo2v/255
+            if group.group_id == 29038248:
+                horoscope_image_name = paste_horoscopes_rates(horoscope_image_name)
+
             attachments.extend(upload_photos(session, horoscope_image_name, str(group_id)))
             delete_files(horoscope_image_name)
             record_text = ''

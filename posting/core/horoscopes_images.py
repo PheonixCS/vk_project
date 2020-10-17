@@ -112,7 +112,6 @@ def paste_horoscopes_rates(horoscope_image_name: str, font_name: str='museo_cyrl
         luck[0]: randint(*rate_boarders),
         finance[0]: randint(*rate_boarders)
     }
-    print(horoscopes_rates)
 
     icons_height = icons_width = 60
     icons_bottom_offset = 10
@@ -138,7 +137,7 @@ def paste_horoscopes_rates(horoscope_image_name: str, font_name: str='museo_cyrl
         draw = ImageDraw.Draw(base)
         draw.text((icon_paste_x+icons_width+30, icon_paste_y-10), str(horoscopes_rates[image[0]]), font=font_body)
 
-    base.save('test.jpg', 'JPEG', quality=95, progressive=True)
+    base.save(horoscope_image_name, 'JPEG', quality=95, progressive=True)
 
     return 'test.jpg'
 
