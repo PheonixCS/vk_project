@@ -220,8 +220,9 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
     today_start = now_time_utc.replace(hour=0, minute=0, second=0)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
 
-    if allowed_time_threshold > today_start:
-        allowed_time_threshold = today_start
+    # Remove it, because Pavel angry about this feature
+    # if allowed_time_threshold > today_start:
+    #     allowed_time_threshold = today_start
 
     donors = group.donors.all()
     if not donors:
