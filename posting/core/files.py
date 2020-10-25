@@ -9,8 +9,7 @@ log = logging.getLogger('posting.files')
 def download_file(url, extension=None):
     log.debug('download_file called')
 
-    file_name_in_vk = url.split('/')[-1]
-    extension = extension or file_name_in_vk.split('.')[-1]
+    extension = extension or 'jpg'
     local_filename = str(abs(hash(url)))[:256]
 
     if extension:

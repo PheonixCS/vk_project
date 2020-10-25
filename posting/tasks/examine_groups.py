@@ -223,7 +223,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
     if group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON) and allowed_time_threshold > today_start:
         allowed_time_threshold = today_start
 
-    donors = group.donors.all()
+    donors = group.donors.filter(is_involved=True)
     if not donors:
         log.warning(f'Group {group.domain_or_id} got no donors but in common condition!')
         return None, []
