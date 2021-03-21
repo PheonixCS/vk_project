@@ -175,6 +175,7 @@ def post_record(group_id, record_id):
 
             record_text = '\n'.join([record_text, text_to_add]) if record_text else text_to_add
 
+        log.debug(f'{group_id} attachments: {attachments}')
         # posting part
         data_to_post = {
             'owner_id': f'-{group_id}',
