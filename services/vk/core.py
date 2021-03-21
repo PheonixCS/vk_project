@@ -15,7 +15,7 @@ def create_vk_session_using_login_password(login, password, app_id):
 
     vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION)
     try:
-        vk_session.auth()
+        vk_session.auth(token_only=True)
     except vk_api.AuthError as error_msg:
         log.info('User {} got api error: {}'.format(login, error_msg))
         if error_msg == BANNED_ACCOUNT_ERROR_MESSAGE:
