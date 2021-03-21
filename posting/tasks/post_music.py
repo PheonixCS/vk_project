@@ -42,12 +42,14 @@ def post_music(group_id, record_id):
 
         # audios
         audios = list(record.audios.all())
+        log.debug(f'{group_id} audio before {len(audios)}')
         prepared_audios = prepare_audio_attachments(audios,
                                                     is_shuffle=group.is_audios_shuffle_enabled,
                                                     is_cut=config.CUT_ONE_AUDIO_ATTACHMENT
                                                     )
 
         attachments.extend(prepared_audios)
+        log.debug(f'{group_id} audio after {len(prepared_audios)}')
 
         # text
         record_text = delete_emoji_from_text(record.text) if not group.is_text_delete_enabled else ''
@@ -109,6 +111,7 @@ def post_music(group_id, record_id):
         paste_text_on_music_image(result_image_name, text_to_image)
 
         attachments.extend(upload_photos(session, result_image_name, group_id))
+        log.debug(f'{group_id} attachments: {attachments}')
 
         data_to_post = {
             'owner_id': f'-{group_id}',

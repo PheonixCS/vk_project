@@ -20,7 +20,7 @@ more-itertools==4.3.0
 numpy==1.14.5
 packaging==20.3
 phonenumbers==8.9.5
-Pillow==5.4.1
+Pillow==8.1.2
 pluggy==0.13.1
 psycopg2-binary==2.8.4
 py==1.5.4
@@ -41,7 +41,7 @@ uritools==2.2.0
 urlextract==0.8.3
 urllib3==1.22
 vine==1.1.4
-vk-api==10.0
-vk-requests==1.1.1
+vk-api==11.9.1
+vk-requests==1.2.0
 wcwidth==0.1.9
 zipp==3.1.0
