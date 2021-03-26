@@ -93,7 +93,10 @@ def examine_groups():
         if is_common_condition(group, is_time_to_post, last_hour_posts_exist):
             log.debug(f'{group} in common condition')
 
-            the_best_record, candidates = find_common_record_to_post(group)
+            try:
+                the_best_record, candidates = find_common_record_to_post(group)
+            except AttributeError:
+                log.error('Attribute error', exc_info=True)
             log.info(f'Group {group} got {len(candidates)} candidates')
 
             if the_best_record:
@@ -178,7 +181,7 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
         time_list = group.return_posting_time_list(interval=interval)
         is_time_to_post = (now_hour, now_minute) in time_list
         log.debug(f'time_list {time_list}\n-->is_time_to_post {is_time_to_post}')
-        posting_pause_threshold = now_time_utc - timedelta(minutes=interval-1)
+        posting_pause_threshold = now_time_utc - timedelta(minutes=interval - 1)
 
     if group.group_type == group.MOVIE_SPECIAL:
         last_hour_movies = Movie.objects.filter(post_in_group_date__gt=posting_pause_threshold)
