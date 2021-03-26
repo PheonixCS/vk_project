@@ -97,6 +97,7 @@ def examine_groups():
                 the_best_record, candidates = find_common_record_to_post(group)
             except AttributeError:
                 log.error('Attribute error', exc_info=True)
+                continue
             log.info(f'Group {group} got {len(candidates)} candidates')
 
             if the_best_record:
