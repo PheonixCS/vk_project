@@ -144,6 +144,11 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': True,
             'filters': ['rate_limit']
+        },
+        '': {
+            'handlers': [''],
+            'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
+            'propagate': True
         }
     },
 }
