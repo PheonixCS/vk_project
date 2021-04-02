@@ -78,6 +78,11 @@ def post_record(group_id, record_id):
         # audios part
         audios = list(record.audios.all())
         log.debug('got {} audios for group {}'.format(len(audios), group_id))
+        # cut audio list to prevent overflow
+        if len(audios) == 9:
+            audios = audios[:-1]
+        log.debug('got {} audios for group {} after cutting'.format(len(audios), group_id))
+
         prepared_audios = prepare_audio_attachments(audios,
                                                     is_shuffle=group.is_audios_shuffle_enabled,
                                                     is_cut=config.CUT_ONE_AUDIO_ATTACHMENT
