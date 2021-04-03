@@ -2,17 +2,11 @@ import logging
 import os
 
 import requests
-import sentry_sdk
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration, ignore_logger
 
 from vk_scraping_posting.settings import BASE_DIR
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', '')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
-
-ignore_logger('telegram')
 
 
 class TelegramHandler(logging.Handler):
@@ -30,17 +24,6 @@ class TelegramHandler(logging.Handler):
         return requests.post('https://api.telegram.org/bot{token}/sendMessage'.format(token=TELEGRAM_TOKEN),
                              data=payload).content
 
-
-sentry_logging = LoggingIntegration(
-    level=logging.INFO,  # Capture info and above as breadcrumbs
-    event_level=logging.WARNING  # Send no events from log messages
-)
-
-if os.getenv('SERVER_ROLE', 'prod') == 'prod':
-    sentry_sdk.init(
-        dsn="https://374beeda2c78426ea8cd2cc84d176b1b@sentry.io/1290864",
-        integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
-    )
 
 LOGGING = {
     'version': 1,
