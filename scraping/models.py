@@ -64,6 +64,8 @@ class Filter(models.Model):
                                                verbose_name='Минимальное количество гифок')
     min_quantity_of_audios = models.IntegerField(blank=True, null=True,
                                                  verbose_name='Минимальное количество аудиозаписей')
+    max_text_length = models.IntegerField(blank=True, null=True,
+                                          verbose_name='Максимальная длина текста')
 
     def __str__(self):
         return 'Фильтр #{} для группы {}'.format(self.id, self.donor)

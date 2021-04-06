@@ -180,6 +180,13 @@ def min_text_length_filter(item, custom_filter):
     return True
 
 
+def max_text_length_filter(item, custom_filter):
+    if len(item.get('text', str())) > custom_filter.max_text_length:
+        log.debug('delete {} because of custom filter: max_text_length'.format(item['id']))
+        return False
+    return True
+
+
 def min_quantity_of_videos_filter(item, custom_filter):
     number_of_videos = len(
         [attachment for attachment in item.get('attachments', []) if attachment['type'] == 'video'])
@@ -236,6 +243,9 @@ def filter_with_custom_filters(records, custom_filters):
 
         if custom_filter.min_text_length:
             filters += (min_text_length_filter,)
+
+        if custom_filter.max_text_length:
+            filters += (max_text_length_filter,)
 
         if custom_filter.min_quantity_of_videos:
             filters += (min_quantity_of_videos_filter,)
