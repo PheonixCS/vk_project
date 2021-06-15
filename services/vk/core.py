@@ -3,6 +3,7 @@ import logging
 import vk_api
 import vk_requests
 from constance import config
+from requests import Session
 from vk_requests.exceptions import VkAPIError
 from .vars import BANNED_ACCOUNT_ERROR_MESSAGE
 
@@ -10,10 +11,30 @@ log = logging.getLogger('services.vk.core')
 telegram = logging.getLogger('telegram')
 
 
-def create_vk_session_using_login_password(login, password, app_id):
+class CustomSession(Session):
+    def prepare_request(self, *args, **kwargs):
+        result = super().prepare_request(*args, **kwargs)
+        actual_request = '{}\n{}\r\n{}\r\n\r\n{}'.format(
+            '-----------START-----------',
+            result.method + ' ' + result.url,
+            '\r\n'.join('{}: {}'.format(k, v) for k, v in result.headers.items()),
+            result.body,
+        )
+        log.debug(actual_request)
+        return result
+
+
+def create_vk_session_using_login_password(login, password, app_id, special_session=False):
     log.debug('create_vk_session_using_login_password called')
 
-    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION)
+    # use this custom session for debug requests for vk
+    if special_session:
+        custom_session = CustomSession()
+    else:
+        custom_session = requests.Session()
+
+    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
+                              session=custom_session)
     try:
         vk_session.auth(token_only=True)
     except vk_api.AuthError as error_msg:

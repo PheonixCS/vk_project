@@ -31,8 +31,13 @@ def post_record(group_id, record_id):
     group = Group.objects.get(group_id=group_id)
     record = Record.objects.get(pk=record_id)
 
+    special_session = False
+    if group.group_type == Group.MUSIC_COMMON:
+        special_session = True
+
     try:
-        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id,
+                                                         special_session=special_session)
         api = session.get_api()
     except:
         log.error('got unexpected exception in post_record for group {}'.format(group_id), exc_info=True)
