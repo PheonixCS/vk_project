@@ -4,7 +4,7 @@ from collections import OrderedDict
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 CONSTANCE_CONFIG = {
-    'VK_API_VERSION': ('5.74', 'VK API version', str),
+    'VK_API_VERSION': ('5.131', 'VK API version', str),
     'MIN_STRING_MATCH_RATIO': (0.85, 'Non documented'),
     'HOROSCOPES_DONOR_ID': ('83815413', 'Horoscopes specific donor id', str),
     'MAX_TEXT_TO_FILL_LENGTH': (70, 'Maximum text length to adding on image'),

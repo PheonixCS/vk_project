@@ -34,13 +34,14 @@ ratelimit==2.2.0
 ratelimitingfilter==1.2
 raven==6.9.0
 requests==2.18.4
+sentry-sdk==0.3.6
 six==1.11.0
 tenacity==5.0.4
 uritools==2.2.0
 urlextract==0.8.3
 urllib3==1.22
 vine==1.1.4
-vk-api==11.9.1
+vk-api==11.9.4
 vk-requests==1.2.0
 wcwidth==0.1.9
 zipp==3.1.0

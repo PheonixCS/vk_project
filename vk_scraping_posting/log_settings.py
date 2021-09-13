@@ -95,27 +95,27 @@ LOGGING = {
         'django': {
             'handlers': ['console', 'django'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
-            'propagate': True
+            'propagate': False
         },
         'scraping': {
             'handlers': ['scraping'],
             'level': os.getenv('SCRAPER_LOG_LEVEL', 'DEBUG'),
-            'propagate': True
+            'propagate': False
         },
         'posting': {
             'handlers': ['posting'],
             'level': os.getenv('POSTING_LOG_LEVEL', 'DEBUG'),
-            'propagate': True
+            'propagate': False
         },
         'moderation': {
             'handlers': ['moderation'],
             'level': os.getenv('MODERATION_LOG_LEVEL', 'DEBUG'),
-            'propagate': True
+            'propagate': False
         },
         'сelery': {
             'handlers': ['console', 'celery'],
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
-            'propagate': True
+            'propagate': False
         },
         'services': {
             'handlers': [''],
@@ -125,7 +125,7 @@ LOGGING = {
         'telegram': {
             'handlers': ['telegram'],
             'level': 'WARNING',
-            'propagate': True,
+            'propagate': False,
             'filters': ['rate_limit']
         },
         '': {

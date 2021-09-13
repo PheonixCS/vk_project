@@ -29,10 +29,24 @@ def distribute_donors_between_accounts(donors, accounts):
     return accounts_with_donors
 
 
+# old for version below 5.77
+# def find_url_of_biggest_image(image_dict: dict) -> str:
+#     photos_keys = [key for key in image_dict if key.startswith('photo_')]
+#     key_of_max_size_photo = max(photos_keys, key=lambda x: int(x.split('_')[1]))
+#     return image_dict[key_of_max_size_photo]
+
+# for API version 5.77+
+# https://vk.com/dev/photo_sizes
+# https://vk.com/dev/objects/photo
 def find_url_of_biggest_image(image_dict: dict) -> str:
-    photos_keys = [key for key in image_dict if key.startswith('photo_')]
-    key_of_max_size_photo = max(photos_keys, key=lambda x: int(x.split('_')[1]))
-    return image_dict[key_of_max_size_photo]
+    result = ''
+
+    sizes = image_dict.get('sizes', [])
+    if sizes:
+        result = max(sizes, key=lambda x: x['width'])
+        result = result['url']
+
+    return result
 
 
 def extract_records_per_donor(vk_response: dict) -> dict:
