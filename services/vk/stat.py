@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+import time
 
 from constance import config
 from django.utils import timezone
@@ -10,10 +11,13 @@ log = logging.getLogger('services.vk.stat')
 
 def get_group_week_statistics(api, group_id):
     log.debug('get_group_week_statistics called for group {}'.format(group_id))
-    now = datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')
-    week_ago = (datetime.now(tz=timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
+    now = datetime.now(tz=timezone.utc)
+    week_ago = (datetime.now(tz=timezone.utc) - timedelta(days=7))
 
-    return api.stats.get(group_id=group_id, date_from=week_ago, date_to=now)
+    now = int(time.mktime(now.timetuple()))
+    week_ago = int(time.mktime(week_ago.timetuple()))
+
+    return api.stats.get(group_id=group_id, timestamp_from=week_ago, timestamp_to=now)
 
 
 def fetch_liked_user_ids(api, group_id, post_id):
