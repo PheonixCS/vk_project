@@ -12,7 +12,8 @@ from posting.core.poster import get_movies_rating_intervals, get_next_interval_b
 from posting.core.posting_history import save_posting_history
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, AdRecord, Block
-from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, post_music, post_record
+from posting.tasks import post_movie, post_horoscope, post_music, post_record
+from posting.tasks.sex_statistics_weekly import sex_statistics_weekly
 from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.vars import SIGNS_EN
