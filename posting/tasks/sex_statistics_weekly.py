@@ -10,7 +10,7 @@ from services.vk.stat import get_group_week_statistics
 log = logging.getLogger('posting.scheduled')
 
 
-@shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
+@shared_task(time_limit=180, name='posting.tasks.sex_statistics_weekly.sex_statistics_weekly')
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
