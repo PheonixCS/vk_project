@@ -12,18 +12,18 @@ from posting.core.poster import get_movies_rating_intervals, get_next_interval_b
 from posting.core.posting_history import save_posting_history
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, AdRecord, Block
-from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly_task, post_music, post_record
+from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, post_music, post_record
 from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.vars import SIGNS_EN
 from services.vk.core import create_vk_session_using_login_password, fetch_group_id
 
 log = logging.getLogger('posting.scheduled')
-telegram = logging.getLogger('telegram')
+# telegram = logging.getLogger('telegram')
 
 
-@shared_task(time_limit=59)
-def examine_groups_task():
+@shared_task(time_limit=59, name='posting.tasks.examine_groups.examine_groups')
+def examine_groups():
     log.debug('start group examination')
     groups_to_post_in = Group.objects.filter(
         user__isnull=False,
@@ -118,7 +118,7 @@ def examine_groups_task():
                         log.info(f'Set block {block_result}')
                 except:
                     log.error('got unexpected exception in examine_groups', exc_info=True)
-                    telegram.critical('Неожиданная ошибка при подготовке к постингу')
+                    # telegram.critical('Неожиданная ошибка при подготовке к постингу')
                     the_best_record.set_failed()
             else:
                 log.warning(f'Group {group} has no records to post')
@@ -258,7 +258,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
                 group.group_type not in (Group.MUSIC_COMMON,)
                 and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
         ):
-            sex_statistics_weekly_task.delay()
+            sex_statistics_weekly.delay()
             return None, []
 
         male_percent, female_percent = group.get_auditory_percents()

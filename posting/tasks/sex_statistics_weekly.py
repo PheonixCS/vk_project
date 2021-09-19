@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from django.utils import timezone
 
@@ -5,13 +7,11 @@ from posting.core.poster import get_groups_to_update_sex_statistics
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.stat import get_group_week_statistics
 
-import logging
-
 log = logging.getLogger('posting.scheduled')
 
 
 @shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
-def sex_statistics_weekly_task():
+def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
     groups = get_groups_to_update_sex_statistics()
