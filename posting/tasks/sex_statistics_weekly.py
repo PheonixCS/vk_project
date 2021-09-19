@@ -26,6 +26,7 @@ def sex_statistics_weekly():
             continue
 
         stats = get_group_week_statistics(api, group_id=group.group_id)
+        log.debug(stats)
 
         male_count_list = []
         female_count_list = []
