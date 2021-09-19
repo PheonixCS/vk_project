@@ -12,7 +12,7 @@ from posting.core.poster import get_movies_rating_intervals, get_next_interval_b
 from posting.core.posting_history import save_posting_history
 from posting.core.vk_helper import is_ads_posted_recently
 from posting.models import Group, AdRecord, Block
-from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly, post_music, post_record
+from posting.tasks import post_movie, post_horoscope, sex_statistics_weekly_task, post_music, post_record
 from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.vars import SIGNS_EN
@@ -258,7 +258,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
                 group.group_type not in (Group.MUSIC_COMMON,)
                 and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
         ):
-            sex_statistics_weekly.delay()
+            sex_statistics_weekly_task.delay()
             return None, []
 
         male_percent, female_percent = group.get_auditory_percents()

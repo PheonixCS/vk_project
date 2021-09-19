@@ -11,7 +11,7 @@ from posting.models import Group
 from posting.tasks import (
     post_record,
     post_music,
-    sex_statistics_weekly
+    sex_statistics_weekly_task
 )
 from scraping.models import Record
 
@@ -87,7 +87,7 @@ class Command(BaseCommand):
 
         if config.POSTING_BASED_ON_SEX:
             if not group.sex_last_update_date or group.sex_last_update_date < week_ago:
-                sex_statistics_weekly.delay()
+                sex_statistics_weekly_task.delay()
                 self.stdout.write('Updating sex statistic')
                 return
 
