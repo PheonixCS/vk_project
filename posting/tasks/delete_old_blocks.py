@@ -1,10 +1,10 @@
+import logging
 from datetime import timedelta
 
 from celery import shared_task
 from django.utils import timezone
 
 from posting.models import Block
-import logging
 
 log = logging.getLogger('posting.scheduled')
 
