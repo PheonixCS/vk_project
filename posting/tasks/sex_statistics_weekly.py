@@ -26,18 +26,18 @@ def sex_statistics_weekly():
             continue
 
         stats = get_group_week_statistics(api, group_id=group.group_id)
-        log.debug(stats)
 
         male_count_list = []
         female_count_list = []
 
         for day in stats:
-            sex_list = day.get('sex', [])
+            reach = day.get('reach')
+            sex_list = reach.get('sex', [])
             for sex in sex_list:
                 if sex.get('value', 'n') == 'f':
-                    female_count_list.append(sex.get('visitors'))
+                    female_count_list.append(sex.get('count'))
                 elif sex.get('value', 'n') == 'm':
-                    male_count_list.append(sex.get('visitors'))
+                    male_count_list.append(sex.get('count'))
 
         if male_count_list:
             male_average_count = sum(male_count_list) // len(male_count_list)
