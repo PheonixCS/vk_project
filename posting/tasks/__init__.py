@@ -1,6 +1,6 @@
 from .delete_old_ads import *
 from .delete_old_stat import *
-from .examine_groups import *
+from .examine_groups import examine_groups_task
 from .pin_best_post import *
 from .post_horoscope import *
 from .post_movie import *

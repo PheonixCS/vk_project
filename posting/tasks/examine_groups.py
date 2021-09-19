@@ -23,7 +23,7 @@ telegram = logging.getLogger('telegram')
 
 
 @shared_task(time_limit=59)
-def examine_groups():
+def examine_groups_task():
     log.debug('start group examination')
     groups_to_post_in = Group.objects.filter(
         user__isnull=False,

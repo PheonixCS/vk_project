@@ -10,7 +10,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=0)  # every hour at 0 minute
     },
     'poster_task': {
-        'task': 'posting.tasks.examine_groups.examine_groups',
+        'task': 'posting.tasks.examine_groups.examine_groups_task',
         'schedule': crontab(minute='*')  # every minute
     },
     'pin_best_task': {
@@ -46,7 +46,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=0)  # at 0:00 am UTC (3:00 am by MSK)
     },
     'sex_statistics_weekly': {
-        'task': 'posting.tasks.sex_statistics_weekly.sex_statistics_weekly',
+        'task': 'posting.tasks.sex_statistics_weekly.sex_statistics_weekly_task',
         'schedule': crontab(minute=0, hour=0, day_of_week=0)  # at 0:00 am UTC every sunday (3:00 am by MSK)
     },
     'download_youtube_trailers': {
