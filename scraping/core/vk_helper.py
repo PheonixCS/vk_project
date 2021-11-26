@@ -1,12 +1,14 @@
 # methods to work with vk api and data
 import time
-
+import logging
 
 from django.db.models.query import QuerySet
 from vk_requests.api import API
 
 from services.vk.wall import get_records_info_from_groups
 from services.vk.stat import fetch_liked_user_ids, get_users_sex_by_ids
+
+log = logging.getLogger('services.vk.sex_stats')
 
 
 def get_records_info(api: API, records: QuerySet) -> dict:
@@ -24,7 +26,9 @@ def extract_records_sex(api: API, structured_records: dict) -> None:
             sex_list = get_users_sex_by_ids(api, user_ids)
 
             if sex_list is None:
-                pass
+                log.warning('sleep 3 seconds')
+                time.sleep(3)
+                continue
 
             unknown_count = sex_list.count(0)
             females_count = sex_list.count(1)
