@@ -1,4 +1,6 @@
 # methods to work with vk api and data
+import time
+
 
 from django.db.models.query import QuerySet
 from vk_requests.api import API
@@ -21,6 +23,9 @@ def extract_records_sex(api: API, structured_records: dict) -> None:
             user_ids = fetch_liked_user_ids(api, donor, record['id'])
             sex_list = get_users_sex_by_ids(api, user_ids)
 
+            if sex_list is None:
+                pass
+
             unknown_count = sex_list.count(0)
             females_count = sex_list.count(1)
             males_count = sex_list.count(2)
@@ -32,3 +37,4 @@ def extract_records_sex(api: API, structured_records: dict) -> None:
                  'males_count': males_count,
                  'males_females_ratio': males_females_ratio}
             )
+            time.sleep(1)
