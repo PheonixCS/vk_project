@@ -48,7 +48,6 @@ def rate_new_posts() -> None:
             extract_records_sex(api, structured_records)
             update_structured_records(structured_records)
             i += 100
-            time.sleep(5)
 
 
     log.debug('rating finished')

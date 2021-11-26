@@ -46,4 +46,4 @@ def extract_records_sex(api: API, structured_records: dict) -> None:
                  'males_count': males_count,
                  'males_females_ratio': males_females_ratio}
             )
-            time.sleep(1)
+            time.sleep(0.35)
