@@ -67,7 +67,7 @@ def filter_out_records_with_small_images(records, min_quantity_of_pixels=None):
             if attachment['type'] != 'photo':
                 continue
 
-            if attachment['photo'].get(sizes, None) is not None:
+            if attachment['photo'].get('sizes', None) is not None:
 
                 max_size = max(attachment['photo']['sizes'], key=lambda x: x['width'])
 
