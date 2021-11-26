@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timedelta
 
 from celery import shared_task
@@ -47,5 +48,7 @@ def rate_new_posts() -> None:
             extract_records_sex(api, structured_records)
             update_structured_records(structured_records)
             i += 100
+            time.sleep(1)
+
 
     log.debug('rating finished')
