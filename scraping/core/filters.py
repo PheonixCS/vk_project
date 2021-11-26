@@ -67,9 +67,13 @@ def filter_out_records_with_small_images(records, min_quantity_of_pixels=None):
             if attachment['type'] != 'photo':
                 continue
 
-            width = attachment['photo'].get('width', None)
-            height = attachment['photo'].get('height', None)
-            if not width or not height:
+            if attachment['photo'].get(sizes, None) is not None:
+
+                max_size = max(attachment['photo']['sizes'], key=lambda x: x['width'])
+
+                width = max_size.get('width', None)
+                height = max_size.get('height', None)
+            else:
                 log.debug(f'record {record.get("id", None)} photo has no dimensions')
                 continue
 
