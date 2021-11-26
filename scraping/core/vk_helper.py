@@ -23,6 +23,11 @@ def extract_records_sex(api: API, structured_records: dict) -> None:
     for donor in structured_records.keys():
         for record in structured_records[donor]:
             user_ids = fetch_liked_user_ids(api, donor, record['id'])
+            if user_ids is None:
+                log.warning('sleep 3 seconds')
+                time.sleep(3)
+                continue
+
             sex_list = get_users_sex_by_ids(api, user_ids)
 
             if sex_list is None:
