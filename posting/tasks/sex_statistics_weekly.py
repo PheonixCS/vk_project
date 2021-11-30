@@ -14,6 +14,10 @@ log = logging.getLogger('posting.scheduled')
 def sex_statistics_weekly():
     log.debug('sex_statistics_weekly started')
 
+    # TODO сделал временно
+    log.debug('exit sex_statistics_weekly, enable it later')
+    return
+
     groups = get_groups_to_update_sex_statistics()
 
     for group in groups:
