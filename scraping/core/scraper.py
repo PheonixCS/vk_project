@@ -268,3 +268,5 @@ def update_structured_records(records: dict) -> None:
 
             record.status = Record.READY
             record.save(update_fields=fields)
+
+    log.debug('update_structured_records finished')

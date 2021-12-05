@@ -20,6 +20,7 @@ def get_records_info(api: API, records: QuerySet) -> dict:
 
 # TODO need tests with mocks
 def extract_records_sex(api: API, structured_records: dict) -> None:
+    log.debug('extract_records_sex called')
     for donor in structured_records.keys():
         for record in structured_records[donor]:
             user_ids = fetch_liked_user_ids(api, donor, record['id'])
@@ -47,3 +48,5 @@ def extract_records_sex(api: API, structured_records: dict) -> None:
                  'males_females_ratio': males_females_ratio}
             )
             time.sleep(0.35)
+
+    log.debug('extract_records_sex finished')

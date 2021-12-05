@@ -43,10 +43,13 @@ def rate_new_posts() -> None:
     if new_records:
         i = 0
         while i < new_records.count():
-            records_info = get_records_info(api, new_records[i: i + 100])
-            structured_records = extract_records_per_donor(records_info)
-            extract_records_sex(api, structured_records)
-            update_structured_records(structured_records)
+            try:
+                records_info = get_records_info(api, new_records[i: i + 100])
+                structured_records = extract_records_per_donor(records_info)
+                extract_records_sex(api, structured_records)
+                update_structured_records(structured_records)
+            except Exception as e:
+                log.warning(f'Unknown exception {e}')
             i += 100
 
 
