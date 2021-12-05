@@ -281,6 +281,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
     else:
         the_best_record = max(candidates, key=lambda x: x.rate)
 
+    log.debug(f'Candidates {len(candidates)} for group {group.domain_or_id} at finish, {the_best_record}')
     return the_best_record, candidates
 
 
