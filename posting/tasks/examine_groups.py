@@ -257,18 +257,19 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
     if group.banned_origin_attachment_types:
         candidates = filter_banned_records(candidates, list(group.banned_origin_attachment_types))
 
-    log.debug(f'Candidates {len(candidates)} for group {group.domain_or_id} first')
+    log.debug(f'Candidates {len(candidates)} for group {group.domain_or_id} second')
 
-    if not candidates.exists():
+    if candidates.exists() and candidates.count() == 0:
         return None, []
 
     if config.POSTING_BASED_ON_SEX:
-        if (
-                group.group_type not in (Group.MUSIC_COMMON,)
-                and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
-        ):
-            sex_statistics_weekly.delay()
-            return None, []
+        # uncomment it later
+        # if (
+        #         group.group_type not in (Group.MUSIC_COMMON,)
+        #         and (not group.sex_last_update_date or group.sex_last_update_date < week_ago)
+        # ):
+        #     sex_statistics_weekly.delay()
+        #     return None, []
 
         male_percent, female_percent = group.get_auditory_percents()
 
@@ -281,7 +282,6 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
     else:
         the_best_record = max(candidates, key=lambda x: x.rate)
 
-    log.debug(f'Candidates {len(candidates)} for group {group.domain_or_id} at finish, {the_best_record}')
     return the_best_record, candidates
 
 
