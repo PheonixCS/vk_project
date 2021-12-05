@@ -38,7 +38,7 @@ def create_vk_session_using_login_password(login, password, app_id, special_sess
     try:
         vk_session.http.headers[
             'User-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0'
-        vk_session.auth(token_only=True)
+        vk_session.auth()
     except vk_api.AuthError as error_msg:
         log.info('User {} got api error: {}'.format(login, error_msg))
         if error_msg == BANNED_ACCOUNT_ERROR_MESSAGE:
