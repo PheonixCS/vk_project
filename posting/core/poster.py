@@ -127,7 +127,6 @@ def find_suitable_record(records: QuerySet, percents, divergence=20, group_id=No
               f'candidates number={len(records)}')
 
     watched_list = []
-    candidate_number = 1
 
     for i, record in enumerate(records):
         male_percent = record.get_auditory_percents()[0]

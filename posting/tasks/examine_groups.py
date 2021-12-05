@@ -259,7 +259,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
 
     log.debug(f'Candidates {len(candidates)} for group {group.domain_or_id} second')
 
-    if candidates.exists() and candidates.count() == 0:
+    if len(candidates) == 0:
         return None, []
 
     if config.POSTING_BASED_ON_SEX:
