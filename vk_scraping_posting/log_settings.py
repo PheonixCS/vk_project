@@ -80,6 +80,12 @@ LOGGING = {
             'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/posting.log",
             'formatter': 'default'
         },
+        'services': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.getenv('LOGGING_DIR', BASE_DIR) + "/services.log",
+            'formatter': 'default'
+        },
         'telegram': {
             'level': 'DEBUG',
             'class': 'vk_scraping_posting.log_settings.TelegramHandler',
@@ -118,7 +124,7 @@ LOGGING = {
             'propagate': False
         },
         'services': {
-            'handlers': [''],
+            'handlers': ['services'],
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
             'propagate': True
         },
