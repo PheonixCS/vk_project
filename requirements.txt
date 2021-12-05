@@ -17,7 +17,7 @@ idna==2.6
 importlib-metadata==1.6.0
 kombu==4.2.2.post1
 more-itertools==4.3.0
-numpy==1.19.5
+numpy==1.20.0
 packaging==20.3
 phonenumbers==8.9.5
 Pillow==8.3.2
