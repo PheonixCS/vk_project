@@ -36,6 +36,8 @@ def create_vk_session_using_login_password(login, password, app_id, special_sess
     vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
                               session=custom_session)
     try:
+        vk_session.http.headers[
+            'User-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0'
         vk_session.auth(token_only=True)
     except vk_api.AuthError as error_msg:
         log.info('User {} got api error: {}'.format(login, error_msg))
