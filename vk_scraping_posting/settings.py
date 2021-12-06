@@ -13,11 +13,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'gDC7HL6Q7gAqkZ3mXAlLXubdJZgYZZWTP9jHTrdQ1C8hMIauhbe7ucTQ6yzfQWvx'
 
+PROD = 'prod'
+TEST_SERV = 'test'
+
 # SECURITY WARNING: don't run with debug turned on in production!
-server_role = os.getenv('SERVER_ROLE', 'prod')
-if server_role == 'prod':
+server_role = os.getenv('SERVER_ROLE', PROD)
+if server_role == PROD:
     DEBUG = False
-elif server_role == 'test':
+elif server_role == TEST_SERV:
     DEBUG = True
 
 ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org']
@@ -76,16 +79,23 @@ WSGI_APPLICATION = 'vk_scraping_posting.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'vk_db'),
-        'USER': os.environ['DB_LOGIN'],
-        'PASSWORD': os.environ['DB_PASSWORD'],
-        'HOST': os.environ['DB_HOST'],
-        'PORT': os.environ['DB_PORT'],
+if server_role == PROD:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'vk_db'),
+            'USER': os.environ['DB_LOGIN'],
+            'PASSWORD': os.environ['DB_PASSWORD'],
+            'HOST': os.environ['DB_HOST'],
+            'PORT': os.environ['DB_PORT'],
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3'
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
