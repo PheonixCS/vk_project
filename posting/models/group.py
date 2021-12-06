@@ -172,6 +172,16 @@ class Group(models.Model):
     def get_active_donors_number(self):
         return self.donors.filter(is_involved=True).count()
 
+    def get_last_record_time(self):
+        last_record = self.records.order_by('-post_in_group_date').first()
+        if last_record is not None:
+            now = timezone.now()
+            record_date = last_record.post_in_group_date
+            delta = (now - record_date).seconds // 60
+        else:
+            delta = None
+        return delta
+
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'
