@@ -36,7 +36,7 @@ class WebhookTransaction(models.Model):
     )
 
     date_received = models.DateTimeField(auto_now_add=True)
-    body = JSONField(default={})
+    body = JSONField(default=dict)
     status = models.CharField(max_length=250, choices=STATUSES, default=UNPROCESSED)
 
     def __str__(self):
@@ -65,4 +65,4 @@ class Comment(models.Model):
 class Attachment(models.Model):
     attached_to = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')
     type = models.CharField(max_length=64, default='')
-    body = JSONField(default={})
+    body = JSONField(default=dict)
