@@ -15,20 +15,22 @@
     <header>Все сообщества</header>
 </div>
 <div class="container">
-    {% if groups %}
-        <ul>
-            {% for group in groups %}
-                <li class="row">
-                <div>
-                    <a href="{% url 'admin:posting_group_change' group.pk %}">{{ group.group_id }}</a>
-                    <span>Donors: {{ group.donors.count }}</span>
-                </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No groups</p>
-    {% endif %}
+    <div>
+        {% if groups %}
+            <ul class="list-group">
+                {% for group in groups %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{% url 'admin:posting_group_change' group.pk %}">{{ group.group_id }}</a>
+                        <span class="badge badge-primary badge-pill">
+                        Donors: {{ group.get_active_donors_number }}/{{ group.donors.count }}
+                    </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No groups</p>
+        {% endif %}
+    </div>
 </div>
 </body>
 </html>

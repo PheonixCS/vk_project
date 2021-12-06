@@ -169,6 +169,9 @@ class Group(models.Model):
 
         return result
 
+    def get_active_donors_number(self):
+        return self.donors.filter(is_involved=True).count()
+
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'
