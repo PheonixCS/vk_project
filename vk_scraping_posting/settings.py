@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'constance.backends.database',
     'constance',
 
+    'bootstrap4',
+
     'raven.contrib.django.raven_compat',
 ]
 

@@ -3,7 +3,7 @@
     <h1 id="site-name">
         <a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a>
         <span>|</span>
-        <a href="https://vk.com">Kek</a>
+        <a href="{% url 'posting:posting' %}">Posting</a>
     </h1>
 
 {% endblock %}

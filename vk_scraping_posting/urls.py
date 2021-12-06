@@ -22,6 +22,7 @@ urlpatterns = [
     path('moderation/', include('moderation.urls')),
     path('admin/', admin.site.urls),
     path('', include('shapranov.urls')),
+    path('posting/', include('posting.urls'))
 ]
 
 admin.site.index_template = 'admin/custom_index.html'

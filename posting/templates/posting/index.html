@@ -1,0 +1,34 @@
+{% load bootstrap4 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Records</title>
+</head>
+<body>
+<div class="container">
+    <header>Все сообщества</header>
+</div>
+<div class="container">
+    {% if groups %}
+        <ul>
+            {% for group in groups %}
+                <li class="row">
+                <div>
+                    <a href="{% url 'admin:posting_group_change' group.pk %}">{{ group.group_id }}</a>
+                    <span>Donors: {{ group.donors.count }}</span>
+                </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No groups</p>
+    {% endif %}
+</div>
+</body>
+</html>
