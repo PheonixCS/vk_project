@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from posting.models.user import User
 from posting.models.block import Block
 from django.utils import timezone
-from scraping.models import Attachment
+from scraping.models import Attachment, Record, ScrapingHistory
 
 
 class Group(models.Model):
@@ -83,7 +83,7 @@ class Group(models.Model):
         null=True,
         verbose_name='Недопустимые вложения для записей',
         help_text=f'Типы вложений записей, которые не нужны в этой группе. '
-        f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
+                  f'Примеры:{[c[1] for c in Attachment.TYPE_CHOICES]}'
     )
 
     posting_interval = models.IntegerField(
@@ -181,6 +181,27 @@ class Group(models.Model):
         else:
             delta = None
         return delta
+
+    def get_ready_records(self):
+        return Record.objects.filter(status=Record.READY, donor__group=self)
+
+    def get_all_records_last_day(self):
+        now = timezone.now()
+        day_ago = now - datetime.timedelta(hours=24)
+
+        return Record.objects.filter(donor__group=self, add_to_db_date__gte=day_ago)
+
+    def filter_stats_last_day(self):
+        filters = dict()
+
+        now = timezone.now()
+        day_ago = now - datetime.timedelta(hours=24)
+
+        for filter_history in ScrapingHistory.objects.filter(group__group=self, created_at__gte=day_ago):
+            filter_data = filters.get(filter_history.filter_name, 0) + filter_history.filtered_number
+            filters.update({filter_history.filter_name: filter_data})
+
+        return filters.items()
 
     class Meta:
         verbose_name = 'Сообщество'

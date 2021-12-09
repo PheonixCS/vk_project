@@ -16,13 +16,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-# from vk_scraping_posting.admin import admin_site
+from posting.views import GroupView
 
 urlpatterns = [
     path('moderation/', include('moderation.urls')),
     path('admin/', admin.site.urls),
     path('', include('shapranov.urls')),
-    path('posting/', include('posting.urls'))
+    path('posting/', include('posting.urls')),
+    path('posting/group/<int:pk>/', GroupView.as_view(), name='group-detail')
 ]
 
 admin.site.index_template = 'admin/custom_index.html'

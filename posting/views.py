@@ -12,3 +12,10 @@ class IndexView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         return Group.objects.all()
+
+
+class GroupView(LoginRequiredMixin, generic.DetailView):
+    raise_exception = True
+    template_name = 'posting/group.html'
+
+    model = Group
