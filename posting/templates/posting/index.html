@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="container-lg">
-        <header>Все сообщества</header>
+        <h2>Все сообщества</h2>
     </div>
     <div class="container-lg">
         <div>
@@ -13,6 +13,15 @@
                         <li class="list-group-item">
                             <div class="row justify-content-md-center">
                                 <div class="col-sm">
+                                    {{ group.name }}
+                                    <a href="{% url 'group-detail' group.pk %}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                             fill="currentColor" class="bi bi-info-lg" viewBox="0 0 16 16">
+                                            <path d="m9.708 6.075-3.024.379-.108.502.595.108c.387.093.464.232.38.619l-.975 4.577c-.255 1.183.14 1.74 1.067 1.74.72 0 1.554-.332 1.933-.789l.116-.549c-.263.232-.65.325-.905.325-.363 0-.494-.255-.402-.704l1.323-6.208Zm.091-2.755a1.32 1.32 0 1 1-2.64 0 1.32 1.32 0 0 1 2.64 0Z"></path>
+                                        </svg>
+
+                                    </a>
+
                                     <a href="{% url 'admin:posting_group_change' group.pk %}">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                              fill="currentColor"
@@ -20,7 +29,6 @@
                                             <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"></path>
                                         </svg>
                                     </a>
-                                    {{ group.name }}
                                 </div>
 
                                 <div class="col-sm">
