@@ -4,6 +4,8 @@ from celery import shared_task
 from constance import config
 
 from scraping.models import Donor, Record
+from django.utils import timezone
+from datetime import timedelta
 
 log = logging.getLogger('scraping.scheduled')
 
@@ -14,11 +16,21 @@ def delete_oldest():
 
     max_count = config.COMMON_RECORDS_COUNT_FOR_DONOR
 
+    day_ago = timezone.now() - timedelta(hours=24)
+
     donors = Donor.objects.filter(
         is_involved=True
     )
 
     for donor in donors.iterator():
+        stuck_records = Record.objects.filter(
+            donor=donor, status__in=(Record.READY, Record.POSTING), add_to_db_date__lte=day_ago
+        )
+
+        log.debug(f'got {stuck_records.count()} stuck records')
+        number_of_records, extended = stuck_records.delete()
+        log.debug(f'deleted {number_of_records} records for group {donor.id} coz stuck')
+
         records_number = Record.objects.filter(donor=donor).count()
 
         if records_number > max_count:
