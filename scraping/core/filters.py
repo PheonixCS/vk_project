@@ -152,7 +152,7 @@ def raffle_filter(item):
     return True
 
 
-def filter_out_ads(records):
+def filter_out_ads(records: list) -> list:
     log.info('filter_out_ads called')
     filters = (
         marked_as_ads_filter,

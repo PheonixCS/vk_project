@@ -77,6 +77,7 @@ class Record(models.Model):
     POSTING = 3
     POSTED = 4
     FAILED = 5
+    FILTERED = 6
 
     STATUS_CHOICES = (
         (NEW, 'new'),
@@ -84,6 +85,7 @@ class Record(models.Model):
         (POSTING, 'posting'),
         (POSTED, 'posted'),
         (FAILED, 'failed'),
+        (FILTERED, 'filtered'),
     )
 
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='records', verbose_name='Источник')

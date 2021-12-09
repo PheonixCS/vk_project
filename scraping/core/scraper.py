@@ -37,8 +37,8 @@ from scraping.core.scraping_history import save_filter_stats
 log = logging.getLogger('scraping.scraper')
 
 
-def save_record_to_db(donor, record):
-    log.info('save_record_to_db called')
+def save_suitable_record_to_db(donor, record):
+    log.info('save_suitable_record_to_db started')
     obj, created = Record.objects.get_or_create(
         donor=donor,
         record_id=record['id'],
@@ -91,6 +91,7 @@ def save_record_to_db(donor, record):
                         genre=str(audio['audio'].get('genre_id', ''))
                     )
 
+    log.info('save_suitable_record_to_db finished')
     return created
 
 
@@ -123,6 +124,23 @@ def save_movie_to_db(movie):
                 movie=obj,
                 url=frame
             )
+    return created
+
+
+def save_filtered_record_to_db(donor, record):
+    log.info('save_filtered_record_to_db started')
+
+    obj, created = Record.objects.get_or_create(
+        donor=donor,
+        record_id=record['id'],
+        status=Record.FILTERED,
+        defaults={
+            'post_in_donor_date': datetime.datetime.fromtimestamp(int(record['date']), tz=timezone.utc).strftime(
+                '%Y-%m-%d %H:%M:%S'),
+        }
+    )
+
+    log.info('save_filtered_record_to_db finished')
     return created
 
 
@@ -167,22 +185,29 @@ def main_scraper():
             new_records = exclude_old_records(donor, wall)
 
             try:
-                filtered_new_records = filter_records(donor, new_records)
+                new_suitable_records = filter_records(donor, new_records)
             except:
                 log.error('error while filter', exc_info=True)
                 continue
 
-            # Save records to db
+            # Save suitable records to db
+            for record in new_suitable_records:
+                save_suitable_record_to_db(donor, record)
+            log.info(f'saved {len(new_suitable_records)} suitable records in donor {donor.id}')
+
+            # Save filtered records to db
+            filtered_new_records = [r for r in new_records if r not in new_suitable_records]
             for record in filtered_new_records:
-                save_record_to_db(donor, record)
-            log.info('saved {} records in group {}'.format(len(filtered_new_records), donor.id))
+                save_filtered_record_to_db(donor, record)
+
+            log.info(f'saved {len(filtered_new_records)} filtered records in donor {donor.id}')
 
 
 # TODO need tests
 def filter_records(donor, records):
     origin = len(records)
     records = filter_out_ads(records)
-    save_filter_stats(donor, 'ads', origin-len(records))
+    save_filter_stats(donor, 'ads', origin - len(records))
 
     origin = len(records)
     records = filter_out_records_with_small_images(records)
@@ -212,13 +237,9 @@ def filter_records(donor, records):
 
 
 # TODO need tests
-def exclude_old_records(donor, wall):
+def exclude_old_records(donor, wall) -> list:
     all_records = wall['items']
     log.debug('got {} records in donor <{}>'.format(len(all_records), donor.id))
-
-    # now get records that we don't have in our db
-    # new_records = [record for record in all_records
-    #                if not Record.objects.filter(record_id=record['id'], donor_id=donor.id).first()]
 
     donor_record_ids = Record.objects.filter(donor=donor).values_list('record_id', flat=True)
     new_records = [record for record in all_records if not record['id'] in donor_record_ids]

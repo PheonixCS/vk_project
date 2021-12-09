@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from typing import Optional
 
 import vk_api
 from constance import config
@@ -13,7 +14,7 @@ from .vars import *
 log = logging.getLogger('services.vk.wall')
 
 
-def get_wall(api, group_id, count=20):
+def get_wall(api, group_id, count=20) -> (Optional[dict], Optional[str]):
     log.debug('get_wall api called for group {}'.format(group_id))
 
     version = config.VK_API_VERSION
