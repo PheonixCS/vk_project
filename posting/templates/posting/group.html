@@ -16,7 +16,7 @@
     <div class="container">
         <h3>Общая информация</h3>
         <p>Активных источников:<b> {{ object.get_active_donors_number }}</b>. Всего источников {{ object.donors.count }}</p>
-        <p>Готово постов для постинга: {{ object.get_ready_records.count }}</p>
+        <p>Готово постов для предпостинга: {{ object.get_ready_records.count }}</p>
         <p>
             Последний пост от источника: {{ object.get_last_record.donor }} - это значит, что пост из этого источника
             будет игнорироваться при следующем постинге.
