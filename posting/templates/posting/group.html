@@ -1,5 +1,8 @@
 {% extends 'posting/base.html' %}
 
+{% load recrods_filter %}
+
+
 {% block content %}
     <div class="container">
         <h1>{{ object.name }}
@@ -15,13 +18,15 @@
 
     <div class="container">
         <h3>Общая информация</h3>
-        <p>Активных источников:<b> {{ object.get_active_donors_number }}</b>. Всего источников {{ object.donors.count }}</p>
+        <p>Активных источников:<b> {{ object.get_active_donors_number }}</b>. Всего источников {{ object.donors.count }}
+        </p>
         <p>Готово постов для предпостинга (не старше 8 часов): {{ object.get_ready_records.count }}</p>
         <p>
-            Последний пост от источника: {{ object.get_last_record.donor }} - это значит, что пост из этого источника
+            Последний пост от источника: "{{ object.get_last_record.donor }}" - это значит, что пост из этого источника
             будет игнорироваться при следующем постинге. Можно отключить эту настройку.
         </p>
 
+        <h3>Статистика доноров за последние 24 часа</h3>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -55,11 +60,11 @@
                             <a href="{{ donor.url }}">{{ donor.id }} {{ donor.name }}</a>
                         </th>
                         <td> {{ donor.get_ready_records.count }}</td>
-                        <td> {{ donor.records.all.count }}</td>
-                        <td> {{ donor.get_posted_records.count }}</td>
-                        <td> {{ donor.get_new_posts.count }}</td>
-                        <td> {{ donor.get_filtered_records.count }}</td>
-                        <td> {{ donor.get_failed_records.count }}</td>
+                        <td> {{ donor.records.all | count_by_time:"0" }}</td>
+                        <td> {{ donor.get_posted_records | count_by_time:"0" }}</td>
+                        <td> {{ donor.get_new_posts | count_by_time:"0" }}</td>
+                        <td> {{ donor.get_filtered_records | count_by_time:"0" }}</td>
+                        <td> {{ donor.get_failed_records | count_by_time:"0" }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -73,7 +78,7 @@
             <table class="table table-striped">
                 <thead>
                 <tr>
-                    <th scope="col" >Название фильтра</th>
+                    <th scope="col">Название фильтра</th>
                     <th scope="col">Количество отфильтрованых постов</th>
                 </tr>
                 </thead>
