@@ -33,6 +33,7 @@
                 <tr>
                     <th scope="col">Донор</th>
                     <th scope="col">Готовых постов (не старше 8 часов)</th>
+                    <th scope="col">Готовых постов (все)</th>
                     <th scope="col">Всего собрано</th>
                     <th scope="col">Всего запостили</th>
                     <th scope="col">Всего новых постов</th>
@@ -59,7 +60,8 @@
                             {% endif %}
                             <a href="{{ donor.url }}">{{ donor.id }} {{ donor.name }}</a>
                         </th>
-                        <td> {{ donor.get_ready_records.count }}</td>
+                        <td> {{ donor.get_ready_records | count_by_time:"8" }}</td>
+                        <td> {{ donor.get_ready_records | count_by_time:"24" }}</td>
                         <td> {{ donor.records.all | count_by_time:"24" }}</td>
                         <td> {{ donor.get_posted_records | count_by_time:"24" }}</td>
                         <td> {{ donor.get_new_posts | count_by_time:"24" }}</td>

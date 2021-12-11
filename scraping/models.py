@@ -48,9 +48,7 @@ class Donor(models.Model):
         self.save(update_fields=['ban_reason', 'is_involved'])
 
     def get_ready_records(self):
-        now_time_utc = timezone.now()
-        allowed_time_threshold = now_time_utc - datetime.timedelta(hours=8)
-        return self.records.filter(status=Record.READY, post_in_donor_date__gte=allowed_time_threshold)
+        return self.records.filter(status=Record.READY)
 
     def get_filtered_records(self):
         return self.records.filter(status=Record.FILTERED)
