@@ -139,7 +139,7 @@ def examine_groups():
 
 def is_common_condition(group, is_time_to_post):
     # https://trello.com/c/MIb9GDx1/265
-    return is_time_to_post and not group.group_type == Group.MOVIE_SPECIAL
+    return is_time_to_post and not group.group_type == Group.MOVIE_SPECIAL and group.is_force_post_condition()
 
 
 def is_horoscopes_conditions(group, is_time_to_post):
@@ -237,7 +237,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
 
     if len(donors) > 1 and not config.IGNORE_DONORS_REPEAT:
         # find last record id and its donor id
-        last_record = group.get_last_record()
+        last_record = group.get_last_common_record()
         if last_record:
             donors = donors.exclude(pk=last_record.donor_id)
 

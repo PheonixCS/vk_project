@@ -7,6 +7,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from posting.models.user import User
 from posting.models.block import Block
 from django.utils import timezone
+
+from posting.tasks import are_any_ads_posted_recently
 from scraping.models import Attachment, Record, ScrapingHistory
 
 
@@ -187,6 +189,10 @@ class Group(models.Model):
 
         return latest_record
 
+    def get_last_common_record(self):
+        common_record = self.records.order_by('-post_in_group_date').first()
+        return common_record
+
     def get_last_record_time(self):
         last_record = self.get_last_record()
         if last_record is not None and last_record.post_in_group_date is not None:
@@ -225,6 +231,21 @@ class Group(models.Model):
         else:
             delta = False
         return delta and delta <= self.posting_interval
+
+    def is_force_post_condition(self):
+        result = False
+        if are_any_ads_posted_recently(self):
+            # если у нас есть рекламный пост последний час и 5 минут - нельзя постить
+            result = False
+        elif self.ad_records.exists():
+            # если есть рекламный пост и он последний в ленте - нужно "догнать" обычный пост
+            last_hour_ads = self.ad_records.order_by('-post_in_group_date').first()
+            last_post = self.get_last_record()
+
+            if last_hour_ads.post_in_group_date > last_post.post_in_group_date:
+                result = True
+
+        return result
 
     class Meta:
         verbose_name = 'Сообщество'
