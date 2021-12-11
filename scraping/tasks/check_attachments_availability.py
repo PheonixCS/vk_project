@@ -5,7 +5,8 @@ from celery import shared_task
 from django.utils import timezone
 
 from posting.models import Group
-from scraping.models import Record
+from scraping.core.scraping_history import save_filter_stats
+from scraping.models import Record, ScrapingHistory
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import check_video_availability
 
@@ -44,6 +45,8 @@ def check_attachments_availability() -> None:
                 else:
                     record.set_failed()
                     filtered += 1
+
+                    save_filter_stats(record.donor, 'check_attachments_availability', 1)
                     break
 
         log.debug(f'filtered {filtered} records in group {group.group_id} after check_attachments_availability')
