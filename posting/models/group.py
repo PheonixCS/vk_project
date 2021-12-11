@@ -178,9 +178,7 @@ class Group(models.Model):
     def get_last_record_time(self):
         last_record = self.get_last_record()
         if last_record is not None:
-            now = timezone.now()
-            record_date = last_record.post_in_group_date
-            delta = (now - record_date).seconds // 60
+            delta = last_record.post_in_group_date
         else:
             delta = None
         return delta
@@ -205,6 +203,13 @@ class Group(models.Model):
             filters.update({filter_history.filter_name: filter_data})
 
         return filters.items()
+
+    def is_post_time_in_interval(self):
+        if self.get_last_record_time():
+            delta = int((timezone.now() - self.get_last_record_time()).seconds // 60)
+        else:
+            delta = False
+        return delta and delta <= self.posting_interval
 
     class Meta:
         verbose_name = 'Сообщество'
