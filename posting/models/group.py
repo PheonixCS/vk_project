@@ -178,7 +178,8 @@ class Group(models.Model):
         latest_record = common_record = self.records.order_by('-post_in_group_date').first()
 
         if self.horoscopes.exists():
-            horoscope_record = self.horoscopes.order_by('-post_in_group_date').first()
+            horoscope_record = self.horoscopes.filter(post_in_group_date__isnull=False)\
+                .order_by('-post_in_group_date').first()
 
             if (
                     common_record
