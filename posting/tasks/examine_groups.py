@@ -20,6 +20,8 @@ from services.horoscopes.vars import SIGNS_EN
 from services.vk.core import create_vk_session_using_login_password, fetch_group_id
 
 log = logging.getLogger('posting.scheduled')
+
+
 # telegram = logging.getLogger('telegram')
 
 
@@ -57,7 +59,7 @@ def examine_groups():
 
             continue
 
-        if is_movies_condition(group, is_time_to_post, last_hour_posts_exist):
+        if is_movies_condition(group, is_time_to_post):
             log.debug(f'{group} in movies condition')
 
             movie = find_movie_id_to_post()
@@ -91,7 +93,7 @@ def examine_groups():
 
             continue
 
-        if is_common_condition(group, is_time_to_post, last_hour_posts_exist):
+        if is_common_condition(group, is_time_to_post):
             log.debug(f'{group} in common condition')
 
             try:
@@ -135,11 +137,9 @@ def examine_groups():
     return 'succeed'
 
 
-def is_common_condition(group, is_time_to_post, last_hour_posts_exist):
-    return (
-            (is_time_to_post or not last_hour_posts_exist)
-            and not group.group_type == Group.MOVIE_SPECIAL
-    )
+def is_common_condition(group, is_time_to_post):
+    # https://trello.com/c/MIb9GDx1/265
+    return is_time_to_post and not group.group_type == Group.MOVIE_SPECIAL
 
 
 def is_horoscopes_conditions(group, is_time_to_post):
@@ -156,10 +156,11 @@ def is_horoscopes_conditions(group, is_time_to_post):
     )
 
 
-def is_movies_condition(group, is_time_to_post, last_hour_posts_exist):
+def is_movies_condition(group, is_time_to_post):
+    # https://trello.com/c/MIb9GDx1/265
     return (
             group.group_type == group.MOVIE_SPECIAL
-            and (is_time_to_post or not last_hour_posts_exist or config.FORCE_MOVIE_POST)
+            and (is_time_to_post or config.FORCE_MOVIE_POST)
     )
 
 
