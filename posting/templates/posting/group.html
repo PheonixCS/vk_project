@@ -29,6 +29,7 @@
                 <th scope="col">Готовых постов</th>
                 <th scope="col">Всего собрано</th>
                 <th scope="col">Всего отфильтровано</th>
+                <th scope="col">Всего забраковано</th>
             </tr>
             </thead>
             <tbody>
@@ -53,6 +54,7 @@
                     <td> {{ donor.get_ready_records.count }}</td>
                     <td> {{ donor.records.all.count }}</td>
                     <td> {{ donor.get_filtered_records.count }}</td>
+                    <td> {{ donor.get_failed_records.count }}</td>
                 </tr>
             {% endfor %}
             </tbody>
