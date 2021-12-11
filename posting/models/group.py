@@ -1,14 +1,12 @@
 import datetime
 
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-
-from posting.models.user import User
-from posting.models.block import Block
+from django.db import models
 from django.utils import timezone
 
-from posting.tasks import are_any_ads_posted_recently
+from posting.models.block import Block
+from posting.models.user import User
 from scraping.models import Attachment, Record, ScrapingHistory
 
 
@@ -178,7 +176,7 @@ class Group(models.Model):
         latest_record = common_record = self.records.order_by('-post_in_group_date').first()
 
         if self.horoscopes.exists():
-            horoscope_record = self.horoscopes.filter(post_in_group_date__isnull=False)\
+            horoscope_record = self.horoscopes.filter(post_in_group_date__isnull=False) \
                 .order_by('-post_in_group_date').first()
 
             if (
@@ -235,7 +233,7 @@ class Group(models.Model):
 
     def is_force_post_condition(self):
         result = False
-        if are_any_ads_posted_recently(self):
+        if self.are_any_ads_posted_recently():
             # если у нас есть рекламный пост последний час и 5 минут - нельзя постить
             result = False
         elif self.ad_records.exists():
@@ -247,6 +245,16 @@ class Group(models.Model):
                 result = True
 
         return result
+
+    def are_any_ads_posted_recently(self) -> bool:
+        now_time_utc = timezone.now()
+        ads_time_threshold = now_time_utc - datetime.timedelta(hours=1, minutes=5)
+
+        last_hour_ads = self.ad_records.filter(post_in_group_date__gt=ads_time_threshold)
+        if last_hour_ads.exists():
+            return True
+
+        return False
 
     class Meta:
         verbose_name = 'Сообщество'
