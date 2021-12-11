@@ -1,4 +1,5 @@
 from random import randint
+import datetime
 
 from django.db import models
 from django.db.models import Count
@@ -47,7 +48,9 @@ class Donor(models.Model):
         self.save(update_fields=['ban_reason', 'is_involved'])
 
     def get_ready_records(self):
-        return self.records.filter(status=Record.READY)
+        now_time_utc = timezone.now()
+        allowed_time_threshold = now_time_utc - datetime.timedelta(hours=8)
+        return self.records.filter(status=Record.READY, post_in_donor_date__gte=allowed_time_threshold)
 
     def get_filtered_records(self):
         return self.records.filter(status=Record.FILTERED)
