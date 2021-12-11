@@ -179,14 +179,18 @@ class Group(models.Model):
         if self.horoscopes.exists():
             horoscope_record = self.horoscopes.order_by('-post_in_group_date').first()
 
-            if common_record and horoscope_record.post_in_group_date > common_record.post_in_group_date:
+            if (
+                    common_record
+                    and horoscope_record.post_in_group_date
+                    and horoscope_record.post_in_group_date > common_record.post_in_group_date
+            ):
                 latest_record = horoscope_record
 
         return latest_record
 
     def get_last_record_time(self):
         last_record = self.get_last_record()
-        if last_record is not None:
+        if last_record is not None and last_record.post_in_group_date is not None:
             delta = last_record.post_in_group_date
         else:
             delta = None
