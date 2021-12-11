@@ -19,7 +19,7 @@
         <p>Готово постов для предпостинга: {{ object.get_ready_records.count }}</p>
         <p>
             Последний пост от источника: {{ object.get_last_record.donor }} - это значит, что пост из этого источника
-            будет игнорироваться при следующем постинге.
+            будет игнорироваться при следующем постинге. Можно отключить эту настройку.
         </p>
 
         <table class="table">
@@ -28,6 +28,7 @@
                 <th scope="col">Донор</th>
                 <th scope="col">Готовых постов</th>
                 <th scope="col">Всего собрано</th>
+                <th scope="col">Всего отфильтровано</th>
             </tr>
             </thead>
             <tbody>
@@ -51,6 +52,7 @@
                     </th>
                     <td> {{ donor.get_ready_records.count }}</td>
                     <td> {{ donor.records.all.count }}</td>
+                    <td> {{ donor.get_filtered_records.count }}</td>
                 </tr>
             {% endfor %}
             </tbody>
