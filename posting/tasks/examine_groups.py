@@ -139,7 +139,7 @@ def examine_groups():
 
 def is_common_condition(group, is_time_to_post):
     # https://trello.com/c/MIb9GDx1/265
-    return is_time_to_post and not group.group_type == Group.MOVIE_SPECIAL and group.is_force_post_condition()
+    return (is_time_to_post or group.do_need_post_after_ad()) and not group.group_type == Group.MOVIE_SPECIAL
 
 
 def is_horoscopes_conditions(group, is_time_to_post):

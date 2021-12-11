@@ -231,7 +231,7 @@ class Group(models.Model):
             delta = False
         return delta and delta <= self.posting_interval
 
-    def is_force_post_condition(self):
+    def do_need_post_after_ad(self):
         result = False
         if self.are_any_ads_posted_recently():
             # если у нас есть рекламный пост последний час и 5 минут - нельзя постить
