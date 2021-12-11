@@ -172,8 +172,11 @@ class Group(models.Model):
     def get_active_donors_number(self):
         return self.donors.filter(is_involved=True).count()
 
+    def get_last_record(self):
+        return self.records.order_by('-post_in_group_date').first()
+
     def get_last_record_time(self):
-        last_record = self.records.order_by('-post_in_group_date').first()
+        last_record = self.get_last_record()
         if last_record is not None:
             now = timezone.now()
             record_date = last_record.post_in_group_date

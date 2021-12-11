@@ -53,7 +53,8 @@ CONSTANCE_CONFIG = {
     'DONOR_OUTDATE_INTERVAL': (30, 'Donor considered outdated if last post was N days ago', int),
     'STATS_STORING_TIME': (30, 'Statistics storing time in days', int),
     'NEW_POSTING_INTERVALS_ENABLE': (True, 'New posting intervals logic', bool),
-    'BLOCKS_ACTIVE': (True, 'Are blocks feature active', bool)
+    'BLOCKS_ACTIVE': (True, 'Are blocks feature active', bool),
+    'IGNORE_DONORS_REPEAT': (False, 'Ignore posting rule, that disable posting from same donor twice', bool),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -63,7 +64,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'IS_DEV', 'POSTING_BASED_ON_SEX', 'RECORDS_SELECTION_PERCENT', 'FORCE_USE_ABSTRACTION',
         'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
         'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE', 'STATS_STORING_TIME',
-        'DONOR_OUTDATE_INTERVAL', 'NEW_POSTING_INTERVALS_ENABLE', 'BLOCKS_ACTIVE'
+        'DONOR_OUTDATE_INTERVAL', 'NEW_POSTING_INTERVALS_ENABLE', 'BLOCKS_ACTIVE', 'IGNORE_DONORS_REPEAT'
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',

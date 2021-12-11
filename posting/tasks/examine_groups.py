@@ -221,7 +221,6 @@ def fetch_group_id_from_vk(group: Group) -> int or None:
 
 def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Record] or None]:
     now_time_utc = timezone.now()
-    week_ago = now_time_utc - timedelta(days=7)
     today_start = now_time_utc.replace(hour=0, minute=0, second=0)
     allowed_time_threshold = now_time_utc - timedelta(hours=8)
 
@@ -235,9 +234,9 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
 
     log.debug(f'Donors {donors.count()} for group {group.domain_or_id}')
 
-    if len(donors) > 1:
+    if len(donors) > 1 and not config.IGNORE_DONORS_REPEAT:
         # find last record id and its donor id
-        last_record = Record.objects.filter(group=group).order_by('-post_in_group_date').first()
+        last_record = group.get_last_record()
         if last_record:
             donors = donors.exclude(pk=last_record.donor_id)
 

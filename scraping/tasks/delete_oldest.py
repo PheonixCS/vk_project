@@ -18,9 +18,7 @@ def delete_oldest():
 
     day_ago = timezone.now() - timedelta(hours=24)
 
-    donors = Donor.objects.filter(
-        is_involved=True
-    )
+    donors = Donor.objects.all()
 
     for donor in donors.iterator():
         stuck_records = Record.objects.filter(

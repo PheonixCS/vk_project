@@ -46,6 +46,9 @@ class Donor(models.Model):
         self.is_involved = False
         self.save(update_fields=['ban_reason', 'is_involved'])
 
+    def get_ready_records(self):
+        return self.records.filter(status=Record.READY)
+
 
 class Filter(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='filters')
