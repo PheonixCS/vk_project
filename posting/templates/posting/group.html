@@ -16,7 +16,7 @@
     <div class="container">
         <h3>Общая информация</h3>
         <p>Активных источников:<b> {{ object.get_active_donors_number }}</b>. Всего источников {{ object.donors.count }}</p>
-        <p>Готово постов для предпостинга: {{ object.get_ready_records.count }}</p>
+        <p>Готово постов для предпостинга (не старше 8 часов): {{ object.get_ready_records.count }}</p>
         <p>
             Последний пост от источника: {{ object.get_last_record.donor }} - это значит, что пост из этого источника
             будет игнорироваться при следующем постинге. Можно отключить эту настройку.
@@ -26,8 +26,10 @@
             <thead>
             <tr>
                 <th scope="col">Донор</th>
-                <th scope="col">Готовых постов</th>
+                <th scope="col">Готовых постов (не старше 8 часов)</th>
                 <th scope="col">Всего собрано</th>
+                <th scope="col">Всего запостили</th>
+                <th scope="col">Всего новых постов</th>
                 <th scope="col">Всего отфильтровано</th>
                 <th scope="col">Всего забраковано</th>
             </tr>
@@ -53,6 +55,8 @@
                     </th>
                     <td> {{ donor.get_ready_records.count }}</td>
                     <td> {{ donor.records.all.count }}</td>
+                    <td> {{ donor.get_posted_records.count }}</td>
+                    <td> {{ donor.get_new_posts.count }}</td>
                     <td> {{ donor.get_filtered_records.count }}</td>
                     <td> {{ donor.get_failed_records.count }}</td>
                 </tr>

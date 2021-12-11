@@ -55,6 +55,12 @@ class Donor(models.Model):
     def get_failed_records(self):
         return self.records.filter(status=Record.FAILED)
 
+    def get_posted_records(self):
+        return self.records.filter(status=Record.POSTED)
+
+    def get_new_posts(self):
+        return self.records.filter(status=Record.NEW)
+
 
 class Filter(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='filters')

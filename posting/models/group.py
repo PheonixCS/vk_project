@@ -184,7 +184,10 @@ class Group(models.Model):
         return delta
 
     def get_ready_records(self):
-        return Record.objects.filter(status=Record.READY, donor__group=self)
+        now_time_utc = timezone.now()
+        allowed_time_threshold = now_time_utc - datetime.timedelta(hours=8)
+        return Record.objects.filter(status=Record.READY, donor__group=self,
+                                     post_in_donor_date__gte=allowed_time_threshold)
 
     def get_all_records_last_day(self):
         now = timezone.now()
