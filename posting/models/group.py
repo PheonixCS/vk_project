@@ -173,8 +173,7 @@ class Group(models.Model):
         return self.donors.filter(is_involved=True).count()
 
     def get_last_record(self):
-        latest_record = None
-        common_record = self.records.order_by('-post_in_group_date').first()
+        latest_record = common_record = self.records.order_by('-post_in_group_date').first()
 
         if self.horoscopes.exists():
             horoscope_record = self.horoscopes.order_by('-post_in_group_date').first()
