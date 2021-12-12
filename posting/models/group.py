@@ -181,6 +181,7 @@ class Group(models.Model):
 
             if (
                     common_record
+                    and horoscope_record
                     and horoscope_record.post_in_group_date
                     and horoscope_record.post_in_group_date > common_record.post_in_group_date
             ):
