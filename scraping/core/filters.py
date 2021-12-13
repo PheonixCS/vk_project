@@ -24,7 +24,7 @@ def filter_out_copies(records):
 
     for record in records:
         if any(record_in_db for record_in_db in records_in_db if
-               SequenceMatcher(None, record['text'] or '', record_in_db.text).ratio() < config.MIN_STRING_MATCH_RATIO):
+               SequenceMatcher(None, record['text'] or '', record_in_db.text or '').ratio() < config.MIN_STRING_MATCH_RATIO):
             filtered_records.append(record)
         else:
             log.debug('record {} was filtered'.format(record['id']))
