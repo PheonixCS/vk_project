@@ -235,7 +235,7 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
 
     log.debug(f'Donors {donors.count()} for group {group.domain_or_id}')
 
-    if len(donors) > 1 and not config.IGNORE_DONORS_REPEAT:
+    if group.donors_alternation and len(donors) > 1 and not config.IGNORE_DONORS_REPEAT:
         # find last record id and its donor id
         last_record = group.get_last_common_record()
         if last_record:

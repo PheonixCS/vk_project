@@ -98,6 +98,12 @@ class Group(models.Model):
         verbose_name='Минута отчета',
         help_text='С этой минуты будет начинаться отчёт постинга.'
     )
+    # https://trello.com/c/ojA55xRF/272
+    donors_alternation = models.BooleanField(
+        default=True,
+        verbose_name='Чередование доноров',
+        help_text='Если настройка включена, 2 поста из одного донора подряд не будут выходить'
+    )
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():
