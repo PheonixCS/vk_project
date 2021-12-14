@@ -93,7 +93,7 @@ class GroupAdmin(admin.ModelAdmin):
         (None, {
             'fields': ('domain_or_id', 'name', 'group_id', 'is_posting_active', 'group_type',
                        'is_pin_enabled', 'posting_time', 'posting_interval', 'posting_minute_base',
-                       'user', 'callback_api_token', 'banned_origin_attachment_types')
+                       'user', 'callback_api_token', 'banned_origin_attachment_types', 'donors_alternation')
         }),
         ('Параметры уникализации', {
             'fields': ('is_text_delete_enabled', 'is_text_filling_enabled',

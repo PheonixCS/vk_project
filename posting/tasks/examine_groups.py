@@ -233,15 +233,16 @@ def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Recor
         log.warning(f'Group {group.domain_or_id} got no donors but in common condition!')
         return None, []
 
-    log.debug(f'Donors {donors.count()} for group {group.domain_or_id}')
+    log.debug(f'Donors {donors.count()} for group {group.domain_or_id} before alternation')
 
-    if len(donors) > 1 and not config.IGNORE_DONORS_REPEAT:
+    if group.donors_alternation and len(donors) > 1 and not config.IGNORE_DONORS_REPEAT:
+        log.debug('Donors alternation is on')
         # find last record id and its donor id
         last_record = group.get_last_common_record()
         if last_record:
             donors = donors.exclude(pk=last_record.donor_id)
 
-    log.debug(f'Donors {donors.count()} for group {group.domain_or_id} after filter')
+    log.debug(f'Donors {donors.count()} for group {group.domain_or_id}')
 
     candidates = Record.objects.filter(
         rate__isnull=False,
