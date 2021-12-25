@@ -63,7 +63,12 @@ def examine_groups():
 
             continue
 
-        if is_movies_condition(group, is_time_to_post):
+        try:
+            movies_condition = is_movies_condition(group, is_time_to_post)
+        except:
+            log.error('Unexpected', exc_info=True)
+            continue
+        if movies_condition:
             log.debug(f'{group} in movies condition')
 
             movie = find_movie_id_to_post()
@@ -80,7 +85,12 @@ def examine_groups():
 
             continue
 
-        if is_horoscopes_conditions(group, is_time_to_post):
+        try:
+            conditions = is_horoscopes_conditions(group, is_time_to_post)
+        except Exception:
+            log.error('Unexpected', exc_info=True)
+            continue
+        if conditions:
             log.debug(f'{group} in horoscopes condition')
 
             horoscope_record = find_horoscope_record_to_post(group)
@@ -97,7 +107,12 @@ def examine_groups():
 
             continue
 
-        if is_common_condition(group, is_time_to_post):
+        try:
+            condition = is_common_condition(group, is_time_to_post)
+        except Exception:
+            log.error('Unexpected', exc_info=True)
+            continue
+        if condition:
             log.debug(f'{group} in common condition')
 
             try:
