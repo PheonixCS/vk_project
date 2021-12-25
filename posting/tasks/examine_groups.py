@@ -48,7 +48,11 @@ def examine_groups():
                 log.info(f'Set block {block_result}')
             continue
 
-        is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
+        try:
+            is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
+        except Exception:
+            log.error('Unexpected', exc_info=True)
+            continue
         if last_hour_posts_exist and not is_time_to_post:
             log.info(f'Got recent posts in group {group}. Skip posting, set block.')
 
@@ -201,6 +205,7 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
     last_hour_posts_common = Record.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
     last_hour_posts_exist = last_hour_posts_common.exists() or movies_exist or horoscopes_exist
 
+    log.debug(f'is_time_to_post: {is_time_to_post}, last_hour_posts_exist: {last_hour_posts_exist}')
     return is_time_to_post, last_hour_posts_exist
 
 
