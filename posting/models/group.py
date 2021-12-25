@@ -248,7 +248,7 @@ class Group(models.Model):
             last_hour_ads = self.ad_records.order_by('-post_in_group_date').first()
             last_post = self.get_last_record()
 
-            if last_hour_ads.post_in_group_date > last_post.post_in_group_date:
+            if last_hour_ads and last_hour_ads.post_in_group_date > last_post.post_in_group_date:
                 result = True
 
         return result
