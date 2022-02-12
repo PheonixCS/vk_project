@@ -6,6 +6,7 @@
 <div class="container-lg">
     <div>
         <h2>{{ user.login }}</h2>
+        <a href="{% url 'admin:posting_user_change' user.pk %}">Go to admin</a>
     </div>
 
     <div>
@@ -14,13 +15,13 @@
             {{ form }}
             <input name="code">
             <input type="hidden" name="user_pk" value="{{ user.pk }}">
-            <input type="submit" class="submit_btn btn label-success" value="Send Code" />
+            <input type="submit" class="btn btn-primary" value="Send Code" />
         </form>
         <form action="{% url 'posting:activate' user.pk %}" method="post">
             {% csrf_token %}
             {{ form }}
             <input type="hidden" name="user_pk" value="{{ user.pk }}">
-            <input type="submit" class="submit_btn btn label-success" value="Test two-factor" />
+            <input type="submit" class="btn btn-primary" value="Test two-factor" />
         </form>
 
     </div>
