@@ -1,10 +1,15 @@
 import logging
+from datetime import timedelta
 
 import vk_api
 import vk_requests
 from constance import config
+from django.db.models import ObjectDoesNotExist
+from django.utils import timezone
 from requests import Session
 from vk_requests.exceptions import VkAPIError
+
+from posting.models import User, AuthCode
 from .vars import BANNED_ACCOUNT_ERROR_MESSAGE
 
 log = logging.getLogger('services.vk.core')
@@ -27,14 +32,23 @@ class CustomSession(Session):
 def create_vk_session_using_login_password(login, password, app_id, special_session=False):
     log.debug('create_vk_session_using_login_password called')
 
+    user_object = User.objects.get(login=login)
+    log.debug(f'Working with {user_object}')
+
     # use this custom session for debug requests for vk
     if special_session:
         custom_session = CustomSession()
     else:
         custom_session = Session()
 
-    vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
-                              session=custom_session)
+    if user_object.two_factor:
+        log.debug('start session')
+        vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
+                                  session=custom_session, auth_handler=lambda: custom_auth_handler(user_object))
+        log.debug('end session')
+    else:
+        vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
+                                  session=custom_session)
     try:
         vk_session.http.headers[
             'User-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
@@ -76,3 +90,21 @@ def fetch_group_id(api, domain_or_id):
             return None
 
     return group_id
+
+
+def custom_auth_handler(user: User):
+    log.debug('start')
+    remember_device = True
+
+    now = timezone.now() - timedelta(minutes=5)
+
+    try:
+        code_object = AuthCode.objects.filter(user=user, create_dt__gte=now).order_by('-create_dt').first()
+        log.debug(code_object)
+        log.debug(code_object.code)
+        key = code_object.code
+    except ObjectDoesNotExist:
+        key = 0
+
+    log.debug(f'end with key: {key}')
+    return key, remember_device
