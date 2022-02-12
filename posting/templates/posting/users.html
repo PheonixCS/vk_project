@@ -3,9 +3,11 @@
 {% block content %}
 
 <div class="container-lg">
-    {% for user in users %}
-        <a href="{% url 'posting:user' user.pk %}">{{ user.login }}</a>
-    {% endfor %}
+    <ul>
+        {% for user in users %}
+        <li><a href="{% url 'posting:user' user.pk %}">{{ user.login }}</a></li>
+        {% endfor %}
+    </ul>
 </div>
 
 {% endblock %}
