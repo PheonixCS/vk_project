@@ -23,7 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('shapranov.urls')),
     path('posting/', include('posting.urls')),
-    path('posting/group/<int:pk>/', GroupView.as_view(), name='group-detail')
 ]
 
 admin.site.index_template = 'admin/custom_index.html'

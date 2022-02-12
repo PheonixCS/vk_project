@@ -1,0 +1,29 @@
+{% extends 'posting/base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container-lg">
+    <div>
+        <h2>{{ user.login }}</h2>
+    </div>
+
+    <div>
+        <form action="{% url 'posting:user' user.pk %}" method="post">
+            {% csrf_token %}
+            {{ form }}
+            <input name="code">
+            <input type="hidden" name="user_pk" value="{{ user.pk }}">
+            <input type="submit" class="submit_btn btn label-success" value="Send Code" />
+        </form>
+        <form action="{% url 'posting:activate' user.pk %}" method="post">
+            {% csrf_token %}
+            {{ form }}
+            <input type="hidden" name="user_pk" value="{{ user.pk }}">
+            <input type="submit" class="submit_btn btn label-success" value="Activate two-factor" />
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
