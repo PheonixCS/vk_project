@@ -100,10 +100,15 @@ def custom_auth_handler(user: User):
 
     try:
         code_object = AuthCode.objects.filter(user=user, create_dt__gte=now).order_by('-create_dt').first()
-        log.debug(code_object)
-        log.debug(code_object.code)
-        key = code_object.code
+        if code_object is None:
+            log.debug('Code is None')
+            key = 0
+        else:
+            log.debug(code_object)
+            log.debug(code_object.code)
+            key = code_object.code
     except ObjectDoesNotExist:
+        log.debug('Exception on code')
         key = 0
 
     log.debug(f'end with key: {key}')
