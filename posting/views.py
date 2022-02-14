@@ -1,11 +1,10 @@
 # Create your views here.
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect
-from django.template import RequestContext
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views import generic
 
 from posting.models import Group, User, AuthCode
-from services.vk.core import create_vk_session_using_login_password
+from services.vk.core import activate_two_factor
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -43,12 +42,12 @@ class UserView(LoginRequiredMixin, generic.DetailView):
         print(request)
         print(dict(request.POST))
 
-        AuthCode.objects.create(
+        result = AuthCode.objects.create(
             code=request.POST.get('code'),
             user_id=int(request.POST.get('user_pk'))
         )
 
-        return HttpResponseRedirect(self.request.path_info)
+        return JsonResponse(data={'result': result.pk})
 
 
 class ActivateView(LoginRequiredMixin, generic.View):
@@ -57,6 +56,6 @@ class ActivateView(LoginRequiredMixin, generic.View):
     def post(self, request, *args, **kwargs):
         print(request)
         user = User.objects.get(pk=int(request.POST.get('user_pk')[0]))
-        create_vk_session_using_login_password(user.login, user.password, user.app_id)
+        result = activate_two_factor(user)
 
-        return HttpResponse(201)
+        return JsonResponse(data={'result': result})

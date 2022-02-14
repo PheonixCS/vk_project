@@ -9,6 +9,7 @@ class User(models.Model):
     initials = models.CharField(max_length=128, verbose_name='ФИО', blank=True, default='')
     app_id = models.CharField(max_length=256, verbose_name='ID приложения', null=True)
     two_factor = models.BooleanField(verbose_name='Двухфакторная аутентификация', default=False)
+    is_authed = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.domain_or_id.isdigit():

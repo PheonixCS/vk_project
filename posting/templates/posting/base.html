@@ -9,6 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <title>Title</title>
 </head>
 <body>
@@ -18,18 +19,12 @@
         <div>
             <div class="navbar-nav">
                 <a class="nav-item nav-link" href={% url 'posting:posting' %}>Groups</a>
-                <a class="nav-item nav-link" href={% url 'posting:users' %}>Users</a>
+                <a class="nav-item nav-link" href={% url 'posting:users' %}>Admins</a>
             </div>
         </div>
     </nav>
 
 {% endblock %}
 {% block content %}{% endblock %}
-<script>
-    $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
-    })
-</script>
-
 </body>
 </html>

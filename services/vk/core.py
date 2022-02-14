@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from time import sleep
 
 import vk_api
 import vk_requests
@@ -41,25 +42,34 @@ def create_vk_session_using_login_password(login, password, app_id, special_sess
     else:
         custom_session = Session()
 
-    if user_object.two_factor:
-        log.debug('start session')
-        vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
-                                  session=custom_session, auth_handler=lambda: custom_auth_handler(user_object))
-        log.debug('end session')
-    else:
-        vk_session = vk_api.VkApi(login=login, password=password, app_id=app_id, api_version=config.VK_API_VERSION,
-                                  session=custom_session)
+    if user_object.two_factor and user_object.is_authed is False:
+        log.warning(f'User {user_object} need two factor auth')
+        return None
+
+    vk_session = vk_api.VkApi(login=login, password=password, api_version=config.VK_API_VERSION, session=custom_session)
+
     try:
         vk_session.http.headers[
             'User-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
-        vk_session.auth(token_only=True)
+
+        log.debug('auth start')
+        vk_session.auth()
+        log.debug('auth end')
+
+    except vk_api.TwoFactorError as err:
+        log.warning(f'User {login} got two-factor error {err}')
+        user_object.is_authed = False
+        return None
+
     except vk_api.AuthError as error_msg:
         log.info('User {} got api error: {}'.format(login, error_msg))
         if error_msg == BANNED_ACCOUNT_ERROR_MESSAGE:
             telegram.critical('Администратор с номером {} не смог залогиниться'.format(login))
         return None
+
     except:
         log.error('got unexpected error in create_vk_session_using_login_password', exc_info=True)
+        return None
 
     return vk_session
 
@@ -98,18 +108,60 @@ def custom_auth_handler(user: User):
 
     now = timezone.now() - timedelta(minutes=5)
 
-    try:
-        code_object = AuthCode.objects.filter(user=user, create_dt__gte=now).order_by('-create_dt').first()
+    success = False
+    key = ''
+    try_num = 1
+    max_tries = 10
+
+    while not success and try_num < max_tries:
+        code_object = AuthCode.objects.filter(user=user, create_dt__gte=now, used=False).order_by('-create_dt').first()
+
         if code_object is None:
             log.debug('Code is None')
-            key = 0
         else:
             log.debug(code_object)
-            log.debug(code_object.code)
+
             key = code_object.code
-    except ObjectDoesNotExist:
-        log.debug('Exception on code')
-        key = 0
+            success = True
+
+            code_object.used = True
+            code_object.save()
+            break
+
+        try_num += 1
+        sleep(30)
+
+    if try_num >= max_tries:
+        raise vk_api.TwoFactorError('No code')
 
     log.debug(f'end with key: {key}')
     return key, remember_device
+
+
+def activate_two_factor(user_object):
+    # app_id=user_object.app_id
+    vk_session = vk_api.VkApi(login=user_object.login, password=user_object.password,
+                              api_version=config.VK_API_VERSION,
+                              auth_handler=lambda: custom_auth_handler(user_object))
+
+    try:
+        vk_session.auth()
+        user_object.is_authed = True
+
+    except vk_api.AuthError as err:
+        log.warning(f'User {user_object} got auth error {err}')
+        user_object.is_authed = False
+
+    # just for test
+    # data_to_post = {
+    #     'owner_id': f'-{166051711}',
+    #     'from_group': 1,
+    #     'message': 'test',
+    # }
+    #
+    # post_response = vk_session.get_api().wall.post(**data_to_post)
+    # log.debug(post_response)
+
+    user_object.save()
+
+    return user_object.is_authed

@@ -10,21 +10,64 @@
     </div>
 
     <div>
-        <form action="{% url 'posting:user' user.pk %}" method="post">
+        <form id="send_code">
             {% csrf_token %}
             {{ form }}
-            <input name="code">
+            <input name="code" id="code">
             <input type="hidden" name="user_pk" value="{{ user.pk }}">
             <input type="submit" class="btn btn-primary" value="Send Code" />
         </form>
-        <form action="{% url 'posting:activate' user.pk %}" method="post">
+        <form id="activate_2f">
             {% csrf_token %}
             {{ form }}
             <input type="hidden" name="user_pk" value="{{ user.pk }}">
             <input type="submit" class="btn btn-primary" value="Test two-factor" />
         </form>
+        <p id="test_message"></p>
 
     </div>
 </div>
+
+    <script>
+        $("#activate_2f").submit(function (e) {
+            // preventing from page reload and default actions
+            e.preventDefault();
+            // serialize the data for sending the form data.
+            let serializedData = $(this).serialize();
+            // make POST ajax call
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'posting:activate' user.pk %}",
+                data: serializedData,
+                success: function (response) {
+                    console.log(response)
+                    {#let resp_json = $.parseJSON(response)#}
+                    $("#test_message").html(JSON.stringify(response));
+                },
+                error: function (response) {
+                    console.log(response)
+                }
+            })
+        });
+        $("#send_code").submit(function (e) {
+            // preventing from page reload and default actions
+            e.preventDefault();
+            // serialize the data for sending the form data.
+            let serializedData = $(this).serialize();
+            // make POST ajax call
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'posting:user' user.pk %}",
+                data: serializedData,
+                success: function (response) {
+                    console.log(response)
+                    $("#send_code")[0].reset()
+                },
+                error: function (response) {
+                    console.log(response)
+                }
+            })
+        })
+    </script>
 
 {% endblock %}
