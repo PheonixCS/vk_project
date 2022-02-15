@@ -58,7 +58,7 @@ def create_vk_session_using_login_password(login, password, app_id, special_sess
             'User-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
 
         log.debug('auth start')
-        vk_session.auth()
+        vk_session.auth(token_only=True)
         log.debug('auth end')
 
     except vk_api.TwoFactorError as err:
