@@ -46,7 +46,12 @@ def create_vk_session_using_login_password(login, password, app_id, special_sess
         log.warning(f'User {user_object} need two factor auth')
         return None
 
-    vk_session = vk_api.VkApi(login=login, password=password, api_version=config.VK_API_VERSION, session=custom_session)
+    if config.USE_APP:
+        vk_session = vk_api.VkApi(login=login, password=password, api_version=config.VK_API_VERSION,
+                                  session=custom_session, app_id=app_id)
+    else:
+        vk_session = vk_api.VkApi(login=login, password=password, api_version=config.VK_API_VERSION,
+                                  session=custom_session)
 
     try:
         vk_session.http.headers[
