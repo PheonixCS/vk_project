@@ -5,7 +5,6 @@ from time import sleep
 import vk_api
 import vk_requests
 from constance import config
-from django.db.models import ObjectDoesNotExist
 from django.utils import timezone
 from requests import Session
 from vk_requests.exceptions import VkAPIError
@@ -127,7 +126,6 @@ def custom_auth_handler(user: User):
             log.debug(code_object)
 
             key = code_object.code
-            success = True
 
             code_object.used = True
             code_object.save()

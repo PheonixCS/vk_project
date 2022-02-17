@@ -1,6 +1,6 @@
 # Create your views here.
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse
 from django.views import generic
 
 from posting.models import Group, User, AuthCode
@@ -54,8 +54,7 @@ class ActivateView(LoginRequiredMixin, generic.View):
     raise_exception = True
 
     def post(self, request, *args, **kwargs):
-        print(request)
-        user = User.objects.get(pk=int(request.POST.get('user_pk')[0]))
+        user = User.objects.get(pk=int(request.POST.get('user_pk')))
         result = activate_two_factor(user)
 
         return JsonResponse(data={'result': result})
