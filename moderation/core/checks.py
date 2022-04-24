@@ -9,13 +9,14 @@ from services.text_utilities import delete_emoji_from_text
 log = logging.getLogger('moderation.core.checks')
 
 
+# TODO need tests
 def is_stop_words_in_text(stop_list, text):
     if any(word in stop_list for word in text):
         log.debug('found stop word in text')
         return True
 
 
-def is_scam_words_in_text(text):
+def is_scam_words_in_text(text: list):
     for word in text:
         ad = AlphabetDetector()
         if len(ad.detect_alphabet(word)) > 1:
@@ -23,6 +24,7 @@ def is_scam_words_in_text(text):
             return True
 
 
+# TODO need tests
 def is_video_in_attachments(attachments):
     for attachment in attachments:
         if attachment['type'] == 'video':
@@ -30,6 +32,7 @@ def is_video_in_attachments(attachments):
             return True
 
 
+# TODO need tests
 def is_link_in_attachments(attachments):
     for attachment in attachments:
         if attachment['type'] == 'link':
@@ -37,12 +40,14 @@ def is_link_in_attachments(attachments):
             return True
 
 
+# TODO need tests
 def is_group(commentator_id):
     if int(commentator_id) < 0:
         log.debug('from_id is group')
         return True
 
 
+# TODO need tests
 def is_links_in_text(text):
     text_without_emoji = delete_emoji_from_text(text)
     extractor = URLExtract()
@@ -51,23 +56,27 @@ def is_links_in_text(text):
         return True
 
 
+# TODO need tests
 def is_vk_links_in_text(text):
     if re.findall(r'\[club.*?\|.*?\]', text):
         log.debug('found vk link in text')
         return True
 
 
+# TODO need tests
 def is_audio_and_photo_in_attachments(attachments):
     if is_audio_in_attachments(attachments) and is_photo_in_attachments(attachments):
         return True
 
 
+# TODO need tests
 def is_audio_in_attachments(attachments):
     if [attachment for attachment in attachments if attachment['type'] == 'audio']:
         log.debug('found audio in attachments')
         return True
 
 
+# TODO need tests
 def is_photo_in_attachments(attachments):
     if [attachment for attachment in attachments if attachment['type'] == 'photo']:
         log.debug('found photo in attachments')
