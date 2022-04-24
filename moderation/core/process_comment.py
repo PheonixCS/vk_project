@@ -33,10 +33,10 @@ def check_for_reason_for_ban_and_get_comments_to_delete(event_object):
             date__gt=time_threshold_timestamp
         )
         if len(comments_with_same_text) >= 2:
-            log.info('from_id {} reason for ban: >3 comments with same text'.format(event_object['from_id']))
+            log.info('from_id {} reason for ban: >=2 comments with same text'.format(event_object['from_id']))
             comments_to_delete = [c.comment_id for c in comments_with_same_text]
             comments_to_delete.append(event_object['id'])
-            return '>3 комментариев с одинаковым текстом', comments_to_delete
+            return '>=2 комментариев с одинаковым текстом', comments_to_delete
 
     for attachment in event_object.get('attachments', []):
         comments_from_user = Comment.objects.filter(
@@ -58,10 +58,10 @@ def check_for_reason_for_ban_and_get_comments_to_delete(event_object):
         log.debug('comments with same attachments {}'.format(comments_with_same_attachment))
 
         if len(comments_with_same_attachment) >= 2:
-            log.info('from_id {} reason for ban: >3 comments with same attachment'.format(event_object['from_id']))
+            log.info('from_id {} reason for ban: >=2 comments with same attachment'.format(event_object['from_id']))
             comments_to_delete = comments_with_same_attachment
             comments_to_delete.append(event_object['id'])
-            return '>3 комментариев с одинаковым вложением', comments_to_delete
+            return '>=2 комментариев с одинаковым вложением', comments_to_delete
 
     log.info('no reason for ban user {}'.format(event_object['from_id']))
     return '', []
