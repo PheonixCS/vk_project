@@ -3,19 +3,10 @@ import re
 
 from alphabet_detector import AlphabetDetector
 from urlextract import URLExtract
-from posting.models import AdRecord
 
 from services.text_utilities import delete_emoji_from_text
 
 log = logging.getLogger('moderation.core.checks')
-
-
-def is_post_ad(post_id, group_id):
-    try:
-        ad_record = AdRecord.objects.get(group__group_id=group_id, ad_record_id=post_id)
-        return ad_record is not None
-    except AdRecord.DoesNotExist:
-        return False
 
 
 def is_stop_words_in_text(stop_list, text):
