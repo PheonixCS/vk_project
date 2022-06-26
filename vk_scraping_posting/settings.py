@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'posting',
     'moderation',
     'shapranov',
+    'promotion',
 
     'constance.backends.database',
     'constance',

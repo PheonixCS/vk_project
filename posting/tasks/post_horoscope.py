@@ -5,13 +5,13 @@ from celery import shared_task
 from constance import config
 from django.utils import timezone
 
-from posting.core.horoscopes import generate_special_group_reference
-from posting.core.horoscopes_images import transfer_horoscope_to_image, paste_horoscopes_rates
 from posting.core.files import download_file, delete_files
+from posting.core.horoscopes_images import transfer_horoscope_to_image, paste_horoscopes_rates
 from posting.core.vk_helper import create_ad_record
-from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from posting.models import Group, Block
-from scraping.core.horoscopes import fetch_zodiac_sign, save_horoscope_for_main_groups
+from promotion.tasks.promotion_task import add_promotion_task
+from scraping.core.horoscopes import save_horoscope_for_main_groups
+from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from services.vk.core import create_vk_session_using_login_password
 from services.vk.files import upload_photos
 from services.vk.vars import ADVERTISEMENT_ERROR_CODE
@@ -89,7 +89,7 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
             try:
                 pin_response = api.wall.pin(
                     owner_id='-{}'.format(group.group_id),
-                    post_id=post_response.get('post_id'))
+                    post_id=record_id)
             except vk_api.VkApiError:
                 log.warning(f'Failed to pin horoscope', exc_info=True)
             else:
@@ -98,6 +98,10 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
                 if config.BLOCKS_ACTIVE:
                     posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
                     posting_block.deactivate()
+
+            # Promotion https://trello.com/c/pLZ9LAlF/275
+            record_url = f'{group.url}?w=wall-{group_id}_{record_id}'
+            add_promotion_task.delay(record_url)
 
     except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))
