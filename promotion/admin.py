@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from promotion.models import PromotionTask
+
+admin.site.register(PromotionTask)

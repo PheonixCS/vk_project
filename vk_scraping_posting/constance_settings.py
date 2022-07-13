@@ -56,7 +56,7 @@ CONSTANCE_CONFIG = {
     'BLOCKS_ACTIVE': (True, 'Are blocks feature active', bool),
     'IGNORE_DONORS_REPEAT': (False, 'Ignore posting rule, that disable posting from same donor twice', bool),
     'USE_APP': (False, 'Use app in session creation', bool),
-    'X_TOKEN': (None, 'x1y1z1 token', str),
+    'X_TOKEN': ('', 'x1y1z1 token', str),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
