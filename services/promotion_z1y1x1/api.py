@@ -17,7 +17,7 @@ def create_new_task(post_url):
     session = Session()
     result = dict()
 
-    url = host + status_endpoint
+    url = host + create_endpoint
     token = config.X_TOKEN
 
     data = {
