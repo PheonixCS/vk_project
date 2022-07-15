@@ -24,7 +24,8 @@ def create_new_task(post_url):
         'token': token,
         'content': post_url,
         'count': 30,
-        'speed': 30
+        'speed': 30,
+        'type': 14
     }
 
     try:
