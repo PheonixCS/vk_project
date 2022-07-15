@@ -27,3 +27,4 @@ def add_promotion_task(post_url):
     status_res = check_task_status(task_id)
 
     obj.status_result = str(status_res)
+    obj.save()
