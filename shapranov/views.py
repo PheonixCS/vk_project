@@ -31,6 +31,8 @@ class DonateView(View):
 
 
 class DocsView(LoginRequiredMixin, View):
+    raise_exception = True
+
     def get(self, request):
         with open(f'{BASE_DIR}/docs.md', 'r', encoding='utf-8') as input_file:
             text = input_file.read()
