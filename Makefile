@@ -13,6 +13,6 @@ git_pull:
 migrate:
 	python3 manage.py migrate
 reqs:
-	pip3 install -r requirements.txt
+	pip3 install -r requirements.txt --no-deps
 check:
 	ps -aux | grep celery
