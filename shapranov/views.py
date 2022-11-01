@@ -1,5 +1,8 @@
-from django.views import View
+import markdown as markdown
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View, generic
 from django.shortcuts import render
+from vk_scraping_posting.settings import BASE_DIR
 
 
 class MainPageView(View):
@@ -25,3 +28,15 @@ class DonateView(View):
             ]
         }
         return render(request, 'shapranov/post.html', context)
+
+
+class DocsView(LoginRequiredMixin, View):
+    def get(self, request):
+        with open(f'{BASE_DIR}/docs.md', 'r', encoding='utf-8') as input_file:
+            text = input_file.read()
+        data = markdown.markdown(text)
+
+        context = {
+            'data': data
+        }
+        return render(request, 'shapranov/docs.html', context)

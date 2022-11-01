@@ -1,5 +1,8 @@
 .idea
 .DS_Store
+.pytest_cache/
+test.jpg
+vk_config.v2.json
 
 # file stores environment variables
 .local_settings
