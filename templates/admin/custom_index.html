@@ -4,6 +4,8 @@
         <a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a>
         <span>|</span>
         <a href="{% url 'posting:posting' %}">Posting</a>
+        <span>|</span>
+        <a href="{% url 'shapranov:docs' %}">Docs</a>
     </h1>
 
 {% endblock %}

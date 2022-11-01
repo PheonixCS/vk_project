@@ -1,7 +1,9 @@
 alphabet-detector==0.0.7
 amqp==2.2.2
+asgiref==3.5.2
 atomicwrites==1.1.5
 attrs==21.4.0
+backports.zoneinfo==0.2.1
 beautifulsoup4==4.10.0
 billiard==3.5.0.3
 celery==4.2.1
