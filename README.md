@@ -1,4 +1,5 @@
 # Документация по боту
+
 Адрес админки: http://80.211.178.81/admin
 Анализ постинга: http://80.211.178.81/posting/
 
@@ -6,6 +7,7 @@
 Что вспомнил - я тут описал. Хотя много чего может быть упущено. 
 
 Используемые технологии:
+
 * Python
 * Django
 * Postgres
@@ -30,6 +32,7 @@ pip3 install -r requirements.txt --no-deps
 ### Подготовка к запуску
 
 Подготовка БД:
+
 ```sql
 CREATE DATABASE vk_db;
 
@@ -40,6 +43,7 @@ GRANT ALL PRIVILEGES ON DATABASE vk_db TO vk_bot;
 
 
 Для правильной работы нужны переменные окружения:
+
 ```shell
 export DB_NAME='vk_db'
 export DB_PASSWORD='123qwe'
@@ -70,6 +74,7 @@ python3 manage.py collectstatic
 ```
 
 ### Запуск
+
 ```shell
 python3 manage.py runserver
 ```
@@ -77,6 +82,7 @@ python3 manage.py runserver
 И можно заходить на https://127.0.0.1:8000
 
 ###Тестирование
+
 > Тесты - они как секс. Если он есть, но мало - это лучше, если бы его совсем не было.  
 
 На какие-то функции сделаны тесты. Они были не сразу, в последствии на каждую новую функцию старались делать тест.
@@ -89,9 +95,11 @@ pytest
 ```
 
 ### Логи в telegram
+
 Можно активировать зендлер для телеграма в логинге
 
 Нужно будет добавить токены:
+
 ```shell
 TELEGRAM_TOKEN
 TELEGRAM_CHAT_ID
