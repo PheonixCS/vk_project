@@ -1,6 +1,7 @@
 # Документация по боту
 
 Адрес админки: http://80.211.178.81/admin
+
 Анализ постинга: http://80.211.178.81/posting/
 
 Настоятельно рекомендую обновлять эту документацию, чтобы потом спешно её не делать.
@@ -24,7 +25,7 @@
 
 Далее активируйте виртуальное окружение (любое, какое нравится: venv, pyenv, pipenv, conda...):
 
-```shell
+```
 pip3 install -r requirements.txt --no-deps
 
 ```
@@ -33,7 +34,7 @@ pip3 install -r requirements.txt --no-deps
 
 Подготовка БД:
 
-```sql
+```
 CREATE DATABASE vk_db;
 
 CREATE USER vk_bot WITH PASSWORD '123qwe';
@@ -44,7 +45,7 @@ GRANT ALL PRIVILEGES ON DATABASE vk_db TO vk_bot;
 
 Для правильной работы нужны переменные окружения:
 
-```shell
+```
 export DB_NAME='vk_db'
 export DB_PASSWORD='123qwe'
 export DB_LOGIN='vk_bot'
@@ -55,27 +56,27 @@ export SERVER_ROLE='test'
 
 Необходимо сделать миграции
 
-```shell
+```
 python3 manage.py migrate
 ```
 
 И создать суперюзера:
 
-```shell
+```
 python3 manage.py createsuperuser
 
 ```
 
 И круто бы собрать статику:
 
-```shell
+```
 python3 manage.py collectstatic
 
 ```
 
 ### Запуск
 
-```shell
+```
 python3 manage.py runserver
 ```
 
@@ -90,7 +91,7 @@ python3 manage.py runserver
 
 Запуск простой: 
 
-```shell
+```
 pytest
 ```
 
@@ -100,7 +101,7 @@ pytest
 
 Нужно будет добавить токены:
 
-```shell
+```
 TELEGRAM_TOKEN
 TELEGRAM_CHAT_ID
 ```
@@ -124,7 +125,8 @@ TELEGRAM_CHAT_ID
 
 ### Передача файлов
 С сервера и на сервер:
-```shell
+
+```
 scp vk_scraping_posting@80.211.178.81:/home/vk_scraping_posting/vk_scraping_posting/<file> ./<file>
 scp ./<file> vk_scraping_posting@80.211.178.81:/home/vk_scraping_posting/vk_scraping_posting/<file> 
 
