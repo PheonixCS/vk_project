@@ -34,7 +34,7 @@ class DocsView(LoginRequiredMixin, View):
     raise_exception = True
 
     def get(self, request):
-        with open(f'{BASE_DIR}/docs.md', 'r', encoding='utf-8') as input_file:
+        with open(f'{BASE_DIR}/README.md', 'r', encoding='utf-8') as input_file:
             text = input_file.read()
         data = markdown.markdown(text)
 

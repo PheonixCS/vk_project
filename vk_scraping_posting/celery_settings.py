@@ -51,7 +51,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'download_youtube_trailers': {
         'task': 'scraping.tasks.download_youtube_trailers.download_youtube_trailers',
-        'schedule': crontab(minute='10, 40')
+        'schedule': crontab(minute='10, 40')  # every hour at 10 and 40 minute
     },
     'scrap_new_movies': {
         'task': 'scraping.tasks.scrap_new_movies.scrap_new_movies',

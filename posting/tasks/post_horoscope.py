@@ -95,9 +95,9 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
             else:
                 log.debug(f'Pin horoscope result {pin_response}')
 
-                if config.BLOCKS_ACTIVE:
-                    posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
-                    posting_block.deactivate()
+                # if config.BLOCKS_ACTIVE:
+                #     posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+                #     posting_block.deactivate()
 
             # Promotion https://trello.com/c/pLZ9LAlF/275
             record_url = f'{group.url}?w=wall-{group_id}_{record_id}'
