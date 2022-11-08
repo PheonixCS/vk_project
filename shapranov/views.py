@@ -1,11 +1,8 @@
 import markdown as markdown
-from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.views import View, generic
+from django.views import View
 
-from shapranov.forms import LoginForm
 from vk_scraping_posting.settings import BASE_DIR
 
 
