@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'moderation',
     'shapranov',
     'promotion',
+    'tg_core',
 
     'constance.backends.database',
     'constance',
