@@ -36,7 +36,7 @@ class UniversalPost(ABC):
         pass
 
     @abstractmethod
-    def _post(self, target: id) -> bool:
+    def _post(self) -> bool:
         pass
 
     def prepare(self):
@@ -46,14 +46,14 @@ class UniversalPost(ABC):
         else:
             self.__status = self.FAILED
 
-    def post(self, target: int) -> str:
+    def post(self) -> str:
         """
         Post prepared post to target.
 
         target may be tg channel, user, or anything else.
         """
         if self.status == self.PREPARED:
-            post_result = self._post(target)
+            post_result = self._post
             if post_result:
                 self._process_success()
                 self.__status = self.SENT

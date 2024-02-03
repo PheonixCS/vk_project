@@ -14,8 +14,8 @@ log = logging.getLogger()
 
 
 class TGAdapter:
-    def __init__(self):
-        self.__bot = get_bot()
+    def __init__(self, bot_token=None):
+        self.__bot = get_bot(bot_token) if bot_token else get_bot()
 
     def send_post(self, post: 'TGUniversalPost', channel: int) -> Union[telegram.Message, bool]:
         result = False
@@ -47,6 +47,7 @@ class TGUniversalPost(UniversalPost):
     def __init__(self, post_object: TGPost):
         super().__init__()
 
+        # TODO fetch from channel bot
         self.__adapter = TGAdapter()
         self.__post_object = post_object
         self.__post_result: Optional[telegram.Message] = None
@@ -79,6 +80,7 @@ class TGUniversalPost(UniversalPost):
 
         return True
 
-    def _post(self, tg_channel_id: int) -> bool:
-        self.__post_result = self.__adapter.send_post(self, tg_channel_id)
+    def _post(self) -> bool:
+        channel_tg_id = self.__post_object.channel.tg_id
+        self.__post_result = self.__adapter.send_post(self, channel_tg_id)
         return self.__post_result

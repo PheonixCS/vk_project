@@ -15,10 +15,11 @@ class VKUniversalPost:
 
 
 class Poster:
-    def __init__(self, channel: int):
-        self.channel = channel
+    def __init__(self):
+        pass
 
-    def post(self, post_object: Union[TGUniversalPost, VKUniversalPost]):
+    @staticmethod
+    def post(post_object: Union[TGUniversalPost, VKUniversalPost]):
         post_object.prepare()
-        post_object.post(self.channel)
+        post_object.post()
         return post_object

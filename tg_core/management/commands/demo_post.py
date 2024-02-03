@@ -48,5 +48,5 @@ class Command(BaseCommand):
                 image = file.read()
                 post.attachments.append(image)
 
-            result = Poster(channel.tg_id).post(post)
+            result = Poster.post(post)
             print(result)
