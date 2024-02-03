@@ -31,7 +31,7 @@ class TGAdapter:
             chat_id=channel_id,
         )
 
-        data['photo'] = post.attachments[0].file
+        data['photo'] = post.attachments[0]
 
         try:
             result = async_to_sync(self.__bot.send_photo)(**data)
