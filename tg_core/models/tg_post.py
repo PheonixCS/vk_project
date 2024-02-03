@@ -26,7 +26,7 @@ class TGPost(BaseModel):
     text = models.TextField(max_length=4096, default='', blank=True)
     status = models.CharField(max_length=16, default=DRAFT, choices=POST_STATUSES)
     channel = models.ForeignKey(Channel, on_delete=models.SET_NULL, null=True, blank=False)
-    tg_id = models.IntegerField()
+    tg_id = models.IntegerField(null=True)
 
     # datetime fields
     scheduled_dt = models.DateTimeField(null=True, blank=True)
