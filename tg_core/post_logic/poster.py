@@ -5,11 +5,11 @@ from tg_core.tg_logic.adapter import TGUniversalPost
 
 
 class VKAdapter:
-    raise NotImplemented('VKAdapter is not implemented yet, it\'s just stub.')
+    raise NotImplementedError('VKAdapter is not implemented yet, it\'s just stub.')
 
 
 class VKUniversalPost:
-    raise NotImplemented('VKUniversalPost is not implemented yet, it\'s just stub.')
+    raise NotImplementedError('VKUniversalPost is not implemented yet, it\'s just stub.')
 
 
 class Poster:
