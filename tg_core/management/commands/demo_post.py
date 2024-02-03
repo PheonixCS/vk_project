@@ -31,7 +31,7 @@ class Command(BaseCommand):
             print(chat_id)
 
             channel, _ = Channel.objects.update_or_create(
-                tg_id=chat_id,
+                tg_id=chat_id.id,
                 defaults=dict(
                     name=test_channel,
                 ),
