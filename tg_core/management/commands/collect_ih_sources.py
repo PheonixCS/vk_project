@@ -1,8 +1,10 @@
 import logging
 import uuid
 from datetime import timedelta
+from io import BytesIO
 
 from PIL.Image import Image
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -67,7 +69,11 @@ class Command(BaseCommand):
                 )
 
                 image_object = transfer_horoscope_to_image_object(horoscope.text)
-                image_object: Image = paste_horoscopes_rates_object(image_object)
+                image_object = paste_horoscopes_rates_object(image_object)
+
+                buffer = BytesIO()
+                image_object.save(buffer, format='JPEG')
+                image_object = ContentFile(buffer.getvalue())
 
                 print('ready to paste django file')
 
