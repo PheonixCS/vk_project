@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Donor, Filter, Record, ScrapingHistory
+from .models import Donor, Filter, Record, ScrapingHistory, Horoscope
 
 
 class FilterInLine(admin.StackedInline):
@@ -79,7 +79,8 @@ class RecordAdmin(admin.ModelAdmin):
 
     def post_in_group_url_field(self, obj):
         if obj.group_url:
-            return format_html(f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
+            return format_html(
+                f'<a href="{obj.group_url}" target="_blank" rel="noopener noreferrer">{obj.group_url}</a>')
         else:
             return ''
 
@@ -137,3 +138,4 @@ class ScrapingHistoryAdmin(admin.ModelAdmin):
 admin.site.register(Donor, DonorAdmin)
 admin.site.register(Record, RecordAdmin)
 admin.site.register(ScrapingHistory, ScrapingHistoryAdmin)
+admin.site.register(Horoscope)

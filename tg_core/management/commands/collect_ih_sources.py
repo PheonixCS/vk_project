@@ -53,7 +53,7 @@ class Command(BaseCommand):
                         post_in_group_date__gte=last_day,
                         group=InternalHoroscopeSource.group
                     ).exclude(
-                        pk__in=last_linked,  # ERROR must be last linked by source_post
+                        pk__in=last_linked,
                     )
                 else:
                     last_not_linked_horoscopes = Horoscope.objects.filter(
