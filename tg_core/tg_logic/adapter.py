@@ -6,6 +6,7 @@ import telegram
 from asgiref.sync import async_to_sync
 from django.utils import timezone
 
+from tg_core.models.tg_attachment import TGAttachment
 from tg_core.models.tg_post import TGPost
 from tg_core.post_logic.universal_post import UniversalPost
 from tg_core.tg_logic.bot import get_bot
@@ -55,7 +56,8 @@ class TGUniversalPost(UniversalPost):
     def _prepare(self):
         post = self.__post_object
 
-        for attach in post.tg_attachment_set.all().iterator():
+        attachments = TGAttachment.objects.filter(post=post)
+        for attach in attachments.iterator():
             with open(attach.file.path, 'rb') as file:
                 self.attachments.append(file.read())
 
