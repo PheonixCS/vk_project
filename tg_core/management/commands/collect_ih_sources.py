@@ -45,7 +45,8 @@ class Command(BaseCommand):
                     last_linked = link_objects.values_list('source_post', flat=True)
 
                     last_not_linked_horoscopes = Horoscope.objects.filter(
-                        post_in_group_date__gte=last_day
+                        post_in_group_date__gte=last_day,
+                        group=channel.group
                     ).exclude(
                         pk__in=last_linked,  # ERROR must be last linked by source_post
                     )
