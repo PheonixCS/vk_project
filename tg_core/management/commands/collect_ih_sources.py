@@ -32,16 +32,23 @@ class Command(BaseCommand):
 
             last_day = timezone.now() - timedelta(days=1)
 
-            last_linked = InternalHoroscopeSourceLink.objects.filter(
+            link_objects = InternalHoroscopeSourceLink.objects.filter(
                 link=internal_horoscope_source,
                 created_dt__gte=last_day,
-            ).values_list('pk', flat=True)
-
-            last_not_linked_horoscopes = Horoscope.objects.filter(
-                post_in_group_date__gte=last_day
-            ).exclude(
-                pk__in=last_linked,
             )
+
+            if link_objects.exists():
+                last_linked = link_objects.values_list('pk', flat=True)
+
+                last_not_linked_horoscopes = Horoscope.objects.filter(
+                    post_in_group_date__gte=last_day
+                ).exclude(
+                    pk__in=last_linked,
+                )
+            else:
+                last_not_linked_horoscopes = Horoscope.objects.filter(
+                    post_in_group_date__gte=last_day
+                )
 
             for horoscope in last_not_linked_horoscopes.iterator():
                 log.debug(f'Adding {horoscope}')
