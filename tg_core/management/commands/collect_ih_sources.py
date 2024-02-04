@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 last_not_linked_horoscopes = Horoscope.objects.filter(
                     post_in_group_date__gte=last_day
                 ).exclude(
-                    pk__in=last_linked,
+                    pk__in=last_linked,  # ERROR must be last linked by source_post
                 )
             else:
                 last_not_linked_horoscopes = Horoscope.objects.filter(
@@ -68,6 +68,8 @@ class Command(BaseCommand):
 
                 image_object = transfer_horoscope_to_image_object(horoscope.text)
                 image_object: Image = paste_horoscopes_rates_object(image_object)
+
+                print('ready to paste django file')
 
                 django_file = InMemoryUploadedFile(
                     image_object,
