@@ -60,6 +60,8 @@ class Command(BaseCommand):
                         group=InternalHoroscopeSource.group
                     )
 
+                print(last_not_linked_horoscopes)
+
                 for horoscope in last_not_linked_horoscopes.iterator():
                     log.debug(f'Adding {horoscope}')
                     print(f'Adding {horoscope}')
