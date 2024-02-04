@@ -53,7 +53,7 @@ class UniversalPost(ABC):
         target may be tg channel, user, or anything else.
         """
         if self.status == self.PREPARED:
-            post_result = self._post
+            post_result = self._post()
             if post_result:
                 self._process_success()
                 self.__status = self.SENT
