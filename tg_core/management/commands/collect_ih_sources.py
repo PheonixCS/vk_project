@@ -58,7 +58,7 @@ class Command(BaseCommand):
                 else:
                     last_not_linked_horoscopes = Horoscope.objects.filter(
                         post_in_group_date__gte=last_day,
-                        group=InternalHoroscopeSource.group
+                        group=internal_horoscope_source.group
                     )
 
                 print(last_not_linked_horoscopes)
