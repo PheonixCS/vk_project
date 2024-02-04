@@ -17,9 +17,9 @@ class Command(BaseCommand):
     help = 'demo'
 
     def handle(self, *args, **options):
-        tg_post: TGPost = TGPost.objects.filter(status=TGPost.DRAFT)
+        tg_posts = TGPost.objects.filter(status=TGPost.DRAFT)
 
-        if tg_post:
+        for tg_post in tg_posts:
             post = TGUniversalPost(tg_post)
             result = Poster.post(post)
             print(result)
