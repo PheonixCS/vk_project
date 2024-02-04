@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 image_object = paste_horoscopes_rates_object(image_object)
 
                 TGAttachment.objects.create(
-                    file=File(image_object, uuid.uuid4()),
+                    file=File(image_object, str(uuid.uuid4())),
                     post=tg_post,
                 )
 
