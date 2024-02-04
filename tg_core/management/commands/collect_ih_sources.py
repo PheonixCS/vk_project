@@ -41,7 +41,7 @@ class Command(BaseCommand):
             )
 
             if link_objects.exists():
-                last_linked = link_objects.values_list('pk', flat=True)
+                last_linked = link_objects.values_list('source_post', flat=True)
 
                 last_not_linked_horoscopes = Horoscope.objects.filter(
                     post_in_group_date__gte=last_day
