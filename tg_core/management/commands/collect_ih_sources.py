@@ -36,6 +36,8 @@ class Command(BaseCommand):
             last_day = timezone.now() - timedelta(days=1)
 
             for internal_horoscope_source in internal_horoscope_sources:
+                print(f'work with {internal_horoscope_source}')
+
                 link_objects = InternalHoroscopeSourceLink.objects.filter(
                     link=internal_horoscope_source,
                     created_dt__gte=last_day,
