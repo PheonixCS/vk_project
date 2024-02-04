@@ -2,7 +2,8 @@ import logging
 import uuid
 from datetime import timedelta
 
-from django.core.files import File
+from PIL.Image import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -66,10 +67,19 @@ class Command(BaseCommand):
                 )
 
                 image_object = transfer_horoscope_to_image_object(horoscope.text)
-                image_object = paste_horoscopes_rates_object(image_object)
+                image_object: Image = paste_horoscopes_rates_object(image_object)
+
+                django_file = InMemoryUploadedFile(
+                    image_object,
+                    None,
+                    f'{str(uuid.uuid4())}.jpg',
+                    'image/jpeg',
+                    image_object.tell,
+                    None
+                )
 
                 TGAttachment.objects.create(
-                    file=File(image_object, str(uuid.uuid4())),
+                    file=django_file,
                     post=tg_post,
                 )
 
