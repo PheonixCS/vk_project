@@ -44,6 +44,8 @@ class Command(BaseCommand):
                 if link_objects.exists():
                     last_linked = link_objects.values_list('source_post', flat=True)
 
+                    print(last_linked)
+
                     last_not_linked_horoscopes = Horoscope.objects.filter(
                         post_in_group_date__gte=last_day,
                         group=InternalHoroscopeSource.group
@@ -52,7 +54,8 @@ class Command(BaseCommand):
                     )
                 else:
                     last_not_linked_horoscopes = Horoscope.objects.filter(
-                        post_in_group_date__gte=last_day
+                        post_in_group_date__gte=last_day,
+                        group=InternalHoroscopeSource.group
                     )
 
                 for horoscope in last_not_linked_horoscopes.iterator():
