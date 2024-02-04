@@ -33,7 +33,8 @@ class Command(BaseCommand):
                 channel=channel
             )
 
-            last_day = timezone.now() - timedelta(days=1)
+            last_day = timezone.now() - timedelta(days=7)
+            print(last_day)
 
             for internal_horoscope_source in internal_horoscope_sources:
                 print(f'work with {internal_horoscope_source}')
