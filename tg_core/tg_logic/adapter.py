@@ -55,6 +55,10 @@ class TGUniversalPost(UniversalPost):
     def _prepare(self):
         post = self.__post_object
 
+        for attach in post.attachment_set.all().iterator():
+            with open(attach.file.path, 'rb') as file:
+                self.attachments.append(file.read())
+
         post.status = post.POSTING
         post.save()
 
