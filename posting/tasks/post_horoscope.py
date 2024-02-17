@@ -44,11 +44,7 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
-
-            # https://trello.com/c/YfqFDo2v/255
-            if group.group_id == 29038248:
-                horoscope_image_name = paste_horoscopes_rates(horoscope_image_name)
-
+            horoscope_image_name = paste_horoscopes_rates(horoscope_image_name)
             attachments.extend(upload_photos(session, horoscope_image_name, str(group_id)))
             delete_files(horoscope_image_name)
             record_text = ''
