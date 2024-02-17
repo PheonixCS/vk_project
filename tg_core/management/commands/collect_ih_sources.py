@@ -3,7 +3,6 @@ import uuid
 from datetime import timedelta
 from io import BytesIO
 
-from PIL.Image import Image
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management.base import BaseCommand
