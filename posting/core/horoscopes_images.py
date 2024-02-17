@@ -13,9 +13,8 @@ from posting.core.images import is_text_fit_to_width, calculate_max_len_in_chars
 log = logging.getLogger('posting.horoscopes')
 
 
-def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
+def transfer_horoscope_to_image_object(raw_text, font_name='museo_cyrl.otf'):
     log.debug('transfer_horoscope_to_image started')
-    file_name = f'horoscopes{randint(1, int(time())):0<10}.jpg'
 
     horoscopes_font_title = config.HOROSCOPES_FONT_TITLE
     font_path = os.path.join(settings.BASE_DIR, 'posting/extras/fonts', 'bebas_neue_ru.ttf')
@@ -41,6 +40,16 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
         body_font_size -= 5
         font_body = ImageFont.truetype(font_path, body_font_size)
 
+    log.debug('transfer_horoscope_to_image finished')
+    return img
+
+
+def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
+    log.debug('transfer_horoscope_to_image started')
+    file_name = f'horoscopes{randint(1, int(time())):0<10}.jpg'
+
+    img = transfer_horoscope_to_image_object(raw_text, font_name)
+
     if file_name.endswith('.jpg'):
         img.save(file_name, 'JPEG', quality=95, progressive=True)
     else:
@@ -48,6 +57,48 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
 
     log.debug(f'transfer_horoscope_to_image finished, file {file_name}')
     return file_name
+
+
+def paste_horoscopes_rates_object(base, font_name: str = 'museo_cyrl.otf'):
+    love = 'Любовь', 'love.png'
+    health = 'Здоровье', 'health.png'
+    luck = 'Удача', 'luck.png'
+    finance = 'Финансы', 'money.png'
+    # Порядок такой: здоровье, деньги, любовь, удача
+    order = (health, finance, love, luck)
+
+    # Справа от иконок ставим цифру которая получилась.
+    rate_boarders = 5, 9
+    horoscopes_rates = {
+        love[0]: randint(*rate_boarders),
+        health[0]: randint(*rate_boarders),
+        luck[0]: randint(*rate_boarders),
+        finance[0]: randint(*rate_boarders)
+    }
+
+    icons_height = icons_width = 60
+    icons_bottom_offset = 10
+    icons_offset_width = 140
+    body_font_size = config.HOROSCOPES_FONT_BODY
+    # body_font_size = 60
+    font_path = os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name)
+    font_body = ImageFont.truetype(font_path, body_font_size)
+
+    width = base.width - icons_offset_width
+    height = base.height
+
+    icon_paste_width = width // 4
+    icon_paste_y = height - icons_bottom_offset - icons_height
+
+    for i, image in enumerate(order):
+        icon_paste_x = icons_offset_width + i * icon_paste_width
+        img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', image[1]))
+        img = resize_image_aspect_ratio_by_one_side(img, height=icons_height)
+        base.paste(img, (icon_paste_x, icon_paste_y), img)
+        draw = ImageDraw.Draw(base)
+        draw.text((icon_paste_x + icons_width + 30, icon_paste_y - 10), str(horoscopes_rates[image[0]]), font=font_body)
+
+    return base
 
 
 def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center', spacing=10):
@@ -96,49 +147,9 @@ def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center'
     return 1
 
 
-def paste_horoscopes_rates(horoscope_image_name: str, font_name: str='museo_cyrl.otf') -> str:
-    love = 'Любовь', 'love.png'
-    health = 'Здоровье', 'health.png'
-    luck = 'Удача', 'luck.png'
-    finance = 'Финансы', 'money.png'
-    # Порядок такой: здоровье, деньги, любовь, удача
-    order = (health, finance, love, luck)
-
-    # Справа от иконок ставим цифру которая получилась.
-    rate_boarders = 5, 9
-    horoscopes_rates = {
-        love[0]: randint(*rate_boarders),
-        health[0]: randint(*rate_boarders),
-        luck[0]: randint(*rate_boarders),
-        finance[0]: randint(*rate_boarders)
-    }
-
-    icons_height = icons_width = 60
-    icons_bottom_offset = 10
-    icons_offset_width = 140
-    body_font_size = config.HOROSCOPES_FONT_BODY
-    # body_font_size = 60
-    font_path = os.path.join(settings.BASE_DIR, 'posting/extras/fonts', font_name)
-    font_body = ImageFont.truetype(font_path, body_font_size)
-
+def paste_horoscopes_rates(horoscope_image_name: str, font_name: str = 'museo_cyrl.otf') -> str:
     base = Image.open(horoscope_image_name)
-
-    width = base.width - icons_offset_width
-    height = base.height
-
-    icon_paste_width = width // 4
-    icon_paste_y = height - icons_bottom_offset - icons_height
-
-    for i, image in enumerate(order):
-        icon_paste_x = icons_offset_width + i*icon_paste_width
-        img = Image.open(os.path.join(settings.BASE_DIR, 'posting/extras/image_templates', image[1]))
-        img = resize_image_aspect_ratio_by_one_side(img, height=icons_height)
-        base.paste(img, (icon_paste_x, icon_paste_y), img)
-        draw = ImageDraw.Draw(base)
-        draw.text((icon_paste_x+icons_width+30, icon_paste_y-10), str(horoscopes_rates[image[0]]), font=font_body)
-
+    base = paste_horoscopes_rates_object(base, font_name)
     base.save(horoscope_image_name, 'JPEG', quality=95, progressive=True)
 
     return horoscope_image_name
-
-

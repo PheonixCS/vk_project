@@ -128,12 +128,6 @@ LOGGING = {
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),
             'propagate': True
         },
-        'telegram': {
-            'handlers': ['telegram'],
-            'level': 'WARNING',
-            'propagate': False,
-            'filters': ['rate_limit']
-        },
         '': {
             'handlers': [''],
             'level': os.getenv('CELERY_LOG_LEVEL', 'DEBUG'),

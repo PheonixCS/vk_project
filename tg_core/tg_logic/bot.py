@@ -9,8 +9,8 @@ load_dotenv()
 TOKEN = os.getenv('TG_TOKEN')
 
 
-def get_bot():
-    return Bot(TOKEN)
+def get_bot(bot_token=TOKEN):
+    return Bot(bot_token)
 
 
 def send_message(*args, **kwargs):
