@@ -11,13 +11,13 @@ from posting.core.poster import get_movies_rating_intervals, get_next_interval_b
     find_suitable_record
 from posting.core.posting_history import save_posting_history
 from posting.core.vk_helper import is_ads_posted_recently
-from posting.models import Group, AdRecord, Block
+from posting.models import Group, AdRecord
 from posting.tasks import post_movie, post_horoscope, post_music, post_record
-from posting.tasks.sex_statistics_weekly import sex_statistics_weekly
 from scraping.core.horoscopes import are_horoscopes_for_main_groups_ready
 from scraping.models import Movie, Horoscope, Record, Trailer
 from services.horoscopes.vars import SIGNS_EN
-from services.vk.core import create_vk_session_using_login_password, fetch_group_id
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
+from services.vk.core import fetch_group_id
 
 log = logging.getLogger('posting.scheduled')
 
@@ -225,7 +225,7 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
 
 
 def fetch_group_id_from_vk(group: Group) -> int or None:
-    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+    session = create_vk_session_with_access_token(group.user)
     if not session:
         return None
 

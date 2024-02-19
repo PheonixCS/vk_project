@@ -7,7 +7,8 @@ from constance import config
 from django.utils import timezone
 
 from posting.models import Group, ServiceToken
-from services.vk.core import create_vk_api_using_service_token, create_vk_session_using_login_password, fetch_group_id
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
+from services.vk.core import create_vk_api_using_service_token, fetch_group_id
 from services.vk.wall import get_wall
 
 log = logging.getLogger('posting.scheduled')
@@ -54,7 +55,7 @@ def pin_best_post():
                 continue
             log.debug('got best record with id: {}'.format(best['id']))
 
-            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            session = create_vk_session_with_access_token(group.user)
             if not session:
                 continue
 

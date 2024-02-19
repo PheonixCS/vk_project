@@ -6,14 +6,14 @@ from datetime import datetime
 from django.utils import timezone
 
 from posting.models import AdRecord, Group
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.wall import get_ad_in_last_hour
-from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('posting.core.vk_helper')
 
 
 def is_ads_posted_recently(group):
-    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+    session = create_vk_session_with_access_token(group.user)
     if not session:
         return False
     api = session.get_api()

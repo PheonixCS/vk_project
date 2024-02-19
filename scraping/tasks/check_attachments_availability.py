@@ -6,8 +6,8 @@ from django.utils import timezone
 
 from posting.models import Group
 from scraping.core.scraping_history import save_filter_stats
-from scraping.models import Record, ScrapingHistory
-from services.vk.core import create_vk_session_using_login_password
+from scraping.models import Record
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.files import check_video_availability
 
 log = logging.getLogger('scraping.scheduled')
@@ -32,7 +32,7 @@ def check_attachments_availability() -> None:
         log.debug(f'got {len(records)} records in group {group.group_id} before check_attachments_availability')
 
         if records:
-            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            session = create_vk_session_with_access_token(group.user)
             api = session.get_api()
         else:
             continue

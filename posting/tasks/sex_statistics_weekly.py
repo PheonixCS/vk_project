@@ -4,7 +4,6 @@ from celery import shared_task
 from django.utils import timezone
 
 from posting.core.poster import get_groups_to_update_sex_statistics
-from services.vk.core import create_vk_session_using_login_password
 from services.vk.stat import get_group_week_statistics
 
 log = logging.getLogger('posting.scheduled')
@@ -21,7 +20,7 @@ def sex_statistics_weekly():
     groups = get_groups_to_update_sex_statistics()
 
     for group in groups:
-        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        session = create_vk_session_with_access_token(group.user)
         if not session:
             continue
 

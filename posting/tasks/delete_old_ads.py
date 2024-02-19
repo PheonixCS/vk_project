@@ -6,6 +6,7 @@ from constance import config
 from django.utils import timezone
 
 from posting.models import Group, AdRecord
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('posting.scheduled')
@@ -29,7 +30,7 @@ def delete_old_ads():
 
         if ads.exists():
 
-            session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+            session = create_vk_session_with_access_token(group.user)
             if not session:
                 continue
 
