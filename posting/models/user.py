@@ -15,7 +15,7 @@ class User(models.Model):
         max_length=256,
         verbose_name='Пользовательский Access token',
         blank=True,
-        null=True,
+        default='',
     )
 
     def save(self, *args, **kwargs):

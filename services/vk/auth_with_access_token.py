@@ -18,13 +18,13 @@ def create_vk_session_with_access_token(user: User) -> Optional[vk_api.VkApi]:
 
     vk_session = None
     data = dict(
-        access_token=user.access_token,
-        application_id=user.app_id,
+        token=user.access_token,
+        app_id=user.app_id,
         api_version=config.VK_API_VERSION,
         scope=DEF_SCOPES,
     )
 
-    data_is_filled = all(len(str(value)) for value in data.values())
+    data_is_filled = all(len(str(value)) > 0 for value in data.values())
     if data_is_filled:
         try:
             vk_session = vk_api.VkApi(**data)

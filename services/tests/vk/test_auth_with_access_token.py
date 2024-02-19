@@ -1,3 +1,4 @@
+import random
 from unittest import mock
 
 import vk_api
@@ -9,7 +10,7 @@ from services.vk.auth_with_access_token import generate_url_for_access_token_gen
 
 def create_test_user(**kwargs):
     return User.objects.create(
-        login='Test',
+        login=f'Test{random.randint(1, 1000)}',
         password='pass',
         **kwargs
     )
@@ -23,8 +24,8 @@ def test_session_creation(api_mock: mock.MagicMock):
     expected_scope = 'wall,offline,stats'
 
     expected_data = dict(
-        access_token=expected_token,
-        applicatoin_id=expected_app_id,
+        token=expected_token,
+        app_id=expected_app_id,
         api_version=expected_api_ver,
         scope=expected_scope,
     )
@@ -38,6 +39,31 @@ def test_session_creation(api_mock: mock.MagicMock):
 
     assert api_mock_class.assert_called_once_with(**expected_data)
     assert result is api_mock_class
+
+
+@mock.patch('services.vk.auth_with_access_token.vk_api.VkApi')
+def test_session_creation_with_wrong_data(api_mock: mock.MagicMock):
+    expected_token = ''
+    expected_app_id = 123
+    expected_api_ver = '5.131'
+    expected_scope = 'wall,offline,stats'
+
+    expected_data = dict(
+        token=expected_token,
+        app_id=expected_app_id,
+        api_version=expected_api_ver,
+        scope=expected_scope,
+    )
+
+    api_mock_class: mock.MagicMock = mock.create_autospec(vk_api.VkApi)
+    api_mock.return_value = api_mock_class
+
+    user = create_test_user(app_id=expected_app_id, access_token=expected_token)
+
+    result = create_vk_session_with_access_token(user)
+
+    assert api_mock_class.assert_not_called()
+    assert result is None
 
 
 def test_url_creation():
