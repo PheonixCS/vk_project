@@ -11,11 +11,19 @@ class User(models.Model):
     two_factor = models.BooleanField(verbose_name='Двухфакторная аутентификация', default=False)
     is_authed = models.BooleanField(default=False)
 
+    access_token = models.CharField(
+        max_length=256,
+        verbose_name='Пользовательский Access token',
+        blank=True,
+        null=True,
+    )
+
     def save(self, *args, **kwargs):
-        if self.domain_or_id.isdigit():
-            self.url = 'https://vk.com/id{}'.format(self.domain_or_id)
-        elif self.domain_or_id:
-            self.url = 'https://vk.com/{}'.format(self.domain_or_id)
+        if not self.url:
+            if self.domain_or_id.isdigit():
+                self.url = 'https://vk.com/id{}'.format(self.domain_or_id)
+            elif self.domain_or_id:
+                self.url = 'https://vk.com/{}'.format(self.domain_or_id)
         super(User, self).save(*args, **kwargs)
 
     def __str__(self):

@@ -14,6 +14,7 @@ from posting.models import (
     User,
     Block
 )
+from services.vk.auth_with_access_token import generate_url_for_access_token_generation
 
 
 class MembershipInline(admin.TabularInline):
@@ -145,7 +146,7 @@ class GroupAdmin(admin.ModelAdmin):
 
 class UserAdmin(admin.ModelAdmin):
     exclude = ('url',)
-    readonly_fields = ('vk_url_field',)
+    readonly_fields = ('vk_url_field', 'access_token_generation_url')
     list_display = ('login', 'vk_url_field',)
 
     def vk_url_field(self, obj):
@@ -157,8 +158,16 @@ class UserAdmin(admin.ModelAdmin):
         else:
             return obj.initials
 
+    def access_token_generation_url(self, obj):
+        url = generate_url_for_access_token_generation(obj)
+        data = format_html(f'<a href="{url}" target="_blank" rel="noopener noreferrer">Access token generation</a>')
+        return data
+
     vk_url_field.allow_tags = True
     vk_url_field.short_description = 'Ссылка'
+
+    access_token_generation_url.allow_tags = True
+    access_token_generation_url.short_description = 'Ссылка для генерации Access token'
 
 
 class BackgroundAbstractionAdmin(admin.ModelAdmin):
