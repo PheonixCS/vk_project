@@ -21,7 +21,7 @@ def create_vk_session_with_access_token(user: User) -> Optional[vk_api.VkApi]:
         access_token=user.access_token,
         application_id=user.app_id,
         api_version=config.VK_API_VERSION,
-        scopes=DEF_SCOPES,
+        scope=DEF_SCOPES,
     )
 
     data_is_filled = all(len(str(value)) for value in data.values())

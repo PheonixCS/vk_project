@@ -6,12 +6,12 @@ from celery import shared_task
 from constance import config
 from django.utils import timezone
 
+from posting.core.files import download_file, delete_files
 from posting.core.images import merge_poster_and_three_images
 from posting.core.poster import get_country_name_by_code
-from posting.core.files import download_file, delete_files
 from posting.models import Group, Block
 from scraping.models import Movie, Trailer
-from services.vk.core import create_vk_session_using_login_password
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.files import upload_photos, upload_video
 
 log = logging.getLogger('posting.scheduled')
@@ -23,11 +23,8 @@ def post_movie(group_id, movie_id):
     log.debug(f'start posting movies in {group_id} group')
 
     group = Group.objects.get(group_id=group_id)
-    login = group.user.login
-    password = group.user.password
-    app_id = group.user.app_id
 
-    session = create_vk_session_using_login_password(login, password, app_id)
+    session = create_vk_session_with_access_token(group.user)
     if not session:
         log.error(f'session not created in group {group_id}')
         return

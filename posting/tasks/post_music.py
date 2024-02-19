@@ -7,15 +7,15 @@ from constance import config
 from django.conf import settings
 from django.utils import timezone
 
+from posting.core.files import download_file, delete_files
 from posting.core.images import paste_abstraction_on_template, paste_text_on_music_image
 from posting.core.poster import prepare_audio_attachments, get_music_compilation_artist, get_music_compilation_genre, \
     find_next_element_by_last_used_id
-from posting.core.files import download_file, delete_files
 from posting.core.vk_helper import create_ad_record
-from services.text_utilities import delete_emoji_from_text
 from posting.models import Group, BackgroundAbstraction, Block
 from scraping.models import Record
-from services.vk.core import create_vk_session_using_login_password
+from services.text_utilities import delete_emoji_from_text
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.files import upload_photos
 from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 
@@ -31,7 +31,7 @@ def post_music(group_id, record_id):
     record = Record.objects.get(pk=record_id)
 
     try:
-        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+        session = create_vk_session_with_access_token(group.user)
         if not session:
             return
         api = session.get_api()

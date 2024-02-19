@@ -6,19 +6,19 @@ from celery import shared_task
 from constance import config
 from django.utils import timezone
 
+from posting.core.files import download_file, delete_files
 from posting.core.images import sort_images_for_movies, is_all_images_not_horizontal, merge_six_images_into_one, \
     is_text_on_image
 from posting.core.poster import prepare_audio_attachments, prepare_image_for_posting, \
     find_next_element_by_last_used_id
-from posting.core.files import download_file, delete_files
+from posting.core.vk_helper import create_ad_record
+from posting.models import Group
+from scraping.models import Record
 from services.text_utilities import delete_hashtags_from_text, delete_emoji_from_text, \
     replace_russian_with_english_letters
-from posting.models import Group, Block
-from scraping.models import Record
-from services.vk.core import create_vk_session_using_login_password
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.files import upload_photos, check_docs_availability, check_video_availability
 from services.vk.vars import ADVERTISEMENT_ERROR_CODE
-from posting.core.vk_helper import create_ad_record
 
 log = logging.getLogger('posting.scheduled')
 telegram = logging.getLogger('telegram')
@@ -36,8 +36,7 @@ def post_record(group_id, record_id):
     #     special_session = True
 
     try:
-        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id,
-                                                         special_session=special_session)
+        session = create_vk_session_with_access_token(group.user)
         api = session.get_api()
     except:
         log.error('got unexpected exception in post_record for group {}'.format(group_id), exc_info=True)

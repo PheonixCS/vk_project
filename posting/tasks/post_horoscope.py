@@ -8,11 +8,11 @@ from django.utils import timezone
 from posting.core.files import download_file, delete_files
 from posting.core.horoscopes_images import transfer_horoscope_to_image, paste_horoscopes_rates
 from posting.core.vk_helper import create_ad_record
-from posting.models import Group, Block
+from posting.models import Group
 from promotion.tasks.promotion_task import add_promotion_task
 from scraping.core.horoscopes import save_horoscope_for_main_groups
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
-from services.vk.core import create_vk_session_using_login_password
+from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.files import upload_photos
 from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 
@@ -24,7 +24,8 @@ telegram = logging.getLogger('telegram')
 def post_horoscope(group_id: int, horoscope_record_id: int):
     log.debug('start posting horoscopes in {} group'.format(group_id))
     group = Group.objects.get(group_id=group_id)
-    session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
+
+    session = create_vk_session_with_access_token(group.user)
     if not session:
         log.error('session not created in group {}'.format(group_id))
         return
