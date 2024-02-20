@@ -6,7 +6,7 @@ from constance import config
 
 from posting.models import User
 
-DEF_SCOPES = 'wall,offline,stats'
+DEF_SCOPES = 'wall,offline,stats,docs,video'
 VK_AUTH_URL = 'https://oauth.vk.com/authorize'
 REDIRECT_URL = 'https://oauth.vk.com/blank.html'
 

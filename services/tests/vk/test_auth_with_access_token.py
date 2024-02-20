@@ -21,7 +21,7 @@ def test_session_creation(api_mock: mock.MagicMock):
     expected_token = 'test_token'
     expected_app_id = 123
     expected_api_ver = '5.131'
-    expected_scope = 'wall,offline,stats'
+    expected_scope = 'wall,offline,stats,docs,video'
 
     expected_data = dict(
         token=expected_token,
@@ -46,7 +46,7 @@ def test_session_creation_with_wrong_data(api_mock: mock.MagicMock):
     expected_token = ''
     expected_app_id = 123
     expected_api_ver = '5.131'
-    expected_scope = 'wall,offline,stats'
+    expected_scope = 'wall,offline,stats,docs,video'
 
     expected_data = dict(
         token=expected_token,
@@ -68,7 +68,7 @@ def test_session_creation_with_wrong_data(api_mock: mock.MagicMock):
 
 def test_url_creation():
     expected_id = 123
-    expected_scopes = 'wall,offline,stats'
+    expected_scopes = 'wall,offline,stats,docs,video'
     expected_url = f'https://oauth.vk.com/authorize?client_id={expected_id}&redirect_uri=https://oauth.vk.com/blank.html&display=mobile&scope={expected_scopes}&response_type=token&revoke=1'
 
     user = create_test_user(app_id=expected_id)
