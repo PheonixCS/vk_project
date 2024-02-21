@@ -49,14 +49,14 @@ class Command(BaseCommand):
                     print(last_linked)
 
                     last_not_linked_horoscopes = Horoscope.objects.filter(
-                        post_in_group_date__gte=last_day,
+                        add_to_db_date__gte=last_day,
                         group=InternalHoroscopeSource.group
                     ).exclude(
                         pk__in=last_linked,
                     )
                 else:
                     last_not_linked_horoscopes = Horoscope.objects.filter(
-                        post_in_group_date__gte=last_day,
+                        add_to_db_date__gte=last_day,
                         group=internal_horoscope_source.group
                     )
 
