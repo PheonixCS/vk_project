@@ -41,9 +41,10 @@ class Command(BaseCommand):
                 link_objects = InternalHoroscopeSourceLink.objects.filter(
                     link=internal_horoscope_source,
                     created_dt__gte=last_day,
+                    source_post_isnull=False
                 )
 
-                if link_objects.exists():
+                if link_objects.exists() and link_objects.count() >= 1:
                     last_linked = link_objects.values_list('source_post', flat=True)
 
                     print(last_linked)
