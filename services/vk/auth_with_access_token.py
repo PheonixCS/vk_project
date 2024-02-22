@@ -6,7 +6,7 @@ from constance import config
 
 from posting.models import User
 
-DEF_SCOPES = 'wall,offline,stats,docs,video'
+DEF_SCOPES = 'wall,offline,stats,docs,video,photos'
 VK_AUTH_URL = 'https://oauth.vk.com/authorize'
 REDIRECT_URL = 'https://oauth.vk.com/blank.html'
 
@@ -16,12 +16,16 @@ log = logging.getLogger(__name__)
 def create_vk_session_with_access_token(user: User) -> Optional[vk_api.VkApi]:
     log.debug(f'start session creation with token for {user}')
 
+    scopes = DEF_SCOPES
+    if config.VK_SCOPES and len(config.VK_SCOPES) > 0:
+        scopes = config.VK_SCOPES
+
     vk_session = None
     data = dict(
         token=user.access_token,
         app_id=user.app_id,
         api_version=config.VK_API_VERSION,
-        scope=DEF_SCOPES,
+        scope=scopes,
     )
 
     data_is_filled = all(len(str(value)) > 0 for value in data.values())

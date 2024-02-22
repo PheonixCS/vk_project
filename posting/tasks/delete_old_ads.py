@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from posting.models import Group, AdRecord
 from services.vk.auth_with_access_token import create_vk_session_with_access_token
-from services.vk.core import create_vk_session_using_login_password
 
 log = logging.getLogger('posting.scheduled')
 
