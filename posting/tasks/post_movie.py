@@ -43,9 +43,9 @@ def post_movie(group_id, movie_id):
 
     trailer_name = f'{movie.title} ({movie.rating}&#11088;)'
     trailer_information = f'{movie.release_year}, ' \
-        f'{country}{", " if country else ""}' \
-        f'{", ".join(movie.genres.all().values_list("name", flat=True)[:2])}, ' \
-        f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
+                          f'{country}{", " if country else ""}' \
+                          f'{", ".join(movie.genres.all().values_list("name", flat=True)[:2])}, ' \
+                          f'{str(timedelta(minutes=int(movie.runtime)))[:-3]}'
 
     video_description = f'{trailer_information}\n\n{movie.overview}'
 
@@ -112,14 +112,18 @@ def post_movie(group_id, movie_id):
             trailer.save(update_fields=['status', 'vk_url'])
 
         record_text = f'{trailer_name}\n\n' \
-            f'{trailer_information}\n\n' \
-            f'{trailer_link if uploaded_trailer else ""}\n\n' \
-            f'{movie.overview}'
+                      f'{trailer_information}\n\n' \
+                      f'{trailer_link if uploaded_trailer else ""}\n\n' \
+                      f'{movie.overview}'
 
-        post_response = api.wall.post(owner_id=f'-{group_id}',
-                                      from_group=1,
-                                      message=record_text,
-                                      attachments=','.join(attachments))
+        data = dict(
+            owner_id=f'-{group_id}',
+            from_group=1,
+            message=record_text,
+            attachments=','.join(attachments)
+        )
+
+        post_response = api.wall.post(**data)
 
         movie.post_in_group_date = timezone.now()
         movie.group = Group.objects.get(group_id=group_id)

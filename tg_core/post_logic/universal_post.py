@@ -28,11 +28,11 @@ class UniversalPost(ABC):
         pass
 
     @abstractmethod
-    def _process_failed(self) -> None:
+    def _post_failed_hook(self) -> None:
         pass
 
     @abstractmethod
-    def _process_success(self) -> None:
+    def _post_succeeded_hook(self) -> None:
         pass
 
     @abstractmethod
@@ -55,10 +55,10 @@ class UniversalPost(ABC):
         if self.status == self.PREPARED:
             post_result = self._post()
             if post_result:
-                self._process_success()
+                self._post_succeeded_hook()
                 self.__status = self.SENT
             else:
-                self._process_failed()
+                self._post_failed_hook()
                 self.__status = self.FAILED
         else:
             raise Exception(f'{self} is not prepared for posting yet!')

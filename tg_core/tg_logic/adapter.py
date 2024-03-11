@@ -66,7 +66,7 @@ class TGUniversalPost(UniversalPost):
 
         return True
 
-    def _process_failed(self):
+    def _post_failed_hook(self):
         post = self.__post_object
 
         post.status = post.FAILED
@@ -75,7 +75,7 @@ class TGUniversalPost(UniversalPost):
 
         return True
 
-    def _process_success(self):
+    def _post_succeeded_hook(self):
         post = self.__post_object
 
         post.status = post.POSTED
