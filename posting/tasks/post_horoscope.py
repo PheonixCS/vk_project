@@ -64,11 +64,16 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
         if group.group_type == Group.HOROSCOPES_MAIN:
             record_text = ''
 
+        if config.SHOW_AUTHOR:
+            from_group = 0
+        else:
+            from_group = 1
+
         # posting part
         attachments_string = ','.join(attachments)
         data_to_post = {
             'owner_id': '-{}'.format(group_id),
-            'from_group': 1,
+            'from_group': from_group,
             'message': record_text,
             'attachments': attachments_string
         }
