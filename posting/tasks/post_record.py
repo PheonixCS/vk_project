@@ -123,13 +123,16 @@ def post_record(group_id, record_id):
 
         if config.SHOW_AUTHOR:
             from_group = 0
+            signed = 1
         else:
             from_group = 1
+            signed = 0
 
         # posting part
         data_to_post = {
             'owner_id': f'-{group_id}',
             'from_group': from_group,
+            'signed': signed,
             'message': record_text,
             'attachments': ','.join(attachments)
         }

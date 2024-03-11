@@ -66,14 +66,17 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
 
         if config.SHOW_AUTHOR:
             from_group = 0
+            signed = 1
         else:
             from_group = 1
+            signed = 0
 
         # posting part
         attachments_string = ','.join(attachments)
         data_to_post = {
             'owner_id': '-{}'.format(group_id),
             'from_group': from_group,
+            'signed': signed,
             'message': record_text,
             'attachments': attachments_string
         }
