@@ -1,6 +1,15 @@
 from django.contrib import admin
 
+from tg_core.models import TGAttachment
 from tg_core.models.tg_post import TGPost
+
+
+class TGAttachmentInline(admin.TabularInline):
+    model = TGAttachment
+    extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 class TGPostAdmin(admin.ModelAdmin):
@@ -30,6 +39,10 @@ class TGPostAdmin(admin.ModelAdmin):
         'channel',
         'scheduled_dt',
         'posted_dt',
+    )
+
+    inlines = (
+        TGAttachmentInline,
     )
 
 
