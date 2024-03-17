@@ -10,3 +10,9 @@ class Channel(BaseModel):
     is_active = models.BooleanField(default=False)
 
     internal_horoscope_sources = models.ManyToManyField(InternalHoroscopeSource, null=True, blank=True)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return f'TG Channel {self.name}'
