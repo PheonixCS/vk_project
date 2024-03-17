@@ -6,7 +6,7 @@ from tg_core.models.tg_post import TGPost
 from tg_core.post_logic.poster import Poster
 from tg_core.tg_logic.adapter import TGUniversalPost
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):

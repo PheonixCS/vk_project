@@ -1,2 +1,3 @@
 */10 * * * * /home/vk_scraping_posting/vk_scraping_posting/venv/bin/python /home/vk_scraping_posting/vk_scraping_posting/manage.py collect_ih_sources
-*/5 * * * * /home/vk_scraping_posting/vk_scraping_posting/venv/bin/python /home/vk_scraping_posting/vk_scraping_posting/manage.py demo_post
+# */5 * * * * /home/vk_scraping_posting/vk_scraping_posting/venv/bin/python /home/vk_scraping_posting/vk_scraping_posting/manage.py demo_post
+* * * * * /home/vk_scraping_posting/vk_scraping_posting/venv/bin/python /home/vk_scraping_posting/vk_scraping_posting/manage.py post_scheduled
