@@ -2,6 +2,7 @@ import logging
 import uuid
 from datetime import timedelta
 from io import BytesIO
+from typing import Collection
 
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -28,7 +29,7 @@ class Command(BaseCommand):
         for channel in Channel.objects.filter(is_active=True).iterator():
             print(f'work with {channel}')
 
-            internal_horoscope_sources = InternalHoroscopeSource.objects.filter(
+            internal_horoscope_sources: Collection[InternalHoroscopeSource] = InternalHoroscopeSource.objects.filter(
                 channel=channel
             )
 
@@ -67,15 +68,8 @@ class Command(BaseCommand):
                     log.debug(f'Adding {horoscope}')
                     print(f'Adding {horoscope}')
 
-                    tg_post = TGPost.objects.create(
-                        text=Horoscope.text,
-                        channel=channel,
-                    )
-
-                    InternalHoroscopeSourceLink.objects.create(
-                        link=internal_horoscope_source,
-                        target_post=tg_post,
-                        source_post=horoscope
+                    tg_post = TGPost.objects.create_from_source(
+                        horoscope, channel, internal_horoscope_source
                     )
 
                     image_object = transfer_horoscope_to_image_object(horoscope.text)

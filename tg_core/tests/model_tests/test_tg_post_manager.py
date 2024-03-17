@@ -1,9 +1,14 @@
+import datetime
 from datetime import timedelta
 
 import pytest
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from posting.models import Group
+from scraping.models import Horoscope
+from services.horoscopes.vars import SIGNS_EN
+from tg_core.models import InternalHoroscopeSource, Channel
 from tg_core.models.tg_post import TGPost
 
 
@@ -79,3 +84,33 @@ def test_multiply_posts():
 
     assert len(qs) == 2
     assert sorted([tg_post_1.pk, tg_post_2.pk]) == sorted(qs.values_list('pk', flat=True))
+
+
+def test_horoscope_creation():
+    expected_time = datetime.time(10, 33, 00)
+
+    group = Group.objects.create(
+        domain_or_id='test',
+    )
+
+    horo = Horoscope.objects.create(
+        group=group, zodiac_sign=SIGNS_EN[0], text=''
+    )
+
+    source = InternalHoroscopeSource.objects.create(
+        group=None, repost_time=expected_time
+    )
+
+    channel = Channel.objects.create(
+        name='@test',
+        tg_id=-100000,
+    )
+
+    tg_post = TGPost.objects.create_from_source(
+        horoscope=horo, channel=channel, source=source
+    )
+
+    assert tg_post
+    assert tg_post.scheduled_dt.hour == expected_time.hour
+    assert tg_post.scheduled_dt.minute == expected_time.minute
+    assert tg_post.status == TGPost.SCHEDULED

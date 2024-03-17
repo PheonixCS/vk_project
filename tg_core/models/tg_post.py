@@ -1,3 +1,4 @@
+import typing
 from datetime import timedelta
 
 from django.db import models
@@ -5,6 +6,10 @@ from django.utils import timezone
 
 from tg_core.models.base import BaseModel
 from tg_core.models.channel import Channel
+
+if typing.TYPE_CHECKING:
+    from scraping.models import Horoscope
+    from tg_core.models import InternalHoroscopeSource, InternalHoroscopeSourceLink
 
 ALLOWABLE_INACCURACY_IN_SECONDS = 60
 
@@ -21,6 +26,37 @@ class TGPostScheduledNowManager(models.Manager):
         )
 
         return super().get_queryset().filter(**filter_conditions)
+
+
+class TGPostManager(models.Manager):
+    def create_from_source(
+            self, horoscope: 'Horoscope', channel: Channel, source: 'InternalHoroscopeSource'
+    ) -> 'TGPost':
+        from tg_core.models import InternalHoroscopeSourceLink
+
+        now = timezone.now()
+
+        scheduled_dt = now.replace(
+            hour=source.repost_time.hour,
+            minute=source.repost_time.minute,
+            second=0,
+            microsecond=0
+        )
+
+        tg_post = self.create(
+            text=horoscope.text,
+            channel=channel,
+            scheduled_dt=scheduled_dt,
+            status=TGPost.SCHEDULED
+        )
+
+        InternalHoroscopeSourceLink.objects.create(
+            link=source,
+            target_post=tg_post,
+            source_post=horoscope
+        )
+
+        return tg_post
 
 
 class TGPost(BaseModel):
@@ -51,7 +87,7 @@ class TGPost(BaseModel):
     scheduled_dt = models.DateTimeField(null=True, blank=True)
     posted_dt = models.DateTimeField(null=True, blank=True)
 
-    objects = models.Manager()
+    objects = TGPostManager()
     scheduled_now = TGPostScheduledNowManager()
 
     def __str__(self):
