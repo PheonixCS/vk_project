@@ -5,6 +5,7 @@ from typing import Union, Optional
 import telegram
 from asgiref.sync import async_to_sync
 from django.utils import timezone
+from telegram.constants import ParseMode
 
 from tg_core.models.tg_attachment import TGAttachment
 from tg_core.models.tg_post import TGPost
@@ -30,6 +31,8 @@ class TGAdapter:
         data = dict(
             caption=post.text,
             chat_id=channel_id,
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True
         )
 
         data['photo'] = post.attachments[0]
@@ -60,6 +63,8 @@ class TGUniversalPost(UniversalPost):
         for attach in attachments.iterator():
             with open(attach.file.path, 'rb') as file:
                 self.attachments.append(file.read())
+
+        self.text = post.text
 
         post.status = post.POSTING
         post.save()
