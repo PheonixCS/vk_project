@@ -1,7 +1,6 @@
 import logging
 from typing import Optional, Union
 
-from posting.core.vk_adapter import VKAdapter
 from posting.models import Group
 from scraping.models import Record
 from tg_core.post_logic.universal_post import UniversalPost
@@ -11,6 +10,8 @@ log = logging.getLogger('posting.vk')
 
 class VKUniversalPost(UniversalPost):
     def __init__(self, vk_record_object: Record, target_group: Group):
+        from .vk_adapter import VKAdapter
+
         super().__init__()
 
         self.data: Optional[dict] = None
