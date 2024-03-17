@@ -9,4 +9,4 @@ class Channel(BaseModel):
     tg_id = models.BigIntegerField()
     is_active = models.BooleanField(default=False)
 
-    internal_horoscope_sources = models.ManyToManyField(InternalHoroscopeSource)
+    internal_horoscope_sources = models.ManyToManyField(InternalHoroscopeSource, null=True, blank=True)

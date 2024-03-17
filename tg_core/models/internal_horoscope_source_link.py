@@ -7,6 +7,6 @@ from tg_core.models.tg_post import TGPost
 
 
 class InternalHoroscopeSourceLink(BaseModel):
-    source_post = models.ForeignKey(Horoscope, on_delete=models.SET_NULL, null=True)
-    target_post = models.ForeignKey(TGPost, on_delete=models.SET_NULL, null=True)
-    link = models.ForeignKey(InternalHoroscopeSource, on_delete=models.SET_NULL, null=True)
+    source_post = models.ForeignKey(Horoscope, on_delete=models.SET_NULL, null=True, blank=True)
+    target_post = models.ForeignKey(TGPost, on_delete=models.SET_NULL, null=True, blank=True)
+    link = models.ForeignKey(InternalHoroscopeSource, on_delete=models.SET_NULL, null=True, blank=True)
