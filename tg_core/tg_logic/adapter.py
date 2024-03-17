@@ -32,7 +32,6 @@ class TGAdapter:
             caption=post.text,
             chat_id=channel_id,
             parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True
         )
 
         data['photo'] = post.attachments[0]
