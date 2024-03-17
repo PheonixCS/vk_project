@@ -68,16 +68,16 @@ def test_multiply_posts():
 
     tg_post_1 = TGPost.objects.create(
         status=TGPost.SCHEDULED,
-        scheduled_dt=now + timedelta(seconds=59)
+        scheduled_dt=now + timedelta(seconds=29)
     )
     tg_post_2 = TGPost.objects.create(
         status=TGPost.SCHEDULED,
-        scheduled_dt=now - timedelta(seconds=59)
+        scheduled_dt=now - timedelta(seconds=29)
     )
 
     TGPost.objects.create(
         status=TGPost.SCHEDULED,
-        scheduled_dt=now - timedelta(seconds=61)
+        scheduled_dt=now - timedelta(seconds=31)
     )
 
     qs: QuerySet = TGPost.scheduled_now.all()

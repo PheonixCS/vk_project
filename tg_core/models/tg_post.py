@@ -11,7 +11,7 @@ if typing.TYPE_CHECKING:
     from scraping.models import Horoscope
     from tg_core.models import InternalHoroscopeSource, InternalHoroscopeSourceLink
 
-ALLOWABLE_INACCURACY_IN_SECONDS = 60
+ALLOWABLE_INACCURACY_IN_SECONDS = 30
 
 
 class TGPostScheduledNowManager(models.Manager):
