@@ -45,7 +45,7 @@ class TGPostManager(models.Manager):
         )
 
         tg_post = self.create(
-            text=TextTemplate.objects.get_by_slug(TextTemplate.slugs.horoscope_common),
+            text=TextTemplate.objects.get_by_slug(TextTemplate.slugs.horoscope_common).template,
             channel=channel,
             scheduled_dt=scheduled_dt,
             status=TGPost.SCHEDULED
