@@ -23,7 +23,7 @@ class TemplatesManager(models.Manager):
         template_obj, created = self.get_or_create(slug=slug)
         result = NA_MESSAGE_TEXT
 
-        if created:
+        if not created:
             result = template_obj
         else:
             templates_path = Path(os.path.join(settings.BASE_DIR, 'tg_core/templates/messages/'))
