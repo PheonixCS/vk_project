@@ -26,12 +26,11 @@ class TemplatesManager(models.Manager):
         if created:
             result = template_obj
         else:
-            templates_path = Path(os.path.join(settings.BASE_DIR, 'tg_core/templates/messages/')).iterdir()
-            for d in templates_path:
-                for t in d.iterdir():
-                    if t.name == f'{slug}.html':
-                        result = t.open().read()
-                        break
+            templates_path = Path(os.path.join(settings.BASE_DIR, 'tg_core/templates/messages/'))
+            for t in templates_path.iterdir():
+                if t.name == f'{slug}.html':
+                    result = t.open().read()
+                    break
 
         template_obj.template = result
 
