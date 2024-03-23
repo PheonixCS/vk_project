@@ -24,7 +24,7 @@ class TemplatesManager(models.Manager):
         result = NA_MESSAGE_TEXT
 
         if not created:
-            result = template_obj
+            result = template_obj.template
         else:
             templates_path = Path(os.path.join(settings.BASE_DIR, 'tg_core/templates/messages/'))
             for t in templates_path.iterdir():
