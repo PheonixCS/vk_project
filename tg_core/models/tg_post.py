@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from tg_core.models.base import BaseModel
 from tg_core.models.channel import Channel
+from tg_core.models.text_template import TextTemplate
 
 if typing.TYPE_CHECKING:
     from scraping.models import Horoscope
@@ -44,7 +45,7 @@ class TGPostManager(models.Manager):
         )
 
         tg_post = self.create(
-            text=horoscope.text,
+            text=TextTemplate.objects.get_by_slug(TextTemplate.slugs.horoscope_common),
             channel=channel,
             scheduled_dt=scheduled_dt,
             status=TGPost.SCHEDULED
