@@ -28,6 +28,23 @@ log = logging.getLogger('posting.scheduled')
 @shared_task(time_limit=59, name='posting.tasks.examine_groups.examine_groups')
 def examine_groups():
     log.debug('start group examination')
+
+    now = timezone.now()
+
+    start_time = config.POSTING_START_TIME
+    end_time = config.POSTING_END_TIME
+
+    posting_start_h, posting_start_m = map(int, start_time.split(':'))
+    posting_end_h, posting_end_m = map(int, end_time.split(':'))
+
+    if not (
+            now.replace(hour=posting_start_h, minute=posting_start_m)
+            <= now
+            <= now.replace(hour=posting_end_h, minute=posting_end_m)
+    ):
+        log.info(f'No suitable time for posting ({start_time}-{end_time})')
+        return
+
     groups_to_post_in = Group.objects.filter(
         user__isnull=False,
         is_posting_active=True

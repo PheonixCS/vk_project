@@ -59,6 +59,8 @@ CONSTANCE_CONFIG = {
     'X_TOKEN': ('', 'x1y1z1 token', str),
     'VK_SCOPES': ('', 'Права доступа к приложению', str),
     'SHOW_AUTHOR': (False, 'Показывать автора?', bool),
+    'POSTING_START_TIME': ('4:00', 'Время начала постинга (UTC)', str),
+    'POSTING_END_TIME': ('20:59', 'Время конца постинга (UTC)', str),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -69,7 +71,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
         'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE', 'STATS_STORING_TIME',
         'DONOR_OUTDATE_INTERVAL', 'NEW_POSTING_INTERVALS_ENABLE', 'BLOCKS_ACTIVE', 'IGNORE_DONORS_REPEAT', 'USE_APP',
-        'VK_SCOPES', 'SHOW_AUTHOR'
+        'VK_SCOPES', 'SHOW_AUTHOR', 'POSTING_START_TIME', 'POSTING_END_TIME'
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',
