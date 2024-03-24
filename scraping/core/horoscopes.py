@@ -72,8 +72,7 @@ def save_horoscope_record_to_db(group, text, zodiac_sign):
 
 def save_horoscope_for_main_groups(horoscope: Horoscope, image_vk_url: str, group_id: int, record_id: int) -> None:
     log.info('save_horoscope_for_main_groups called')
-    # exclude https://trello.com/c/YfqFDo2v/255
-    main_horoscopes = Group.objects.filter(group_type=Group.HOROSCOPES_MAIN).exclude(group_id=29038248)
+    main_horoscopes = Group.objects.filter(group_type=Group.HOROSCOPES_MAIN)
     log.debug(f'Main horoscopes: {main_horoscopes}')
 
     # https://trello.com/c/uB0RQBvE/244

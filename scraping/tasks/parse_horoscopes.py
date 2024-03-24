@@ -13,8 +13,8 @@ log = logging.getLogger('scraping.scheduled')
 @shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
 def parse_horoscopes() -> None:
     log.debug('start parse_horoscopes')
-    horoscope_page = MailRuHoroscopes()
-    women_horoscopes = WomenHoroscopes()
+    horoscope_page = WomenHoroscopes()
+    # women_horoscopes = WomenHoroscopes()
 
     tomorrow_date_ru = get_tomorrow_date_ru()
     log.debug(f'tomorrows date in ru is {tomorrow_date_ru}')
@@ -39,16 +39,16 @@ def parse_horoscopes() -> None:
                 record_text = f'{additional_text}\n{parsed[group_sign_en]}'
                 save_horoscope_record_to_db(group, record_text, group_sign_en)
 
-    log.debug('start craping horoscopes for women')
-    parsed = women_horoscopes.parse(by_selector=True)
-    women_horoscopes_group = Group.objects.get(group_id=29038248)
-
-    for sign, value in parsed.items():
-        sign_ru = horoscopes_translate(sign, to_lang='ru')
-        additional_text = f'{tomorrow_date_ru}, {sign_ru}'
-        record_text = f'{additional_text}\n{value}'
-        save_horoscope_record_to_db(women_horoscopes_group, record_text, sign)
-
-    log.debug('end craping horoscopes for women')
+    # log.debug('start scraping horoscopes for women')
+    # parsed = women_horoscopes.parse(by_selector=True)
+    # women_horoscopes_group = Group.objects.get(group_id=29038248)
+    #
+    # for sign, value in parsed.items():
+    #     sign_ru = horoscopes_translate(sign, to_lang='ru')
+    #     additional_text = f'{tomorrow_date_ru}, {sign_ru}'
+    #     record_text = f'{additional_text}\n{value}'
+    #     save_horoscope_record_to_db(women_horoscopes_group, record_text, sign)
+    #
+    # log.debug('end scraping horoscopes for women')
 
     log.debug('finish parse_horoscopes')
