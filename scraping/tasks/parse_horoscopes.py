@@ -52,3 +52,8 @@ def parse_horoscopes() -> None:
     # log.debug('end scraping horoscopes for women')
 
     log.debug('finish parse_horoscopes')
+
+
+if __name__ == '__main__':
+    horoscope_page = WomenHoroscopes()
+    parsed = horoscope_page.parse(by_selector=True)

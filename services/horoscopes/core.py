@@ -84,7 +84,7 @@ class HoroscopesPage:
             return node.text
         else:
             try:
-                node = soup.findAll(*self.text_locator)
+                node = soup.findAll(self.text_locator)
             except Exception:
                 log.warning('parsing exception', exc_info=True)
                 return None
