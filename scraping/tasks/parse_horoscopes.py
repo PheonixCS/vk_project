@@ -19,7 +19,7 @@ def parse_horoscopes() -> None:
     tomorrow_date_ru = get_tomorrow_date_ru()
     log.debug(f'tomorrows date in ru is {tomorrow_date_ru}')
 
-    parsed = horoscope_page.parse()
+    parsed = horoscope_page.parse(by_selector=True)  # remove by_selector
     log.debug(f'parsed {len(parsed)} horoscopes')
 
     groups_with_horoscope_posting = Group.objects.filter(
