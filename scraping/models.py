@@ -1,3 +1,4 @@
+import random
 from random import randint
 import datetime
 
@@ -228,6 +229,8 @@ class Horoscope(models.Model):
     text = models.TextField(max_length=2048, null=True)
     post_in_group_date = models.DateTimeField(null=True)
     add_to_db_date = models.DateTimeField(null=True, auto_now_add=True)
+    rates = models.PositiveSmallIntegerField(
+        default=0, help_text='От 5555 до 9999, случайные значения')
 
     # https://trello.com/c/uB0RQBvE/244
     copyright_text = models.CharField(max_length=256, null=True)
@@ -238,6 +241,10 @@ class Horoscope(models.Model):
     def save(self, *args, **kwargs):
         # for https://trello.com/c/8oKiFb1P/249
         self.index = SIGNS_EN[::-1].index(self.zodiac_sign)
+
+        if not self.pk:
+            self.rates = random.randint(5555, 9999)
+
         return super(Horoscope, self).save(*args, **kwargs)
 
     class Meta:
