@@ -139,7 +139,7 @@ def vk_link_filter(item):
 
 
 def vk_link_filter_2(item):
-    if re.findall(r'.*vk.com/.*', item['text']):
+    if re.findall(r'.*[vk.com, vk.cc]/.*', item['text']):
         log.debug('delete {} as ad: vk_link_filter2'.format(item['id']))
         return False
     return True
