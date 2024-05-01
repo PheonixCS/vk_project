@@ -7,7 +7,7 @@ from scraping.models import Record
 
 
 def test_common_max_record(create_group, create_donor, create_record):
-    time_threshold = timezone.now() - timedelta(hours=6)
+    time_threshold = timezone.now() - timedelta(hours=3, minutes=59)
     group = create_group()
     donor = create_donor()
     group.donors.add(donor)
