@@ -3,6 +3,7 @@ import os
 from random import randint
 from textwrap import wrap
 from time import time
+from typing import Optional
 
 from PIL import ImageFont, Image, ImageDraw
 from constance import config
@@ -59,22 +60,8 @@ def transfer_horoscope_to_image(raw_text, font_name='museo_cyrl.otf'):
     return file_name
 
 
-def paste_horoscopes_rates_object(base, font_name: str = 'museo_cyrl.otf'):
-    love = 'Любовь', 'love.png'
-    health = 'Здоровье', 'health.png'
-    luck = 'Удача', 'luck.png'
-    finance = 'Финансы', 'money.png'
-    # Порядок такой: здоровье, деньги, любовь, удача
-    order = (health, finance, love, luck)
-
-    # Справа от иконок ставим цифру которая получилась.
-    rate_boarders = 5, 9
-    horoscopes_rates = {
-        love[0]: randint(*rate_boarders),
-        health[0]: randint(*rate_boarders),
-        luck[0]: randint(*rate_boarders),
-        finance[0]: randint(*rate_boarders)
-    }
+def paste_horoscopes_rates_object(base, font_name: str = 'museo_cyrl.otf', original_rates: Optional[int] = None):
+    horoscopes_rates, order = generate_rates(original_rates)
 
     icons_height = icons_width = 60
     icons_bottom_offset = 10
@@ -99,6 +86,27 @@ def paste_horoscopes_rates_object(base, font_name: str = 'museo_cyrl.otf'):
         draw.text((icon_paste_x + icons_width + 30, icon_paste_y - 10), str(horoscopes_rates[image[0]]), font=font_body)
 
     return base
+
+
+def generate_rates(source_rates: Optional[int] = None):
+    love = 'Любовь', 'love.png'
+    health = 'Здоровье', 'health.png'
+    luck = 'Удача', 'luck.png'
+    finance = 'Финансы', 'money.png'
+
+    # Порядок такой: здоровье, деньги, любовь, удача
+    order = (health, finance, love, luck)
+
+    # Справа от иконок ставим цифру которая получилась.
+    rates = str(source_rates or randint(5555, 9999))
+    horoscopes_rates = {
+        love[0]: rates[0],
+        health[0]: rates[1],
+        luck[0]: rates[2],
+        finance[0]: rates[3]
+    }
+
+    return horoscopes_rates, order
 
 
 def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center', spacing=10):
@@ -147,9 +155,11 @@ def paste_text_to_center(img_obj, font_obj, text, text_type, text_align='center'
     return 1
 
 
-def paste_horoscopes_rates(horoscope_image_name: str, font_name: str = 'museo_cyrl.otf') -> str:
+def paste_horoscopes_rates(
+        horoscope_image_name: str, font_name: str = 'museo_cyrl.otf', original_rates: Optional[int] = None
+) -> str:
     base = Image.open(horoscope_image_name)
-    base = paste_horoscopes_rates_object(base, font_name)
+    base = paste_horoscopes_rates_object(base, font_name, original_rates)
     base.save(horoscope_image_name, 'JPEG', quality=95, progressive=True)
 
     return horoscope_image_name

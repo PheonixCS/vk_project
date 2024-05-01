@@ -11,6 +11,7 @@ from posting.core.vk_helper import create_ad_record
 from posting.models import Group
 from promotion.tasks.promotion_task import add_promotion_task
 from scraping.core.horoscopes import save_horoscope_for_main_groups
+from scraping.models import Horoscope
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from services.vk.auth_with_access_token import create_vk_session_with_access_token
 from services.vk.files import upload_photos
@@ -35,7 +36,7 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
         log.error('no api was created in group {}'.format(group_id))
         return
 
-    horoscope_record = group.horoscopes.get(pk=horoscope_record_id)
+    horoscope_record: Horoscope = group.horoscopes.get(pk=horoscope_record_id)
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
     try:
@@ -45,7 +46,7 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
 
         if config.HOROSCOPES_TO_IMAGE_ENABLED:
             horoscope_image_name = transfer_horoscope_to_image(record_text)
-            horoscope_image_name = paste_horoscopes_rates(horoscope_image_name)
+            horoscope_image_name = paste_horoscopes_rates(horoscope_image_name, original_rates=horoscope_record.rates)
             attachments.extend(upload_photos(session, horoscope_image_name, str(group_id)))
             delete_files(horoscope_image_name)
             record_text = ''

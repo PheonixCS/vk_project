@@ -243,7 +243,7 @@ class Horoscope(models.Model):
         self.index = SIGNS_EN[::-1].index(self.zodiac_sign)
 
         if not self.pk:
-            self.rates = random.randint(5555, 9999)
+            self.rates = int(''.join([str(random.randint(5, 9)) for _ in range(4)]) )
 
         return super(Horoscope, self).save(*args, **kwargs)
 

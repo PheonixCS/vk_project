@@ -73,7 +73,7 @@ class Command(BaseCommand):
                     )
 
                     image_object = transfer_horoscope_to_image_object(horoscope.text)
-                    image_object = paste_horoscopes_rates_object(image_object)
+                    image_object = paste_horoscopes_rates_object(image_object, original_rates=horoscope.rates)
 
                     buffer = BytesIO()
                     image_object.save(buffer, format='JPEG')
