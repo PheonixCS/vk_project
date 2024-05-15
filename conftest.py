@@ -5,7 +5,7 @@ import pytest
 from django.utils import timezone
 
 from posting.models import Group
-from scraping.models import Donor, Record
+from scraping.models import Donor, Record, Horoscope
 
 
 @pytest.fixture(autouse=True)
@@ -62,16 +62,31 @@ def create_donor():
 def create_record():
     records = []
 
-    def _create_record(group, donor, **kwargs):
+    def _create_record(record, donor, **kwargs):
         record_id = len(records) + 1
 
-        group, created = Record.objects.get_or_create(
+        record, created = Record.objects.get_or_create(
             donor=donor,
-            group=group,
+            group=record,
             record_id=record_id,
             **kwargs
         )
-        records.append(group)
-        return group
+        records.append(record)
+        return record
 
     yield _create_record
+
+
+@pytest.fixture
+def create_horoscope():
+    records = []
+
+    def _create_horoscope(group, **kwargs):
+        record, created = Horoscope.objects.get_or_create(
+            group=group,
+            **kwargs
+        )
+        records.append(record)
+        return record
+
+    yield _create_horoscope

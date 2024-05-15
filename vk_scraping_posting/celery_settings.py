@@ -67,7 +67,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'parse_horoscopes': {
         'task': 'scraping.tasks.parse_horoscopes.parse_horoscopes',
-        'schedule': crontab(minute=55, hour=11)  # at 11:55 am UTC (14:55 am by MSK)
+        'schedule': crontab(minute=55, hour=4)  # at 4:55 am UTC (7:55 am by MSK)
     },
     'delete_old_stat': {
         'task': 'posting.tasks.delete_old_stat.delete_old_stat',
