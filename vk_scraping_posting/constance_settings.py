@@ -61,6 +61,7 @@ CONSTANCE_CONFIG = {
     'SHOW_AUTHOR': (False, 'Показывать автора?', bool),
     'POSTING_START_TIME': ('4:00', 'Время начала постинга (UTC)', str),
     'POSTING_END_TIME': ('20:59', 'Время конца постинга (UTC)', str),
+    'HOROSCOPES_CUT_ENABLED': (False, 'Включить текстовые гороскопы с ссылкой в тг?', bool),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
@@ -75,7 +76,7 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',
-        'HOROSCOPES_FONT_TITLE', 'HOROSCOPES_FONT_BODY', 'X_TOKEN',
+        'HOROSCOPES_FONT_TITLE', 'HOROSCOPES_FONT_BODY', 'X_TOKEN', 'HOROSCOPES_CUT_ENABLED',
     )),
     ('Movies', (
         'TMDB_API_KEY', 'TMDB_SEARCH_START_YEAR', 'TMDB_NEW_MOVIES_OFFSET', 'TMDB_MIN_TRAILERS_COUNT',

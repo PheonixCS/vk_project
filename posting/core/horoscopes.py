@@ -47,6 +47,8 @@ def generate_special_group_reference(horoscope_text):
 def prepare_record_content(session: vk_api.VkApi, group: Group, horoscope_record: Horoscope) -> Tuple[str, list]:
     if config.HOROSCOPES_TO_IMAGE_ENABLED:
         final_record_text, filename_to_upload = prepare_horoscope_with_image(horoscope_record)
+    elif config.HOROSCOPES_CUT_ENABLED:
+        final_record_text, filename_to_upload = prepare_horoscope_cut(group, horoscope_record)
     else:
         final_record_text, filename_to_upload = prepare_common(group, horoscope_record)
 
@@ -90,4 +92,14 @@ def prepare_horoscope_with_image(horoscope_record: Horoscope) -> Tuple[str, str]
     horoscope_image_name = transfer_horoscope_to_image(horoscope_record.text)
     filename_to_upload = paste_horoscopes_rates(horoscope_image_name, original_rates=horoscope_record.rates)
 
+    return final_record_text, filename_to_upload
+
+
+def prepare_horoscope_cut(group: Group, horoscope_record: Horoscope) -> Tuple[str, Optional[str]]:
+    # cut 50% and add link text
+    original = horoscope_record.text
+    final_record_text = f'{original[:len(original)]}{group.horoscope_postfix}'
+
+    # attachments
+    filename_to_upload = None
     return final_record_text, filename_to_upload
