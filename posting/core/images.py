@@ -25,6 +25,7 @@ def is_text_fit_to_width(text, width_in_chars, width_in_pixels, font_object):
 
     :type text: str
     """
+    print(text, width_in_chars)
     for line in wrap(text, width_in_chars):
         if font_object.getsize(line)[0] > width_in_pixels:
             return False

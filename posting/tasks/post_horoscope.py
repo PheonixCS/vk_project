@@ -5,16 +5,13 @@ from celery import shared_task
 from constance import config
 from django.utils import timezone
 
-from posting.core.files import download_file, delete_files
-from posting.core.horoscopes_images import transfer_horoscope_to_image, paste_horoscopes_rates
+from posting.core.horoscopes import prepare_record_content
 from posting.core.vk_helper import create_ad_record
 from posting.models import Group
 from promotion.tasks.promotion_task import add_promotion_task
 from scraping.core.horoscopes import save_horoscope_for_main_groups
 from scraping.models import Horoscope
-from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from services.vk.auth_with_access_token import create_vk_session_with_access_token
-from services.vk.files import upload_photos
 from services.vk.vars import ADVERTISEMENT_ERROR_CODE
 
 log = logging.getLogger('posting.scheduled')
@@ -40,30 +37,7 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
     log.debug('{} horoscope record to post in {}'.format(horoscope_record.id, group.domain_or_id))
 
     try:
-        attachments = []
-
-        record_text = horoscope_record.text
-
-        if config.HOROSCOPES_TO_IMAGE_ENABLED:
-            horoscope_image_name = transfer_horoscope_to_image(record_text)
-            horoscope_image_name = paste_horoscopes_rates(horoscope_image_name, original_rates=horoscope_record.rates)
-            attachments.extend(upload_photos(session, horoscope_image_name, str(group_id)))
-            delete_files(horoscope_image_name)
-            record_text = ''
-        else:
-            if group.is_replace_russian_with_english:
-                record_text = replace_russian_with_english_letters(record_text)
-
-            record_text = delete_hashtags_from_text(record_text)
-
-            if horoscope_record.image_url and not config.HOROSCOPES_TO_IMAGE_ENABLED:
-                image_local_filename = download_file(horoscope_record.image_url)
-                attachments.extend(upload_photos(session, image_local_filename, str(group_id)))
-                delete_files(image_local_filename)
-
-        # https://trello.com/c/uB0RQBvE/24
-        if group.group_type == Group.HOROSCOPES_MAIN:
-            record_text = ''
+        record_text, attachments = prepare_record_content(session, group, horoscope_record)
 
         if config.SHOW_AUTHOR:
             from_group = 0
