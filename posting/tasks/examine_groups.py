@@ -232,7 +232,12 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
         movies_exist = False
 
     if group.group_type in (Group.HOROSCOPES_COMMON, Group.HOROSCOPES_MAIN):
-        is_time_to_post = common_horoscopes_posting_start_time <= now_time_utc <= common_horoscopes_posting_finish_time
+        suitable_for_horoscopes = (
+            common_horoscopes_posting_start_time
+            <= now_time_utc <=
+            common_horoscopes_posting_finish_time
+        )
+        is_time_to_post = is_time_to_post and suitable_for_horoscopes
         last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
         horoscopes_exist = last_hour_horoscopes.exists()
     else:
