@@ -379,6 +379,12 @@ scp ./<file> vk_scraping_posting@80.211.178.81:/home/vk_scraping_posting/vk_scra
 #### Фильмы
 Берем информацию о фильмах тут https://www.themoviedb.org/
 
+#### Обрезание гороскопов в ВК
+Текст гороскопа обрезается на 50% и заполняется текстом после. 
+
+Заранее необходимо заполнить horoscope_postfix для групп основных гороскопов, это будет текст после. Также 
+Включить HOROSCOPES_CUT_ENABLED и убедиться, что HOROSCOPES_TO_IMAGE_ENABLED отключен.
+
 ### Реклама (promotion)
 ### Скрапинг (scraping)
 
@@ -634,3 +640,4 @@ md файла html с помощью стандартной библы и про
 * **IGNORE_DONORS_REPEAT**: (False, **Ignore posting rule, that disable posting from same donor twice**, bool)
 * **USE_APP**: (False, **Use app in session creation**, bool)
 * **X_TOKEN**: (****, **x1y1z1 token**, str)
+* **HOROSCOPES_CUT_ENABLED**: включает обрезание гороскопов (отключите HOROSCOPES_TO_IMAGE_ENABLED)
