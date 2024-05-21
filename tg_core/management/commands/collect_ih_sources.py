@@ -24,7 +24,7 @@ class Command(BaseCommand):
     help = 'Collect tg posts from internal horoscope sources'
 
     def handle(self, *args, **options):
-        print('start collecting')
+        log.info('start collecting')
 
         for channel in Channel.objects.filter(is_active=True).iterator():
             print(f'work with {channel}')
@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
                     last_not_linked_horoscopes = Horoscope.objects.filter(
                         add_to_db_date__gte=last_day,
-                        group=InternalHoroscopeSource.group
+                        group=internal_horoscope_source.group
                     ).exclude(
                         pk__in=last_linked,
                     )
