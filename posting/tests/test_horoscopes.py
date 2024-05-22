@@ -45,4 +45,5 @@ def test_horoscope_text_cut(prepared_group: Group, prepared_horoscope: Horoscope
     text, file = prepare_horoscope_cut(prepared_group, prepared_horoscope)
 
     assert text.endswith(example_horoscope_postfix)
+    assert len(text) < len(prepared_horoscope.text)
     assert file is None
