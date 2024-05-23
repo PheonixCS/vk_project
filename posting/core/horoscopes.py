@@ -98,7 +98,9 @@ def prepare_horoscope_with_image(horoscope_record: Horoscope) -> Tuple[str, str]
 def prepare_horoscope_cut(group: Group, horoscope_record: Horoscope) -> Tuple[str, Optional[str]]:
     # cut 50% and add link text
     original = horoscope_record.text
-    final_record_text = f'{original[:len(original)//2]}{group.horoscope_postfix}'
+    words = original.split(' ')
+    cut = ' '.join(words[:len(words)//2])
+    final_record_text = f'{cut}... {group.horoscope_postfix}'
 
     # attachments
     filename_to_upload = None

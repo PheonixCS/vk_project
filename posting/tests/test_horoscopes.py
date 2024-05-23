@@ -41,9 +41,26 @@ def test_horoscope_with_image_preparation(prepared_horoscope: Horoscope):
     os.remove(file)  # really bad
 
 
-def test_horoscope_text_cut(prepared_group: Group, prepared_horoscope: Horoscope):
+def test_horoscope_with_text_cut_prefix(prepared_group: Group, prepared_horoscope: Horoscope):
     text, file = prepare_horoscope_cut(prepared_group, prepared_horoscope)
 
-    assert text.endswith(example_horoscope_postfix)
+    assert text.endswith(f'... {example_horoscope_postfix}')
     assert len(text) < len(prepared_horoscope.text)
+    assert file is None
+
+
+def test_horoscope_with_text_cut_words(prepared_group: Group, prepared_horoscope: Horoscope):
+    prepared_horoscope.text = 'one\ntwo three four\nfive six'
+    prepared_horoscope.save()
+
+    expected = f'one\ntwo three... {prepared_group.horoscope_postfix}'
+
+    text, _ = prepare_horoscope_cut(prepared_group, prepared_horoscope)
+
+    assert text == expected
+
+
+def test_horoscope_with_text_cut_file(prepared_group: Group, prepared_horoscope: Horoscope):
+    _, file = prepare_horoscope_cut(prepared_group, prepared_horoscope)
+
     assert file is None
