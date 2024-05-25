@@ -17,7 +17,7 @@ def test_horoscopes_bad_time(create_group, create_horoscope):
     group = create_group(group_type=Group.HOROSCOPES_COMMON)
 
     is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
-    assert is_time_to_post is False
+    assert is_time_to_post is True
 
 
 @pytest.mark.freeze_time('2017-05-21 11:59')
@@ -28,7 +28,7 @@ def test_horoscopes_near_min_time(create_group, create_horoscope):
     group.save()
 
     is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
-    assert is_time_to_post is False
+    assert is_time_to_post is True
 
 
 @pytest.mark.freeze_time('2017-05-21 12:00')
@@ -55,4 +55,4 @@ def test_horoscopes_day_start(create_group, create_horoscope):
     group = create_group(group_type=Group.HOROSCOPES_COMMON)
 
     is_time_to_post, last_hour_posts_exist = is_it_time_to_post(group)
-    assert is_time_to_post is False
+    assert is_time_to_post is True

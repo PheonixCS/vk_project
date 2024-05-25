@@ -179,6 +179,17 @@ def is_common_condition(group, is_time_to_post):
 
 
 def is_horoscopes_conditions(group, is_time_to_post) -> bool:
+    now_time_utc = timezone.now()
+
+    common_horoscopes_posting_start_time = now_time_utc.replace(hour=12, minute=0)
+    common_horoscopes_posting_finish_time = now_time_utc.replace(hour=20, minute=59)
+
+    suitable_for_horoscopes = (
+            common_horoscopes_posting_start_time
+            <= now_time_utc <=
+            common_horoscopes_posting_finish_time
+    )
+
     if group.group_type == Group.HOROSCOPES_MAIN:
         condition_for_main = are_horoscopes_for_main_groups_ready(group)
     else:
@@ -187,6 +198,7 @@ def is_horoscopes_conditions(group, is_time_to_post) -> bool:
     return bool(
             group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON)
             and is_time_to_post
+            and suitable_for_horoscopes
             and group.horoscopes.filter(post_in_group_date__isnull=True)
             and condition_for_main
     )
@@ -204,9 +216,6 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
     now_time_utc = timezone.now()
     now_minute = now_time_utc.minute
     now_hour = now_time_utc.hour
-
-    common_horoscopes_posting_start_time = now_time_utc.replace(hour=12, minute=0)
-    common_horoscopes_posting_finish_time = now_time_utc.replace(hour=20, minute=59)
 
     # https://trello.com/c/uB0RQBvE/248
     is_time_to_post = (now_hour, now_minute) in group.return_posting_time_list()
@@ -232,12 +241,6 @@ def is_it_time_to_post(group: Group) -> Tuple[bool, bool]:
         movies_exist = False
 
     if group.group_type in (Group.HOROSCOPES_COMMON, Group.HOROSCOPES_MAIN):
-        suitable_for_horoscopes = (
-            common_horoscopes_posting_start_time
-            <= now_time_utc <=
-            common_horoscopes_posting_finish_time
-        )
-        is_time_to_post = is_time_to_post and suitable_for_horoscopes
         last_hour_horoscopes = Horoscope.objects.filter(group=group, post_in_group_date__gt=posting_pause_threshold)
         horoscopes_exist = last_hour_horoscopes.exists()
     else:
