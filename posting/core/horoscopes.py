@@ -6,7 +6,7 @@ from constance import config
 from posting.core.files import delete_files, download_file
 from posting.core.horoscopes_images import transfer_horoscope_to_image, paste_horoscopes_rates
 from posting.models import Group
-from scraping.core.horoscopes import fetch_zodiac_sign
+from scraping.core.horoscopes import fetch_zodiac_sign, get_horoscopes_emoji
 from scraping.models import Horoscope
 from services.text_utilities import replace_russian_with_english_letters, delete_hashtags_from_text
 from services.vk.files import upload_photos
@@ -98,10 +98,24 @@ def prepare_horoscope_with_image(horoscope_record: Horoscope) -> Tuple[str, str]
 def prepare_horoscope_cut(group: Group, horoscope_record: Horoscope) -> Tuple[str, Optional[str]]:
     # cut 50% and add link text
     original = horoscope_record.text
-    words = original.split(' ')
+    text_for_tempalte = update_text_for_template(original, horoscope_record.zodiac_sign)
+    words = text_for_tempalte.split(' ')
     cut = ' '.join(words[:len(words)//2])
     final_record_text = f'{cut}... {group.horoscope_postfix}'
 
     # attachments
     filename_to_upload = None
     return final_record_text, filename_to_upload
+
+
+def update_text_for_template(text: str, zodiac_sign: str) -> str:
+    """
+    Function update first sentence: transfer to upper case, add emoji code and new line.
+
+    :param text: original horoscope text
+    :param zodiac_sign: zodiac sign text
+    :return: Function return new text for template
+    """
+    first_part = text.split("\n")[0]
+    new_str = f"{first_part.upper()} {get_horoscopes_emoji(zodiac_sign)}\n"
+    return text.replace(first_part, new_str)
