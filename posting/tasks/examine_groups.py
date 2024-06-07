@@ -271,11 +271,11 @@ def fetch_group_id_from_vk(group: Group) -> int or None:
 
 def find_common_record_to_post(group: Group) -> Tuple[Record or None, List[Record] or None]:
     now_time_utc = timezone.now()
-    # today_start = now_time_utc.replace(hour=0, minute=0, second=0)
-    allowed_time_threshold = now_time_utc - timedelta(hours=6)
+    today_start = now_time_utc.replace(hour=0, minute=0, second=0)
+    allowed_time_threshold = now_time_utc - timedelta(hours=config.ALLOWED_POSTING_THRESHOLD_H)
 
-    # if group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON) and allowed_time_threshold > today_start:
-    #     allowed_time_threshold = today_start
+    if group.group_type in (Group.HOROSCOPES_MAIN, Group.HOROSCOPES_COMMON) and allowed_time_threshold < today_start:
+        allowed_time_threshold = today_start
 
     donors = group.donors.filter(is_involved=True)
     if not donors:
