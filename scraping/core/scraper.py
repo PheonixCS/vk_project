@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.db import DataError
 from django.utils import timezone
 
 from posting.models import ServiceToken
@@ -169,7 +170,7 @@ def main_scraper():
 
         for donor in account['donors']:
             # Scraping part
-
+            log.info(f'Start scraping {donor}')
             wall, error_reason = get_wall(api, donor.id)
             if not wall:
                 if error_reason == GROUP_IS_BANNED:
@@ -180,11 +181,13 @@ def main_scraper():
             newest_record_date = newest_record.get('date')
             if newest_record_date and is_donor_out_of_date(newest_record_date):
                 donor.ban(reason=donor.OLD)
+                log.warning(f'Ban {donor}')
                 continue
 
             new_records = exclude_old_records(donor, wall)
 
             try:
+                log.info(f'Start filtering {len(new_records)} records from {donor}')
                 new_suitable_records = filter_records(donor, new_records)
             except:
                 log.error('error while filter', exc_info=True)
@@ -192,7 +195,11 @@ def main_scraper():
 
             # Save suitable records to db
             for record in new_suitable_records:
-                save_suitable_record_to_db(donor, record)
+                try:
+                    save_suitable_record_to_db(donor, record)
+                except DataError:
+                    log.error(f'Error while saving record {record} with donor {donor}', exc_info=True)
+                    continue
             log.info(f'saved {len(new_suitable_records)} suitable records in donor {donor.id}')
 
             # Save filtered records to db
