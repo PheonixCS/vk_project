@@ -149,17 +149,17 @@ def main_scraper():
     log.info('start main scrapper')
 
     tokens = [token.app_service_token for token in ServiceToken.objects.all()]
-    log.info('working with {} tokens: {}'.format(len(tokens), tokens))
+    log.info(f'working with {len(tokens)} tokens: {tokens}')
 
     donors = Donor.objects.filter(is_involved=True, ban_reason__isnull=True)
-    log.info('got {} active donors'.format(len(donors)))
+    log.info(f'got {len(donors)} active donors')
 
     accounts_with_donors = distribute_donors_between_accounts(donors, tokens)
-    log.info('got {} accounts with donors: {}'.format(len(accounts_with_donors), accounts_with_donors))
 
     for account in accounts_with_donors:
+        log.info(f'Scraper using {account}')
         if not account['donors']:
-            log.info('account {} does not have any donor'.format(account))
+            log.info(f'account {account} does not have any donor')
             continue
 
         account_token = account['token']
