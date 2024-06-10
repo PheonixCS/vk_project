@@ -195,13 +195,13 @@ class Record(models.Model):
 
 class Image(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='images')
-    url = models.CharField(max_length=256)
+    url = models.CharField(max_length=2048)
     index_number = models.IntegerField(default=0)
 
 
 class Gif(models.Model):
     record = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='gifs')
-    url = models.CharField(max_length=256)
+    url = models.CharField(max_length=2048)
     owner_id = models.IntegerField(null=True)
     gif_id = models.IntegerField(null=True)
 
