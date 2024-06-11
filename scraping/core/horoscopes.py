@@ -55,6 +55,25 @@ def horoscopes_translate(name, to_lang='ru'):
     return signs_map.get(name)
 
 
+def get_horoscopes_emoji(name: str) -> str:
+    signs_emoji_map = {
+        'arises': '&#9800;',
+        'taurus': '&#9801;',
+        'gemini': '&#9802;',
+        'cancer': '&#9803;',
+        'leo': '&#9804;',
+        'virgo': '&#9805;',
+        'libra': '&#9806;',
+        'scorpio': '&#9807;',
+        'sagittarius': '&#9808;',
+        'capricorn': '&#9809;',
+        'aquarius': '&#9810;',
+        'pisces': '&#9811;'
+    }
+
+    return signs_emoji_map.get(name)
+
+
 def save_horoscope_record_to_db(group, text, zodiac_sign):
     log.info('save_horoscope_record_to_db called')
     obj, created = Horoscope.objects.get_or_create(
