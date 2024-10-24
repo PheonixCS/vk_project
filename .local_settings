@@ -1,0 +1,6 @@
+DB_LOGIN="vk_bot"
+DB_PASSWORD="Zer0Grav1ty"
+DB_HOST="127.0.0.1"
+DB_PORT="5432"
+LOGGING_DIR=/var/log/vk_sp_logs
+

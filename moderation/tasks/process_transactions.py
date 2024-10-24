@@ -6,7 +6,7 @@ from moderation.core.helpers import get_transactions_to_process, save_comment_to
 from moderation.core.process_comment import process_comment
 from moderation.models import WebhookTransaction
 from posting.models import Group
-from services.vk.core import create_vk_session_using_login_password
+from moderation.core.token import GetAuthToken
 
 log = logging.getLogger('moderation.tasks')
 
@@ -22,18 +22,16 @@ def process_transactions():
 
     for group_id in grouped_transaction.keys():
         group = Group.objects.select_related('user').filter(group_id=group_id).first()
-
-        session = create_vk_session_using_login_password(group.user.login, group.user.password, group.user.app_id)
-        if not session:
-            return None
-        api = session.get_api()
-        if not api:
-            log.warning('group {} no api created!'.format(group_id))
-            return None
+        log.info('start creating creds')
+        #session=create_vk_session_using_login_password(login=group.user.login, password=group.user.password, app_id=group.user.app_id)
+        manager = GetAuthToken()
+        token = manager.get_actual_token(app_id=52061491)
+        
+        log.info('finish creating creds')
 
         for transaction in grouped_transaction[group_id]:
             try:
-                process_comment(api, transaction.body)
+                process_comment(transaction.body, token=token)
                 save_comment_to_db(transaction)
 
                 transaction.status = WebhookTransaction.PROCESSED

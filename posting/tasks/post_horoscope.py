@@ -65,23 +65,24 @@ def post_horoscope(group_id: int, horoscope_record_id: int):
 
         record_id = post_response.get('post_id')
 
-        if group.group_type == Group.HOROSCOPES_COMMON:
-            try:
-                pin_response = api.wall.pin(
-                    owner_id='-{}'.format(group.group_id),
-                    post_id=record_id)
-            except vk_api.VkApiError:
-                log.warning(f'Failed to pin horoscope', exc_info=True)
-            else:
-                log.debug(f'Pin horoscope result {pin_response}')
+        # if group.group_type == Group.HOROSCOPES_COMMON:
+        #     try:
+        #         pass
+        #         # pin_response = api.wall.pin(
+        #         #     owner_id='-{}'.format(group.group_id),
+        #         #     post_id=record_id)
+        #     except vk_api.VkApiError:
+        #         log.warning(f'Failed to pin horoscope', exc_info=True)
+        #     else:
+        #         log.debug(f'Pin horoscope result {pin_response}')
 
-                # if config.BLOCKS_ACTIVE:
-                #     posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
-                #     posting_block.deactivate()
+        #         # if config.BLOCKS_ACTIVE:
+        #         #     posting_block = group.blocks.filter(reason=Block.POSTING, is_active=True).first()
+        #         #     posting_block.deactivate()
 
-            # Promotion https://trello.com/c/pLZ9LAlF/275
-            record_url = f'{group.url}?w=wall-{group_id}_{record_id}'
-            add_promotion_task.delay(record_url)
+        #     # Promotion https://trello.com/c/pLZ9LAlF/275
+        #     record_url = f'{group.url}?w=wall-{group_id}_{record_id}'
+        #     # add_promotion_task.delay(record_url)
 
     except vk_api.ApiError as error_msg:
         log.error('group {} got api error: {}'.format(group_id, error_msg))

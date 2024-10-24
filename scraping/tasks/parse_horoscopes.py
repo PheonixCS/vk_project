@@ -13,7 +13,7 @@ log = logging.getLogger('scraping.scheduled')
 @shared_task(time_limit=180, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3}, retry_backoff=120)
 def parse_horoscopes() -> None:
     log.debug('start parse_horoscopes')
-    horoscope_page = WomenHoroscopes()
+    horoscope_page = MailRuHoroscopes()
     # women_horoscopes = WomenHoroscopes()
 
     tomorrow_date_ru = get_tomorrow_date_ru()
@@ -35,7 +35,7 @@ def parse_horoscopes() -> None:
                 log.warning(f'{group_sign_en} not in {parsed.keys()}')
                 continue
             else:
-                additional_text = f'{tomorrow_date_ru}, {group_sign_ru}'
+                additional_text = f'ГОРОСКОП НА {tomorrow_date_ru}'
                 record_text = f'{additional_text}\n{parsed[group_sign_en]}'
                 save_horoscope_record_to_db(group, record_text, group_sign_en)
 

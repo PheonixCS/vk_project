@@ -2,11 +2,11 @@ import logging
 from datetime import timedelta
 from random import choice
 from typing import List, Tuple
-
+import time
 from celery import shared_task
 from constance import config
 from django.utils import timezone
-
+import requests
 from posting.core.poster import get_movies_rating_intervals, get_next_interval_by_movie_rating, filter_banned_records, \
     find_suitable_record
 from posting.core.posting_history import save_posting_history
@@ -107,6 +107,45 @@ def examine_groups():
         except Exception:
             log.error('Unexpected', exc_info=True)
             continue
+        # current_time = timezone.now()
+        # hour = current_time.hour
+        # minute = current_time.minute
+
+        # if group.group_type == Group.HOROSCOPES_MAIN:
+        #     upload_ids = []
+        #     if (hour == 13 and minute == 3):
+        #         for i in photos:
+        #             time.sleep(1)
+        #             upload_server_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params={
+        #                 'group_id': group.group_id,
+        #                 'access_token': 'YOUR_ACCESS_TOKEN',
+        #                 'v': '5.195'
+        #             })
+        #             upload_url = upload_server_response.json()['response']['upload_url']
+
+        #             # Загрузите изображение
+        #             with open(photos, 'rb') as photo:
+        #                 upload_response = requests.post(upload_url, files={'file': photo})
+        #             save_response = requests.post('https://api.vk.com/method/photos.saveWallPhoto', params={
+        #                 'access_token': 'YOUR_ACCESS_TOKEN',
+        #                 'v': '5.195',
+        #                 'group_id': f'-{group.group_id}',
+        #                 'server': upload_response['server'],
+        #                 'photo': upload_response['photo'],
+        #                 'hash': upload_response['hash']
+        #             }).json()
+        #             photo_id = save_response.json()['response'][0]['id']
+        #             owner_id = save_response.json()['response'][0]['owner_id']
+        #             upload_ids.append(f'photo{owner_id}_{photo_id}')
+        #         post_response = requests.post('https://api.vk.com/method/wall.post', params={
+        #             'owner_id': '-{}'.format(group.group_id),
+        #             'from_group': group.group_id,
+        #             'signed': 1,
+        #             'message': 'ГОРОСКОП НА 23 ОКТЯБРЯ ✨\nОвен, телец, близнецы, рак, лев, дева\nНапиши дату рождения в комментариях и\nполучи личный гороскоп от астролога 👇\nНe зaбывай стaвить ❤ и блaгодaрить',
+        #             'attachments': ','.join(upload_ids),
+        #             'v': '5.195'
+        #         })
+        #         continue
         if conditions:
             log.debug(f'{group} in horoscopes condition')
 

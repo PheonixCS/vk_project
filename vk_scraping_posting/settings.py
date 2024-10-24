@@ -27,7 +27,7 @@ if server_role == PROD:
 elif server_role == TEST_SERV:
     DEBUG = True
 
-ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org']
+ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org', 'ahuyang.ru']
 
 # Application definition
 

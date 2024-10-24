@@ -7,7 +7,7 @@ from django.utils import timezone
 
 import moderation.core.checks as checks
 from moderation.core.helpers import prepare_id_white_list, is_moderation_needed
-from moderation.core.vk_helpers import delete_comment, ban_user
+from moderation.core.vk_helpers import delete_comment, ban_user, send_answer_task
 from moderation.models import ModerationRule, Comment
 
 log = logging.getLogger('moderation.core.process_comment')
@@ -67,16 +67,15 @@ def check_for_reason_for_ban_and_get_comments_to_delete(event_object):
     return '', []
 
 
-def process_comment(api, comment):
-    log.info('start handling comment {} in {} by {}'.format(comment['object']['id'],
-                                                            comment['group_id'],
-                                                            comment['object']['from_id']))
-
+def process_comment(comment, token):
     moderation_rule = ModerationRule.objects.first()
     white_list = prepare_id_white_list(moderation_rule.id_white_list)
 
     if not is_moderation_needed(comment['object']['from_id'], comment['group_id'], white_list):
         return False
+    if str(comment['object']['from_id'])[0] == '-':
+        return False
+
 
     words_stop_list = set(moderation_rule.words_stop_list.split())
     words_in_text = re.sub(r'[^\w]', ' ', comment['object']['text']).split()
@@ -91,20 +90,21 @@ def process_comment(api, comment):
                   checks.is_audio_and_photo_in_attachments(comment['object'].get('attachments', [])))
 
     reason_for_ban, comments_to_delete = check_for_reason_for_ban_and_get_comments_to_delete(comment['object'])
-    if reason_for_ban:
-        ban_user(api, comment['group_id'], comment['object']['from_id'], days_timedelta=7, comment=reason_for_ban)
-        log.info('ban user {} in {}'.format(comment['object']['from_id'], comment['group_id']))
-
-        for comment_to_delete_id in comments_to_delete:
-            delete_comment(api, comment['group_id'], comment_to_delete_id)
-            log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
-
-        return True
-
-    if any(all_checks):
-        delete_comment(api, comment['group_id'], comment['object']['id'])
-        log.info('delete comment {} in {}'.format(comment['object']['id'], comment['group_id']))
-        return True
+    try:
+        # Запуск поиска ключевиком, если найдено запускаем отправку коммента
+        message, from_group = checks.text_answer(comment, token)
+        if message:
+            send_answer_task(
+                owner_id=f"-{comment['group_id']}", 
+                comment_id=comment['object']['id'], 
+                post_id=comment['object']['post_id'],
+                message=message,
+                token=token,
+                user_id=comment['object']['from_id'],
+                from_group=from_group
+            )
+    except Exception as e:
+        log.error("error in condition. Error {}".format(e))
 
     log.info('comment {} in {} was moderated, everything ok'.format(comment['object']['id'],
                                                                     comment['group_id']))

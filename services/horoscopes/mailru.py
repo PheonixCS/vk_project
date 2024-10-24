@@ -22,7 +22,8 @@ class MailRuHoroscopes(HoroscopesPage):
             'pisces': '/prediction/pisces/tomorrow/'  # Рыбы
         }
 
-        self.text_locator = 'div', {'class': 'article__text'}
+        self.text_locator = '.b6a5d4949c.e45a4c1552 > div > p'
+
 
 
 class WomenHoroscopes(HoroscopesPage):

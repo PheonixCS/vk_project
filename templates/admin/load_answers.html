@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Загрузка ответов</title>
+</head>
+<body>
+    <h2>Загрузите файл с ответами</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="file" required>
+        <button type="submit">Загрузить</button>
+    </form>
+</body>
+</html>

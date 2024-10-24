@@ -4,6 +4,10 @@ from collections import OrderedDict
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 CONSTANCE_CONFIG = {
+    'proxy_name': ('Grtg6G', 'Proxy-server name', str), 
+    'proxy_pass': ('aPHWuY', 'Proxy-server password', str), 
+    'proxy_host': ('181.177.112.116:8000', 'Proxy-server host', str), 
+    'gpt_token': ('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', 'ChatGPT Token', str),
     'VK_API_VERSION': ('5.131', 'VK API version', str),
     'MIN_STRING_MATCH_RATIO': (0.85, 'Non documented'),
     'HOROSCOPES_DONOR_ID': ('83815413', 'Horoscopes specific donor id', str),
@@ -73,7 +77,8 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
         'MIN_STRING_MATCH_RATIO', 'COMMON_RECORDS_COUNT_FOR_DONOR',
         'NEW_RECORD_MATURITY_MINUTES', 'EXCLUDE_GROUPS_FROM_SEX_STATISTICS_UPDATE', 'STATS_STORING_TIME',
         'DONOR_OUTDATE_INTERVAL', 'NEW_POSTING_INTERVALS_ENABLE', 'BLOCKS_ACTIVE', 'IGNORE_DONORS_REPEAT', 'USE_APP',
-        'VK_SCOPES', 'SHOW_AUTHOR', 'POSTING_START_TIME', 'POSTING_END_TIME', 'ALLOWED_POSTING_THRESHOLD_H'
+        'VK_SCOPES', 'SHOW_AUTHOR', 'POSTING_START_TIME', 'POSTING_END_TIME', 'ALLOWED_POSTING_THRESHOLD_H', 
+        'proxy_name', 'proxy_pass', 'proxy_host', 'gpt_token'
     )),
     ('Horoscopes', (
         'HOROSCOPES_DONOR_ID', 'HOROSCOPES_TO_IMAGE_ENABLED', 'HOROSCOPES_POSTING_INTERVAL',

@@ -105,7 +105,7 @@ class Group(models.Model):
         help_text='Если настройка включена, 2 поста из одного донора подряд не будут выходить'
     )
 
-    horoscope_postfix = models.CharField(
+    horoscope_postfix = models.TextField(
         max_length=256, default='', null=False, blank=True,
         verbose_name='Текст после обрезки основного текста гороскопа',
         help_text='Работает, если включена настройка '

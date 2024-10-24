@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class ModerationRule(models.Model):
@@ -23,6 +24,64 @@ class ModerationRule(models.Model):
         verbose_name = 'Правило модерации'
         verbose_name_plural = 'Правила модерации'
 
+
+# Модель для хранения коментов которые ждут проверки на подписку
+class UserDataSubscribe(models.Model):
+    user_id = models.TextField()
+    group_id = models.TextField()
+    comment_id = models.TextField()
+    post_id = models.TextField()
+    owner_id = models.TextField() 
+
+    @classmethod
+    def add_user(cls, user_id, group_id, comment_id, post_id, owner_id):
+        cls.objects.create(user_id=user_id, group_id=group_id, comment_id=comment_id, post_id=post_id, owner_id=owner_id)
+
+    @classmethod
+    def clear_model(cls):
+        cls.objects.all().delete()
+
+# Модель для добавления улючевиков через админку
+class Filter(models.Model):
+    keywords = models.TextField(help_text="Введите ключевые слова через ';'")
+    answers = models.FileField(upload_to='', default='file.txt', help_text="Загрузите файл .txt с ответами.")
+    onlyword = models.BooleanField(default=False, help_text="Искать слова в предложении? (True/False)")
+
+    def __str__(self):
+        return self.keywords
+    
+    class Meta:
+        permissions = [
+            ("moderation.view_filter", "Can view filter"),
+            ("moderation.change_filter", "Can change filter"),
+            ("moderation.add_filter", "Can add filter"),
+            ("moderation.delete_filter", "Can delete filter"),
+        ]
+        
+# Модель для записи времени последнего комментария отправленого пользователем с определенным ключевым словом        
+class KeywordMessage(models.Model):
+    user_id = models.TextField()
+    keyword = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    @classmethod
+    def add_or_update_message(cls, user_id, keyword):
+        # Проверяем, есть ли уже сообщение с таким ключевым словом
+        last_message = cls.last_message_with_keyword(user_id, keyword)
+        if last_message:
+            # Если сообщение существует, обновляем его текст и время
+            last_message.timestamp = timezone.now()
+            last_message.save(update_fields=['timestamp'])
+        else:
+            # Если нет, создаем новое сообщение
+            cls.objects.create(user_id=user_id, keyword=keyword)
+
+    @classmethod
+    def last_message_with_keyword(cls, user_id, keyword):
+        try:
+            return cls.objects.filter(user_id=user_id, keyword=keyword).latest('timestamp')
+        except cls.DoesNotExist:
+            return None
 
 class WebhookTransaction(models.Model):
     UNPROCESSED = 1
@@ -66,3 +125,17 @@ class Attachment(models.Model):
     attached_to = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')
     type = models.CharField(max_length=64, default='')
     body = JSONField(default=dict)
+
+##Модель с токеном
+class Token(models.Model):
+    access_token=models.TextField(max_length=512)
+    access_token_lifetime=models.TextField(max_length=512)
+    refresh_token=models.TextField(max_length=512)
+    refresh_token_lifetime=models.TextField(max_length=512)
+    device_id=models.TextField(max_length=512)
+    app_id=models.TextField(max_length=512)
+#Сохранение данных с коллбэков авторизации
+class AuthorizationTransactions(models.Model):
+    state=models.CharField(max_length=256)
+    code_verifier=models.CharField(max_length=128)
+    app_id=models.CharField(max_length=256)
