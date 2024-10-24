@@ -1,0 +1,37 @@
+
+   services:
+     app:
+       build: .
+       volumes:
+         - .:/app
+       environment:
+         - PYTHONUNBUFFERED=1
+         - DB_NAME=${DB_NAME}
+         - DB_LOGIN=${DB_LOGIN}
+         - DB_PASSWORD=${DB_PASSWORD}
+         - DB_HOST=db             # Здесь используется имя сервиса, если ваш контейнер с БД называется 'db'
+         - DB_PORT=${DB_PORT}     # Добавляем переменную DB_PORT
+         - SERVER_ROLE=${SERVER_ROLE}
+         - TG_TOKEN=${TG_TOKEN}
+         - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+         - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+         - LOGGING_DIR=${LOGGING_DIR}
+         
+       working_dir: /app/vk_project
+       command: make run
+       restart: always
+       ports:
+          - "8000:8000"
+      
+     db:
+       image: postgres:13
+       restart: always
+       environment:
+         POSTGRES_DB: ${DB_NAME}
+         POSTGRES_USER: ${DB_LOGIN}
+         POSTGRES_PASSWORD: ${DB_PASSWORD}
+       volumes:
+         - postgres_data:/var/lib/postgresql/data
+
+   volumes:
+     postgres_data:
