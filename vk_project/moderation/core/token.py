@@ -113,10 +113,18 @@ class GetAuthToken():
             is_refresh_expired=True
         return [is_access_expired, is_refresh_expired]
     
-    def get_actual_token(self, app_id):
+    def get_actual_token(self, app_id, use_community_token=False):
         """Отдаёт актуальный access_token"""
         try:
-            token_model=Token.objects.get(app_id=app_id)
+            if use_community_token:
+                token_model = Token.objects.filter(app_id=app_id, is_community_token=True).first()
+                if not token_model:
+                    log.error("Community token not found.")
+                    return -1
+                return crypt.decrypt(token_model.access_token).decode()
+
+            token_model = Token.objects.get(app_id=app_id, is_community_token=False)
+
             lifetimes_check=self.__check_token_lifetime(token_model=token_model)
             if lifetimes_check[1] == True:
                 log.error("refresh_token is expired, please, authorize manually")

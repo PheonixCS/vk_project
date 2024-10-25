@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ModerationRule, Filter
+from .models import ModerationRule, Filter, Token
 from django import forms
 import ast
 import logging
@@ -40,6 +40,16 @@ class FilterAdminForm(forms.ModelForm):
 
 class FilterAdmin(admin.ModelAdmin):
     form = FilterAdminForm
+
+
+
+@admin.register(Token)
+class TokenAdmin(admin.ModelAdmin):
+    list_display = ('app_id', 'is_community_token', 'access_token_lifetime')
+    fields = ('app_id', 'access_token', 'refresh_token', 'access_token_lifetime', 'is_community_token')
+    readonly_fields = ('access_token_lifetime',)  # если нужно, чтобы время жизни токена не редактировалось
+    search_fields = ('app_id',)
+    list_filter = ('is_community_token',)
 
 
 admin.site.register(Filter, FilterAdmin)

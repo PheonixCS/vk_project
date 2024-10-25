@@ -41,7 +41,7 @@ class UserDataSubscribe(models.Model):
     def clear_model(cls):
         cls.objects.all().delete()
 
-# Модель для добавления улючевиков через админку
+# Модель для добавления ключевиков через админку
 class Filter(models.Model):
     keywords = models.TextField(help_text="Введите ключевые слова через ';'")
     answers = models.FileField(upload_to='', default='file.txt', help_text="Загрузите файл .txt с ответами.")
@@ -128,12 +128,13 @@ class Attachment(models.Model):
 
 ##Модель с токеном
 class Token(models.Model):
-    access_token=models.TextField(max_length=512)
-    access_token_lifetime=models.TextField(max_length=512)
-    refresh_token=models.TextField(max_length=512)
-    refresh_token_lifetime=models.TextField(max_length=512)
-    device_id=models.TextField(max_length=512)
-    app_id=models.TextField(max_length=512)
+    is_community_token = models.BooleanField(default=False)
+    access_token = models.TextField(max_length=512, verbose_name="Access Token")
+    access_token_lifetime = models.TextField(max_length=512, verbose_name="Access Token Lifetime", blank=True, null=True)
+    refresh_token = models.TextField(max_length=512, verbose_name="Refresh Token", blank=True, null=True)
+    refresh_token_lifetime = models.TextField(max_length=512, verbose_name="Refresh Token Lifetime", blank=True, null=True)
+    device_id = models.TextField(max_length=512, verbose_name="Device ID", blank=True, null=True)
+    app_id = models.TextField(max_length=512, verbose_name="App ID", blank=True, null=True)
 #Сохранение данных с коллбэков авторизации
 class AuthorizationTransactions(models.Model):
     state=models.CharField(max_length=256)
