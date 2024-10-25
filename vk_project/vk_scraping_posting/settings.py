@@ -27,7 +27,7 @@ if server_role == PROD:
 elif server_role == TEST_SERV:
     DEBUG = True
 
-ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org', 'ahuyang.ru', 'localhost', '127.0.0.1', '*', '185.196.117.195']
+ALLOWED_HOSTS = ['46.101.217.6', '127.0.0.1', '80.211.178.81', 'shapranov.org', '*.shapranov.org', 'ahuyang.ru', 'krazu-group.tech','*.krazu-group.tech', '*', '185.196.117.195']
 
 SECURE_HSTS_SECONDS = 0  # или другое значение, например, 31536000 для одного года
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False

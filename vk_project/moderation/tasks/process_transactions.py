@@ -25,7 +25,7 @@ def process_transactions():
         log.info('start creating creds')
         #session=create_vk_session_using_login_password(login=group.user.login, password=group.user.password, app_id=group.user.app_id)
         manager = GetAuthToken()
-        token = manager.get_actual_token(app_id=52061491)
+        token = manager.get_actual_token(app_id=52061491, use_community_token = True)
         
         log.info('finish creating creds')
 
